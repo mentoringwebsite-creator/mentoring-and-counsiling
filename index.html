@@ -246,6 +246,61 @@
       box-shadow: 0 24px 50px rgba(197, 107, 7, 0.2);
     }
 
+    .btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 32px;
+      border-radius: 14px;
+      color: white;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.98rem;
+      transition: background 0.2s ease;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.26);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .feature-card {
+      padding: 28px;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.90);
+      border: 1px solid rgba(27, 65, 50, 0.08);
+      box-shadow: 0 20px 42px rgba(17, 45, 33, 0.08);
+    }
+
+    .feature-icon {
+      width: 54px;
+      height: 54px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: rgba(197, 107, 7, 0.14);
+      font-size: 1.5rem;
+    }
+
+    .feature-card h3 {
+      margin: 18px 0 10px;
+      font-size: 1.2rem;
+      color: #163a2e;
+    }
+
+    .feature-card p {
+      margin: 0;
+      line-height: 1.75;
+      color: #556f61;
+    }
 
     .section {
       padding: 68px 36px 72px;
@@ -378,7 +433,28 @@
             <p class="hero-text">A mentoring and counseling platform designed to help every student grow academically, professionally, and personally.</p>
             <div class="hero-actions">
               <a href="login.html" class="btn-primary">Login to Portal</a>
+              <a href="problems.html" class="btn-secondary">View Queries</a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-grid feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>Personalized Mentoring</h3>
+            <p>Connect with experienced mentors who help you plan coursework, projects, and career goals.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">💬</div>
+            <h3>Wellbeing Support</h3>
+            <p>Access counseling for academic pressure, personal wellness, and campus life balance.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Track Your Progress</h3>
+            <p>Monitor academic performance and counseling outcomes with a unified student dashboard.</p>
           </div>
         </div>
       </section>

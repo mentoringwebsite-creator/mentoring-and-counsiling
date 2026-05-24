@@ -86,6 +86,7 @@
     .secondary-button { display: inline-flex; align-items: center; justify-content: center; padding: 12px 20px; border-radius: 16px; border: 1px solid rgba(71,101,93,0.18); background: white; color: #1d3b31; cursor: pointer; font-weight: 700; }
     .query-entry-panel { background: #f7faf8; border: 1px solid rgba(71, 101, 93, 0.16); box-shadow: 0 18px 36px rgba(18, 46, 36, 0.08); }
     .query-entry-panel .panel { padding: 24px; }
+    .toast { display: grid; gap: 10px; padding: 18px 22px; margin-bottom: 18px; border-radius: 22px; background: rgba(22, 98, 67, 0.12); border: 1px solid rgba(22, 98, 67, 0.2); color: #144a33; box-shadow: 0 14px 26px rgba(14, 41, 28, 0.06); }
     @media (max-width: 920px) { .layout { grid-template-columns: 1fr; } .filter-group { width: 100%; justify-content: space-between; } .query-table { min-width: 0; } }
   </style>
 </head>
@@ -192,6 +193,11 @@
               </form>
             </div>
 
+            <div class="message-card toast hidden" id="success-message">
+              <strong>Success!</strong>
+              Your query has been added and is now being reviewed by the counseling team.
+            </div>
+
             <div style="overflow-x:auto;">
               <table class="query-table">
                 <thead>
@@ -253,6 +259,22 @@
             queryPanel.classList.add('hidden');
           }
 
+          const queryFilter = document.getElementById('query-filter');
+          const queryTableBody = document.querySelector('.query-table tbody');
+          const successMessage = document.getElementById('success-message');
+
+          function formatDate(date) {
+            return date.toLocaleDateString('en-GB');
+          }
+
+          function generateNewQueryId() {
+            const existingIds = Array.from(queryTableBody.querySelectorAll('tr td:first-child'))
+              .map(td => parseInt(td.textContent.replace(/\D/g, ''), 10))
+              .filter(Boolean);
+            const nextNumber = existingIds.length ? Math.max(...existingIds) + 1 : 1026;
+            return `Q${nextNumber}`;
+          }
+
           if (raiseButton && queryPanel) {
             raiseButton.addEventListener('click', function() {
               queryPanel.classList.remove('hidden');
@@ -267,7 +289,43 @@
           if (queryForm) {
             queryForm.addEventListener('submit', function(event) {
               event.preventDefault();
-              hidePanel();
+
+              const subject = document.getElementById('new-query-subject').value.trim();
+              const category = document.getElementById('new-query-category').value;
+              const description = document.getElementById('new-query-text').value.trim();
+
+              if (!subject || !description) {
+                alert('Please add a subject and description for your query.');
+                return;
+              }
+
+              const newRow = document.createElement('tr');
+              newRow.innerHTML = `
+                <td>${generateNewQueryId()}</td>
+                <td>${category}</td>
+                <td>${subject}</td>
+                <td>${formatDate(new Date())}</td>
+                <td><span class="status-chip status-pending">Pending</span></td>
+                <td><a href="#" class="view-button">View</a></td>
+              `;
+
+              queryTableBody.appendChild(newRow);
+              queryForm.reset();
+              queryPanel.classList.add('hidden');
+              successMessage.classList.remove('hidden');
+              setTimeout(function() {
+                successMessage.classList.add('hidden');
+              }, 3200);
+            });
+          }
+
+          if (queryFilter) {
+            queryFilter.addEventListener('change', function() {
+              const selected = this.value;
+              document.querySelectorAll('.query-table tbody tr').forEach(function(row) {
+                const type = row.children[1]?.textContent || '';
+                row.style.display = selected === 'All Queries' || type === selected ? '' : 'none';
+              });
             });
           }
         });
