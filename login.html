@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Sreenidhi Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #eef3f2;
+      --surface: rgba(255, 255, 255, 0.96);
+      --surface-strong: #ffffff;
+      --text: #122b24;
+      --muted: #52685e;
+      --accent: #c56b07;
+      --shadow: 0 24px 90px rgba(17, 45, 35, 0.12);
+      --border: rgba(20, 64, 46, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(241, 245, 242, 0.9)),
+        url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1600&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+
+    .page {
+      width: 100%;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 40px 24px 48px;
+    }
+
+    .login-shell {
+      width: min(1180px, 100%);
+      border-radius: 34px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.98);
+      box-shadow: 0 32px 88px rgba(88, 106, 97, 0.12);
+      border: 1px solid rgba(118, 144, 130, 0.14);
+    }
+
+    .login-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 26px 36px;
+      background: #ffffff;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #c56b07 0%, #db7e10 100%);
+      color: white;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 4px;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 800;
+      color: #1d503a;
+      letter-spacing: 0.08em;
+    }
+
+    .brand-subtitle {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #52685e;
+    }
+
+    .portal-title {
+      max-width: 560px;
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #1f4b38;
+    }
+
+    .login-main {
+      position: relative;
+      overflow: hidden;
+      background: transparent;
+      padding: 48px 44px 56px;
+    }
+
+    .login-main::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.84);
+      pointer-events: none;
+    }
+
+    .login-content {
+      position: relative;
+      display: grid;
+      gap: 24px;
+      max-width: 1080px;
+      margin: 0 auto;
+      z-index: 1;
+    }
+
+    .login-heading {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      line-height: 1.02;
+      font-weight: 800;
+      color: #1a2f2a;
+      text-align: center;
+    }
+
+    .login-subtitle {
+      margin: 0;
+      color: #667d76;
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .login-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 26px;
+    }
+
+    .card-link {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 28px;
+      padding: 36px 30px;
+      border: 1px solid rgba(159, 184, 170, 0.18);
+      box-shadow: 0 28px 60px rgba(104, 122, 112, 0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 18px;
+      min-height: 230px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 34px 94px rgba(104, 122, 112, 0.12);
+      border-color: rgba(137, 171, 152, 0.2);
+    }
+
+    .card-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 22px;
+      display: grid;
+      place-items: center;
+      background: #d8e8e0;
+      color: #164032;
+      font-size: 1.7rem;
+      box-shadow: 0 8px 18px rgba(47, 91, 77, 0.08);
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 1.12rem;
+      font-weight: 700;
+      color: #1e3730;
+    }
+
+    .card-text {
+      margin: 0;
+      color: #677b73;
+      line-height: 1.8;
+      font-size: 0.99rem;
+      max-width: 320px;
+    }
+
+    .login-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 36px 24px;
+      background: #173b34;
+      color: #e7f0eb;
+      font-size: 0.92rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .login-footer a {
+      color: #f0f7f2;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    @media (max-width: 920px) {
+      .login-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .page {
+        padding: 16px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .login-header {
+        padding: 22px 18px;
+      }
+
+      .login-main {
+        padding: 30px 22px 36px;
+      }
+
+      .card {
+        padding: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="login-shell">
+      <header class="login-header">
+        <div class="brand">
+          <div class="brand-logo">S</div>
+          <div class="brand-copy">
+            <p class="brand-title">SREENIDHI</p>
+            <p class="brand-subtitle">EDUCATIONAL GROUP</p>
+          </div>
+        </div>
+        <div>
+          <p class="portal-title">STUDENT ENHANCEMENT & COUNSELLING PORTAL</p>
+          <p class="brand-subtitle">Sreenidhi Institute of Science and Technology</p>
+        </div>
+      </header>
+
+      <main class="login-main">
+        <div class="login-content">
+          <div>
+            <h1 class="login-heading">Select Your Login Type</h1>
+            <p class="login-subtitle">Choose the best option to access your dashboard and institutional tools.</p>
+          </div>
+
+          <div class="login-grid">
+            <a href="student-dashboard.html" class="card-link">
+              <div class="card">
+                <div class="card-icon">🎓</div>
+                <h2 class="card-title">Student / Parent Login</h2>
+                <p class="card-text">View academic progress, attendance, and mentoring details.</p>
+              </div>
+            </a>
+            <div class="card">
+              <div class="card-icon">👨‍🏫</div>
+              <h2 class="card-title">Faculty Login</h2>
+              <p class="card-text">Access mentoring dashboard and monitor assigned students.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">🏛️</div>
+              <h2 class="card-title">HOD Login</h2>
+              <p class="card-text">View department analytics and mentor activity reports.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon">⚙️</div>
+              <h2 class="card-title">Admin Login</h2>
+              <p class="card-text">Manage portal data and institutional analytics.</p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer class="login-footer">
+        <span>© Sreenidhi Institute of Science and Technology</span>
+        <span>Student Enhancement & Counselling Portal</span>
+        <span>Contact: <a href="mailto:support@sreenidhi.edu.in">support@sreenidhi.edu.in</a></span>
+      </footer>
+    </div>
+  </div>
+</body>
+</html>
