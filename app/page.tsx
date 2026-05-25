@@ -19,9 +19,9 @@ export default function HomePage() {
 
         <section className="grid min-h-[680px] gap-8 px-6 py-10 md:grid-cols-[1.05fr_0.95fr] md:px-10 md:py-14" style={{ backgroundImage: "linear-gradient(180deg, rgba(22,43,36,0.32), rgba(22,43,36,0.08)), url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
           <div className="flex max-w-2xl flex-col justify-center text-white">
-            <p className="mb-5 inline-flex w-fit items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/85 before:h-1 before:w-10 before:rounded-full before:bg-white/90 before:content-['']">Student Success Platform</p>
+            <p className="mb-5 inline-flex w-fit items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-white/85 before:h-1 before:w-10 before:rounded-full before:bg-white/90 before:content-['']">Student Success Platform · Latest Update</p>
             <h1 className="max-w-[760px] text-5xl font-extrabold leading-[1.05] md:text-6xl">Empowering Students for a Successful Future</h1>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-white/92">A mentoring and counseling platform designed to help every student grow academically, professionally, and personally.</p>
+            <p className="mt-5 max-w-xl text-lg leading-8 text-white/92">A mentoring and counseling platform designed to help every student grow academically, professionally, and personally. This refreshed release is ready to show on the live site.</p>
             <div className="mt-8 flex flex-wrap gap-4">
               <PortalButton href="/login">Login to Portal</PortalButton>
               <PortalButton href="/student/queries" variant="secondary">View Queries</PortalButton>

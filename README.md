@@ -63,7 +63,9 @@ npm run build
 
 ## Deployment
 
-Push to GitHub, import the repo in Vercel, add the Supabase environment variables, and deploy.# SNIST-Mentoring-and-Counselling
+Push to GitHub, import the repo in Vercel, add the Supabase environment variables, and deploy.
+
+# SNIST-Mentoring-and-Counselling
 
 ## Run locally
 
