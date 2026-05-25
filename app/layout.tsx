@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 export const metadata = {
   title: 'Sreenidhi Student Counselling Portal',
-  description: 'Next.js + Supabase student mentoring portal'
+  description: 'A simple, attractive mentoring and counseling portal for students, faculty, and administrators'
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
