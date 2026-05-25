@@ -14,6 +14,8 @@ ENV/
 
 # Node
 node_modules/
+.next/
+.env.local
 
 # OS files
 .DS_Store
