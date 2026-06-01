@@ -6,8 +6,8 @@ import { PortalButton } from '@/components/portal-button';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen px-4 py-4 md:px-6 md:py-6">
-      <div className="mx-auto overflow-hidden rounded-[34px] border border-black/5 bg-white shadow-[0_28px_90px_rgba(16,45,37,0.12)]">
+    <main className="min-h-screen bg-white">
+      <div className="w-full overflow-hidden bg-white">
         <header className="flex flex-col gap-4 border-b border-black/5 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between md:px-8 md:py-5">
           <div className="flex items-center gap-4">
             <Brand />
