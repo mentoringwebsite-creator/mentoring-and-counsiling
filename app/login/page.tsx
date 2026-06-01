@@ -26,25 +26,17 @@ export default function LoginPage() {
               <div className="text-sm text-slate-600">Sreenidhi Institute of Science and Technology</div>
             </div>
           </div>
-          <div className="hidden text-right md:block">
-            <div className="text-[1.12rem] font-semibold uppercase tracking-[0.12em] text-portal-ink">Select Your Login Type</div>
-            <div className="text-sm text-slate-600">Choose the best option to access your dashboard</div>
-          </div>
         </header>
 
         <section className="relative overflow-hidden px-5 py-10 md:px-8 md:py-14">
           <div className="absolute inset-0 bg-white/72" />
-          <div className="relative z-10 mx-auto flex min-h-[calc(100vh-14rem)] max-w-[1120px] flex-col justify-center gap-8">
-            <div className="md:hidden">
+          <div className="relative z-10 mx-auto flex min-h-[calc(100vh-14rem)] max-w-[1120px] flex-col justify-center gap-10">
+            <div>
               <h1 className="text-center text-[2rem] font-extrabold tracking-[-0.04em] text-[#1d2a39] md:text-[2.7rem]">Select Your Login Type</h1>
-              <p className="mt-2 text-center text-sm text-slate-600">Choose the best option to access your dashboard and institutional tools.</p>
-            </div>
-            <div className="hidden md:block">
-              <h1 className="text-center text-[2rem] font-extrabold tracking-[-0.04em] text-[#1d2a39] md:text-[2.7rem]">Select Your Login Type</h1>
-              <p className="mt-2 text-center text-sm text-slate-600">Choose the best option to access your dashboard and institutional tools.</p>
+              <p className="mt-3 text-center text-sm text-slate-600 md:text-base">Choose the best option to access your dashboard and institutional tools.</p>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2 md:gap-7">
+            <div className="grid gap-6 md:grid-cols-2 md:gap-6">
               {roles.map((role) => {
                 const Icon = role.icon;
 
@@ -52,7 +44,7 @@ export default function LoginPage() {
                   <Link
                     key={role.label}
                     href={role.href as never}
-                    className="group flex min-h-[214px] flex-col items-center justify-center rounded-[9px] border border-[#dde3e6] bg-white px-8 py-9 text-center shadow-[0_6px_18px_rgba(18,39,31,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(18,39,31,0.12)]"
+                    className="group flex min-h-[218px] flex-col items-center justify-center rounded-[9px] border border-[#dde3e6] bg-white px-8 py-9 text-center shadow-[0_6px_18px_rgba(18,39,31,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(18,39,31,0.12)]"
                   >
                     <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#dbe8e1] text-[#27584a] transition group-hover:bg-[#cfe0d8]">
                       <Icon className="h-11 w-11" />
