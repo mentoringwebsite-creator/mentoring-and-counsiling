@@ -10,11 +10,11 @@ export default function StudentPage() {
 
   return (
     <PageShell title="Student Dashboard" subtitle="Student Enhancement & Counselling Portal">
-      <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <div className="grid gap-6 px-5 py-5 md:px-8 md:py-8 xl:grid-cols-[300px_minmax(0,1fr)]">
         <Sidebar active="/student" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
-        <div className="grid gap-6">
-          <div className="portal-card grid gap-6 md:grid-cols-[1fr_280px]">
-            <div className="grid gap-6 md:grid-cols-[220px_1fr]">
+        <div className="grid gap-6 xl:min-w-0">
+          <div className="portal-card grid gap-6 xl:grid-cols-[1fr_320px]">
+            <div className="grid gap-6 md:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr]">
               <div className="rounded-3xl bg-[linear-gradient(180deg,#f0f6f3,#e7f0eb)] p-4">
                 <div className="grid h-full min-h-[280px] place-items-center rounded-3xl bg-white/80 text-center text-portal-ink">
                   <div>
@@ -35,14 +35,14 @@ export default function StudentPage() {
               </div>
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid gap-3 xl:w-full">
               <StatCard title="CGPA" value={studentSummary.cgpa.toFixed(2)} tone="green" />
               <StatCard title="Backlogs" value={String(studentSummary.backlogs)} tone={studentSummary.backlogs > 0 ? 'orange' : 'green'} />
               <StatCard title="Risk Level" value={risk} tone={risk === 'High' ? 'red' : risk === 'Medium' ? 'orange' : 'green'} />
             </div>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-4">
+          <div className="grid gap-6 md:grid-cols-4 xl:grid-cols-4">
             <StatCard title="Attendance" value={`${studentSummary.attendance}%`} hint="Current month" tone="green" />
             <StatCard title="SGPA" value={studentSummary.sgpa.toFixed(1)} hint="Latest semester" tone="neutral" />
             <StatCard title="Mentor Messages" value="12" hint="Unread and recent" tone="orange" />
@@ -59,7 +59,7 @@ export default function StudentPage() {
                   <div key={query.id} className="flex items-center justify-between rounded-2xl bg-portal-paper p-4">
                     <div>
                       <div className="font-semibold">{query.subject}</div>
-                      <div className="text-sm text-slate-600">{query.id} • {query.type}</div>
+                      <div className="text-sm text-slate-600">{query.id}, {query.type}</div>
                     </div>
                     <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold">{query.status}</span>
                   </div>
