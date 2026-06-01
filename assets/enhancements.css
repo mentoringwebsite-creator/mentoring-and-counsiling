@@ -2,11 +2,44 @@
   --accent-color: #c56b07;
   --accent-dark: #b25805;
   --muted: rgba(0,0,0,0.46);
+  --bg: #eef3f0;
+  --surface: #ffffff;
+  --text: #112923;
+  --radius: 14px;
 }
 
 *{transition: background-color 220ms ease, color 220ms ease, transform 220ms ease;}
 
 body{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+/* Layout helpers */
+.container{ max-width:1180px; margin:0 auto; padding:0 20px; }
+
+/* Header */
+.page-header{ display:flex; align-items:center; justify-content:space-between; gap:20px; padding:18px 0; }
+.brand{ display:flex; align-items:center; gap:16px; text-decoration:none; color:inherit; }
+.brand-logo{ width:86px; height:46px; display:block; }
+.brand-logo img{ width:100%; height:100%; object-fit:contain; }
+
+.site-nav{ display:flex; gap:18px; align-items:center; }
+.site-nav a{ color:var(--text); text-decoration:none; font-weight:600; padding:8px 10px; border-radius:10px; }
+.site-nav a:hover{ background:rgba(0,0,0,0.04); }
+
+/* Hero */
+.hero{ min-height:60vh; display:flex; align-items:center; }
+.hero-body{ width:100%; }
+.hero-title{ font-size:clamp(2rem,4.6vw,3.6rem); margin:0 0 12px; }
+.hero-text{ font-size:1.05rem; color:rgba(17,41,35,0.86); max-width:680px; }
+.hero-actions{ margin-top:22px; display:flex; gap:12px; flex-wrap:wrap; }
+.btn-primary{ background:linear-gradient(135deg,var(--accent-color),var(--accent-dark)); color:white; padding:12px 22px; border-radius:12px; text-decoration:none; font-weight:700; }
+.btn-secondary{ background:transparent; border:1px solid rgba(0,0,0,0.08); padding:12px 22px; border-radius:12px; text-decoration:none; color:var(--text); }
+
+/* Feature cards */
+.feature-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
+.feature-card{ background:var(--surface); padding:20px; border-radius:12px; box-shadow:0 8px 30px rgba(16,45,37,0.06); }
+
+/* Footer */
+.footer{ text-align:center; padding:24px 0; font-size:0.95rem; color:rgba(17,41,35,0.6); }
 
 .btn-primary:hover, .btn-login:hover{ transform: translateY(-4px); box-shadow: 0 36px 70px rgba(197,107,7,0.16); }
 .btn-primary:active, .btn-login:active{ transform: translateY(-1px); }
@@ -25,7 +58,4 @@ body{ -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
 
 .footer, .login-footer{ transition: background-color 320ms ease; }
 
-.container{ width:100%; max-width:1180px; margin:0 auto; padding:0 20px; }
-
-/* small utility */
 .muted{ color: var(--muted); }
