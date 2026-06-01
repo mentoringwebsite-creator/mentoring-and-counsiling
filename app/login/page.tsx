@@ -14,23 +14,23 @@ const roles = [
 export default function LoginPage() {
   return (
     <main
-      className="min-h-screen bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,242,0.9))] px-4 py-4 md:px-6 md:py-6"
+      className="min-h-screen bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,242,0.9))]"
       style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(241,245,242,0.9)), url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1600&q=80')", backgroundSize: 'cover', backgroundPosition: 'center' }}
     >
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1180px] flex-col overflow-hidden rounded-[34px] border border-[rgba(118,144,130,0.14)] bg-white/98 shadow-[0_32px_88px_rgba(88,106,97,0.12)]">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-black/5 bg-white px-6 py-5 md:px-8">
+      <div className="min-h-screen bg-[rgba(255,255,255,0.72)] backdrop-blur-[2px]">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-black/5 bg-white px-5 py-4 md:px-8 md:py-5">
           <div className="flex items-center gap-4">
             <Brand compact />
             <div className="hidden border-l border-black/10 pl-4 md:block">
-              <div className="text-[1.03rem] font-semibold uppercase tracking-[0.12em] text-portal-ink">Student Enhancement &amp; Counselling Portal</div>
+              <div className="text-[1.02rem] font-semibold uppercase tracking-[0.12em] text-portal-ink">Student Enhancement &amp; Counselling Portal</div>
               <div className="text-sm text-slate-600">Sreenidhi Institute of Science and Technology</div>
             </div>
           </div>
         </header>
 
-        <section className="relative flex-1 overflow-hidden px-6 py-10 md:px-10 md:py-14">
-          <div className="absolute inset-0 bg-white/70" />
-          <div className="relative z-10 mx-auto flex max-w-[1080px] flex-col gap-8">
+        <section className="relative overflow-hidden px-5 py-10 md:px-8 md:py-12">
+          <div className="absolute inset-0 bg-white/72" />
+          <div className="relative z-10 mx-auto flex max-w-[1120px] flex-col gap-8">
             <div>
               <h1 className="text-center text-[2rem] font-extrabold tracking-[-0.04em] text-[#1d2a39] md:text-[2.7rem]">Select Your Login Type</h1>
             </div>
@@ -57,7 +57,7 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <footer className="flex flex-col gap-3 bg-[#173b34] px-6 py-5 text-white md:flex-row md:items-center md:justify-between md:px-8">
+        <footer className="flex flex-col gap-3 bg-[#173b34] px-5 py-5 text-white md:flex-row md:items-center md:justify-between md:px-8">
           <span className="text-sm font-semibold">© Sreenidhi Institute of Science and Technology</span>
           <span className="text-sm">Student Enhancement &amp; Counselling Portal</span>
           <span className="text-sm text-white/80">Contact: support@sreenidhi.edu.in</span>
