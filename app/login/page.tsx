@@ -1,66 +1,67 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { PortalButton } from '@/components/portal-button';
+import Link from 'next/link';
+import { GraduationCap, BriefcaseBusiness, Landmark, Settings2 } from 'lucide-react';
 import { Brand } from '@/components/brand';
-import { supabase } from '@/lib/supabase';
 
 const roles = [
-  { label: 'Student / Parent Login', href: '/student', description: 'View academic progress, attendance, and mentoring details.' },
-  { label: 'Faculty Login', href: '/faculty', description: 'Access mentoring dashboard and monitor assigned students.' },
-  { label: 'HOD Login', href: '/hod', description: 'View department analytics and mentor activity reports.' },
-  { label: 'Admin Login', href: '/admin', description: 'Manage portal data and institutional analytics.' }
+  { label: 'Student / Parent Login', href: '/student', description: 'View academic progress, attendance, and mentoring details.', icon: GraduationCap },
+  { label: 'Faculty Login', href: '/faculty', description: 'Access mentoring dashboard and monitor assigned students.', icon: BriefcaseBusiness },
+  { label: 'HOD Login', href: '/hod', description: 'View department analytics and mentor activity reports.', icon: Landmark },
+  { label: 'Admin Login', href: '/admin', description: 'Manage portal data and institutional analytics.', icon: Settings2 }
 ];
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-
-  async function handleSignIn() {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setMessage(error ? error.message : 'Signed in successfully. Redirecting...');
-    if (!error) router.push('/student');
-  }
-
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,242,0.9))] p-4 md:p-6" style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(241,245,242,0.9)), url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1600&q=80')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="mx-auto max-w-[1240px] overflow-hidden rounded-[36px] border border-[rgba(118,144,130,0.14)] bg-white/98 shadow-soft">
+    <main
+      className="min-h-screen bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,242,0.9))] px-4 py-4 md:px-6 md:py-6"
+      style={{ backgroundImage: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(241,245,242,0.9)), url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1600&q=80')", backgroundSize: 'cover', backgroundPosition: 'center' }}
+    >
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1180px] flex-col overflow-hidden rounded-[34px] border border-[rgba(118,144,130,0.14)] bg-white/98 shadow-[0_32px_88px_rgba(88,106,97,0.12)]">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-black/5 bg-white px-6 py-5 md:px-8">
-          <Brand compact />
-          <div>
-            <div className="text-lg font-semibold uppercase tracking-[0.12em] text-portal-ink">Student Enhancement & Counselling Portal</div>
-            <div className="text-sm text-slate-600">Sreenidhi Institute of Science and Technology</div>
+          <div className="flex items-center gap-4">
+            <Brand compact />
+            <div className="hidden border-l border-black/10 pl-4 md:block">
+              <div className="text-[1.03rem] font-semibold uppercase tracking-[0.12em] text-portal-ink">Student Enhancement &amp; Counselling Portal</div>
+              <div className="text-sm text-slate-600">Sreenidhi Institute of Science and Technology</div>
+            </div>
           </div>
         </header>
 
-        <section className="px-6 py-10 md:px-10 md:py-14">
-          <h1 className="text-center text-4xl font-bold text-portal-ink md:text-5xl">Select Your Login Type</h1>
-          <p className="mt-3 text-center text-slate-600">Choose the best option to access your dashboard and institutional tools.</p>
-
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
-            {roles.map((role) => (
-                <button key={role.label} onClick={() => router.push(role.href as never)} className="portal-card flex min-h-[220px] flex-col items-center justify-center gap-4 text-center transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(15,44,34,0.12)]">
-                <div className="grid h-20 w-20 place-items-center rounded-[24px] bg-emerald-100 text-4xl text-emerald-900">✦</div>
-                <div className="text-2xl font-semibold text-portal-ink">{role.label}</div>
-                <div className="max-w-sm text-slate-600">{role.description}</div>
-              </button>
-            ))}
-          </div>
-
-          <div className="portal-card mx-auto mt-8 max-w-2xl">
-            <div className="grid gap-4 md:grid-cols-2">
-              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="rounded-2xl border border-portal-line px-4 py-3 outline-none focus:border-portal-gold" />
-              <input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" type="password" className="rounded-2xl border border-portal-line px-4 py-3 outline-none focus:border-portal-gold" />
+        <section className="relative flex-1 overflow-hidden px-6 py-10 md:px-10 md:py-14">
+          <div className="absolute inset-0 bg-white/70" />
+          <div className="relative z-10 mx-auto flex max-w-[1080px] flex-col gap-8">
+            <div>
+              <h1 className="text-center text-[2rem] font-extrabold tracking-[-0.04em] text-[#1d2a39] md:text-[2.7rem]">Select Your Login Type</h1>
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <PortalButton onClick={handleSignIn}>Sign in with Supabase</PortalButton>
-              {message ? <span className="text-sm text-slate-600">{message}</span> : null}
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {roles.map((role) => {
+                const Icon = role.icon;
+
+                return (
+                  <Link
+                    key={role.label}
+                    href={role.href as never}
+                    className="group flex min-h-[194px] flex-col items-center justify-center rounded-[10px] border border-[#dde3e6] bg-white p-8 text-center shadow-[0_6px_18px_rgba(18,39,31,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_45px_rgba(18,39,31,0.12)]"
+                  >
+                    <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#dbe8e1] text-[#27584a] transition group-hover:bg-[#cfe0d8]">
+                      <Icon className="h-10 w-10" />
+                    </div>
+                    <h2 className="text-[1.18rem] font-semibold text-[#1f2b36] md:text-[1.28rem]">{role.label}</h2>
+                    <p className="mt-2 max-w-[290px] text-[0.98rem] leading-7 text-[#66747b]">{role.description}</p>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
+
+        <footer className="flex flex-col gap-3 bg-[#173b34] px-6 py-5 text-white md:flex-row md:items-center md:justify-between md:px-8">
+          <span className="text-sm font-semibold">© Sreenidhi Institute of Science and Technology</span>
+          <span className="text-sm">Student Enhancement &amp; Counselling Portal</span>
+          <span className="text-sm text-white/80">Contact: support@sreenidhi.edu.in</span>
+        </footer>
       </div>
     </main>
   );
