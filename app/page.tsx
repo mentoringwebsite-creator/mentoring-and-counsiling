@@ -94,9 +94,47 @@ export default function HomePage() {
           </div>
         </section>
 
-        <footer id="contact" className="flex flex-col gap-3 bg-[#1f4650] px-6 py-5 text-white md:flex-row md:items-center md:justify-between md:px-10">
-          <span className="text-sm font-semibold">Student Enhancement &amp; Mentoring Portal</span>
-          <span className="text-sm text-white/80">© 2024 Sreenidhi Institute of Science and Technology · Contact: support@sreenidhi.edu.in</span>
+        <section aria-labelledby="trust" className="border-t border-black/5 bg-white px-6 py-6 md:px-10">
+          <div className="mx-auto max-w-[1180px]">
+            <div className="flex items-center justify-between gap-6">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#fff3e6] text-[#b86d00] font-bold">A+</div>
+                  <div className="text-sm font-semibold">NBA Accredited</div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e8f7ef] text-[#1f7a58]">📘</div>
+                  <div className="text-sm font-semibold">Mentoring System</div>
+                </div>
+
+                <div className="flex items-center gap-3 hidden md:flex">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#eef3ff] text-[#23558c]">🎓</div>
+                  <div className="text-sm font-semibold">Career Development</div>
+                </div>
+              </div>
+
+              <div className="hidden md:block text-sm text-slate-600">Monitor student performance, receive mentor guidance, and access counseling support.</div>
+            </div>
+          </div>
+        </section>
+
+        <footer id="contact" className="bg-gradient-to-b from-[#0f3b46] to-[#173b4a] px-6 py-8 text-white">
+          <div className="mx-auto flex max-w-[1180px] flex-col items-center gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="text-center md:text-left">
+              <div className="text-sm font-semibold">Student Enhancement &amp; Mentoring Portal</div>
+              <div className="mt-1 text-sm text-white/80">© 2024 Sreenidhi Institute of Science and Technology · Contact: support@sreenidhi.edu.in</div>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3 text-sm text-white/90">
+                <ShieldCheck className="h-5 w-5" /> <span>Secure &amp; Private</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-white/90">
+                <BadgeCheck className="h-5 w-5" /> <span>Trusted by students</span>
+              </div>
+            </div>
+          </div>
         </footer>
       </div>
     </main>
