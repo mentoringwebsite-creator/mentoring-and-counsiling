@@ -69,28 +69,32 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="border-y border-black/5 bg-[#f6f7f5] px-4 py-4 md:px-6">
-          <div className="grid gap-4 md:grid-cols-4">
-            {[
-              { icon: BadgeCheck, title: 'Mentoring System', text: 'Monitor student performance and progress' },
-              { icon: GraduationCap, title: 'Academic Support', text: 'Each student receives guidance from mentors' },
-              { icon: BriefcaseBusiness, title: 'Career Development', text: 'Track skills, certifications, and internships' },
-              { icon: Headphones, title: 'Counselling Support', text: 'Provide confidential support for well-being' }
-            ].map((item) => {
-              const Icon = item.icon;
+        <section className="bg-[linear-gradient(180deg,#f7f8f6,#f1f3f2)] px-6 py-8 md:px-10">
+          <div className="mx-auto max-w-[1180px]">
+            <div className="grid gap-6 md:grid-cols-4">
+              {[
+                { icon: BadgeCheck, title: 'Mentoring System', text: 'Monitor student performance and progress' },
+                { icon: GraduationCap, title: 'Academic Support', text: 'Each student receives guidance from mentors' },
+                { icon: BriefcaseBusiness, title: 'Career Development', text: 'Track skills, certifications, and internships' },
+                { icon: Headphones, title: 'Counselling Support', text: 'Provide confidential support for well-being' }
+              ].map((item) => {
+                const Icon = item.icon;
 
-              return (
-                <article key={item.title} className="flex items-center gap-4 rounded-[20px] bg-white px-4 py-3 shadow-[0_8px_28px_rgba(16,45,37,0.06)]">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[#f3ead8] text-[#9b6408]">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-[0.98rem] font-semibold text-[#173a2f]">{item.title}</h3>
-                    <p className="mt-1 text-[0.72rem] leading-5 text-[#556b61]">{item.text}</p>
-                  </div>
-                </article>
-              );
-            })}
+                return (
+                  <article key={item.title} className="rounded-2xl bg-white p-6 shadow-[0_18px_40px_rgba(18,39,31,0.06)]">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#fbf3e6] text-[#b8832e] shadow-sm">
+                        <Icon className="h-7 w-7" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-[#173a2f]">{item.title}</h3>
+                        <p className="mt-1 text-sm leading-6 text-[#556b61]">{item.text}</p>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </section>
 
