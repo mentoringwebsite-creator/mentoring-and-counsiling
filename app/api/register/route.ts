@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       section,
       academic_year: academicYear,
       phone,
-      dob,
+      dob: dob && dob.trim() !== '' ? dob : null,
       profile_photo: profilePhotoUrl
     });
     if (profileError) {

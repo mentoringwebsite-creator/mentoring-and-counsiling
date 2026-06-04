@@ -56,6 +56,7 @@ create table if not exists faculty_profiles (
   department text,
   subjects text,
   contact_number text,
+  profile_photo text,
   created_at timestamp with time zone default now()
 );
 
@@ -66,6 +67,7 @@ create table if not exists hod_profiles (
   designation text,
   department text,
   contact_number text,
+  profile_photo text,
   created_at timestamp with time zone default now()
 );
 

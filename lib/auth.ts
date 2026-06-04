@@ -53,105 +53,118 @@ type RegisterResult = {
 };
 
 export async function loginWithStatusCheck(role: Role, email: string, password: string): Promise<LoginResult> {
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
+  try {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (authError) {
-    return { success: false, message: authError.message };
-  }
-
-  const userId = authData.session?.user?.id;
-  if (!userId) {
-    return { success: false, message: 'Unable to verify your account. Please try again.' };
-  }
-
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('role,status')
-    .eq('id', userId)
-    .single();
-
-  if (userError || !userData) {
-    if (role === 'admin') {
-      const response = await fetch('/api/admin/ensure-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: userId,
-          email,
-          name: authData.user?.user_metadata?.name ?? 'Admin'
-        })
-      });
-
-      if (response.ok) {
-        return { success: true, message: 'Login successful.', redirectTo: '/admin' };
-      }
+    if (authError) {
+      return { success: false, message: authError.message };
     }
 
-    await supabase.auth.signOut();
-    return {
-      success: false,
-      message: 'No matching user record was found. Please register first using the correct portal.'
+    const userId = authData.session?.user?.id;
+    if (!userId) {
+      return { success: false, message: 'Unable to verify your account. Please try again.' };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role,status')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userData) {
+      if (role === 'admin') {
+        const response = await fetch('/api/admin/ensure-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: userId,
+            email,
+            name: authData.user?.user_metadata?.name ?? 'Admin'
+          })
+        });
+
+        if (response.ok) {
+          return { success: true, message: 'Login successful.', redirectTo: '/admin' };
+        }
+      }
+
+      await supabase.auth.signOut();
+      return {
+        success: false,
+        message: 'No matching user record was found. Please register first using the correct portal.'
+      };
+    }
+
+    if (role !== 'admin' && userData.role !== role) {
+      await supabase.auth.signOut();
+      return {
+        success: false,
+        message: 'This login page is for a different user role. Please use the correct portal login.'
+      };
+    }
+
+    if (userData.status === 'Pending') {
+      await supabase.auth.signOut();
+      return {
+        success: false,
+        message: 'Your account is awaiting admin approval. Please wait for approval before signing in.'
+      };
+    }
+
+    if (userData.status === 'Rejected') {
+      await supabase.auth.signOut();
+      return {
+        success: false,
+        message: 'Your registration was rejected. Contact the administrator for help.'
+      };
+    }
+
+    const redirectMap: Record<Role, string> = {
+      student: '/student',
+      faculty: '/faculty',
+      hod: '/hod',
+      admin: '/admin'
     };
+
+    return { success: true, message: 'Login successful.', redirectTo: redirectMap[role] };
+  } catch (err: any) {
+    console.error('Login error:', err);
+    return { success: false, message: err?.message ?? 'An unexpected login error occurred.' };
   }
-
-  if (role !== 'admin' && userData.role !== role) {
-    await supabase.auth.signOut();
-    return {
-      success: false,
-      message: 'This login page is for a different user role. Please use the correct portal login.'
-    };
-  }
-
-  if (userData.status === 'Pending') {
-    await supabase.auth.signOut();
-    return {
-      success: false,
-      message: 'Your account is awaiting admin approval. Please wait for approval before signing in.'
-    };
-  }
-
-  if (userData.status === 'Rejected') {
-    await supabase.auth.signOut();
-    return {
-      success: false,
-      message: 'Your registration was rejected. Contact the administrator for help.'
-    };
-  }
-
-  if (authError) {
-    return { success: false, message: (authError as any)?.message ?? 'Login failed.' };
-  }
-
-  const redirectMap: Record<Role, string> = {
-    student: '/student',
-    faculty: '/faculty',
-    hod: '/hod',
-    admin: '/admin'
-  };
-
-  return { success: true, message: 'Login successful.', redirectTo: redirectMap[role] };
 }
 
 export async function registerUser(role: Role, payload: RegistrationPayload): Promise<RegisterResult> {
-  const response = await fetch('/api/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ role, payload })
-  });
+  try {
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role, payload })
+    });
 
-  const result = await response.json();
+    let result: any = null;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      result = await response.json();
+    }
 
-  if (!response.ok) {
+    if (!response.ok) {
+      return {
+        success: false,
+        message: result?.message ?? `Registration failed (Server error code ${response.status}).`
+      };
+    }
+
+    return {
+      success: true,
+      message: result?.message ?? 'Registration submitted. Your account is awaiting admin approval.'
+    };
+  } catch (err: any) {
+    console.error('Registration fetch error:', err);
     return {
       success: false,
-      message: result?.message ?? 'Registration failed. Please try again later.'
+      message: err?.message ?? 'Connection error. Please verify the development server is running.'
     };
   }
-
-  return {
-    success: true,
-    message: result.message ?? 'Registration submitted. Your account is awaiting admin approval.'
-  };
 }
 
 export async function getPendingApprovals() {

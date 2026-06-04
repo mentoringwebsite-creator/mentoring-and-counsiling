@@ -20,7 +20,7 @@ const studentFields = [
   { name: 'branch', label: 'Branch', type: 'text' },
   { name: 'section', label: 'Section', type: 'text' },
   { name: 'academicYear', label: 'Academic Year', type: 'text' },
-  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg' },
+  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg', required: false },
   { name: 'password', label: 'Password', type: 'password' }
 ];
 
@@ -33,7 +33,7 @@ const facultyFields = [
   { name: 'department', label: 'Department', type: 'text' },
   { name: 'subjects', label: 'Subjects Taught', type: 'text', placeholder: 'Data Structures, DBMS' },
   { name: 'contactNumber', label: 'Contact Number', type: 'text' },
-  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg' },
+  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg', required: false },
   { name: 'password', label: 'Password', type: 'password' }
 ];
 
@@ -44,7 +44,7 @@ const hodFields = [
   { name: 'department', label: 'Department', type: 'text' },
   { name: 'designation', label: 'Designation', type: 'text' },
   { name: 'contactNumber', label: 'Contact Number', type: 'text' },
-  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg' },
+  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg', required: false },
   { name: 'password', label: 'Password', type: 'password' }
 ];
 
@@ -53,7 +53,7 @@ const loginFields = [
   { name: 'password', label: 'Password', type: 'password' }
 ];
 
-function renderField(field: { name: string; label: string; type: string; placeholder?: string }, value: Record<string, string>, onChange: (name: string, value: string) => void) {
+function renderField(field: { name: string; label: string; type: string; placeholder?: string; required?: boolean }, value: Record<string, string>, onChange: (name: string, value: string) => void) {
   return (
     <label key={field.name} className="grid gap-2 text-sm font-medium text-slate-700">
       <span>{field.label}</span>
@@ -64,7 +64,7 @@ function renderField(field: { name: string; label: string; type: string; placeho
         value={value[field.name] ?? ''}
         onChange={(event) => onChange(field.name, event.target.value)}
         className="rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-        required
+        required={field.required !== false}
       />
     </label>
   );
@@ -83,16 +83,21 @@ export function LoginForm({ role, redirectTo, registerHref, showRegisterLink = t
     setLoading(true);
     setMessage(null);
 
-    const result = await loginWithStatusCheck(role, values.email.trim(), values.password);
-    setLoading(false);
+    try {
+      const result = await loginWithStatusCheck(role, values.email.trim(), values.password);
+      if (!result.success) {
+        setMessage(result.message);
+        return;
+      }
 
-    if (!result.success) {
-      setMessage(result.message);
-      return;
+      const destination = result.redirectTo ?? redirectTo;
+      router.push(destination as any);
+    } catch (err: any) {
+      console.error('Login submit error:', err);
+      setMessage(err?.message ?? 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    const destination = result.redirectTo ?? redirectTo;
-    router.push(destination as any);
   };
 
   return (
@@ -141,7 +146,7 @@ export function RegisterForm({ role, loginHref }: { role: Role; loginHref: strin
     subjects: '',
     contactNumber: ''
   });
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ success: boolean; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (name: string, value: string) => setValues((current) => ({ ...current, [name]: value }));
@@ -153,20 +158,20 @@ export function RegisterForm({ role, loginHref }: { role: Role; loginHref: strin
     setLoading(true);
     setMessage(null);
 
-    const payload = fields.reduce((acc, field) => ({ ...acc, [field.name]: values[field.name] ?? '' }), {} as Record<string, string>);
-    payload.name = values.name;
-    payload.email = values.email;
-    payload.password = values.password;
+    try {
+      const payload = fields.reduce((acc, field) => ({ ...acc, [field.name]: values[field.name] ?? '' }), {} as Record<string, string>);
+      payload.name = values.name;
+      payload.email = values.email;
+      payload.password = values.password;
 
-    const result = await registerUser(role, payload as any);
-    setLoading(false);
-
-    if (!result.success) {
-      setMessage(result.message);
-      return;
+      const result = await registerUser(role, payload as any);
+      setMessage({ success: result.success, text: result.message });
+    } catch (err: any) {
+      console.error('Registration submit error:', err);
+      setMessage({ success: false, text: err?.message ?? 'An unexpected error occurred. Please try again.' });
+    } finally {
+      setLoading(false);
     }
-
-    setMessage(result.message);
   };
 
   return (
@@ -177,7 +182,15 @@ export function RegisterForm({ role, loginHref }: { role: Role; loginHref: strin
       </div>
       <form className="grid gap-5" onSubmit={handleSubmit}>
         {fields.map((field) => renderField(field, values, handleChange))}
-        {message ? <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">{message}</div> : null}
+        {message ? (
+          <div className={`rounded-3xl border px-4 py-3 text-sm ${
+            message.success 
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-800' 
+              : 'border-rose-200 bg-rose-50 text-rose-800'
+          }`}>
+            {message.text}
+          </div>
+        ) : null}
         <button
           type="submit"
           disabled={loading}
