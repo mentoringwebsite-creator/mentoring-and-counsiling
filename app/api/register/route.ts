@@ -1,16 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+function getSupabase() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in environment.');
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return null;
+  }
+
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { persistSession: false }
+  });
 }
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
-  auth: { persistSession: false }
-});
 
 type RegistrationPayload = {
   name: string;
@@ -34,6 +36,14 @@ type RegistrationPayload = {
 type Role = 'student' | 'faculty' | 'hod';
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
+  if (!supabase) {
+    return NextResponse.json(
+      { success: false, message: 'Missing server-side Supabase credentials.' },
+      { status: 500 }
+    );
+  }
+
   const body = await request.json();
   const { role, payload } = body as { role?: Role; payload?: RegistrationPayload };
 

@@ -15,7 +15,10 @@ ENV/
 # Node
 node_modules/
 .next/
+out/
 .env.local
+
+tsconfig.tsbuildinfo
 
 # OS files
 .DS_Store
