@@ -5,10 +5,10 @@ import { GraduationCap, BriefcaseBusiness, Landmark, Settings2 } from 'lucide-re
 import { Brand } from '@/components/brand';
 
 const roles = [
-  { label: 'Student / Parent Login', href: '/student', description: 'View academic progress, attendance, and mentoring details.', icon: GraduationCap },
-  { label: 'Faculty Login', href: '/faculty', description: 'Access mentoring dashboard and monitor assigned students.', icon: BriefcaseBusiness },
-  { label: 'HOD Login', href: '/hod', description: 'View department analytics and mentor activity reports.', icon: Landmark },
-  { label: 'Admin Login', href: '/admin', description: 'Manage portal data and institutional analytics.', icon: Settings2 }
+  { label: 'Student / Parent Login', href: '/student/login', description: 'View academic progress, attendance, and mentoring details.', icon: GraduationCap },
+  { label: 'Faculty Login', href: '/faculty/login', description: 'Access mentoring dashboard and monitor assigned students.', icon: BriefcaseBusiness },
+  { label: 'HOD Login', href: '/hod/login', description: 'View department analytics and mentor activity reports.', icon: Landmark },
+  { label: 'Admin Login', href: '/admin/login', description: 'Manage portal data and institutional analytics.', icon: Settings2 }
 ];
 
 export default function LoginPage() {

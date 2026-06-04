@@ -4,13 +4,15 @@ import { StatCard } from '@/components/stat-card';
 import { StudentCharts } from '@/components/charts/student-charts';
 import { cgpaSeries, attendanceSeries, queries, studentSummary } from '@/lib/mock-data';
 import { getRiskLevel } from '@/lib/risk';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 
 export default function StudentPage() {
   const risk = getRiskLevel(studentSummary.cgpa, studentSummary.backlogs);
 
   return (
-    <PageShell title="Student Dashboard" subtitle="Student Enhancement & Counselling Portal">
-      <div className="grid gap-6 px-5 py-5 md:px-8 md:py-8 xl:grid-cols-[300px_minmax(0,1fr)]">
+    <ProtectedRoute role="student">
+      <PageShell title="Student Dashboard" subtitle="Student Enhancement & Counselling Portal">
+        <div className="grid gap-6 px-5 py-5 md:px-8 md:py-8 xl:grid-cols-[300px_minmax(0,1fr)]">
         <Sidebar active="/student" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
         <div className="grid gap-6 xl:min-w-0">
           <div className="portal-card grid gap-6 xl:grid-cols-[1fr_320px]">
@@ -80,5 +82,6 @@ export default function StudentPage() {
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }

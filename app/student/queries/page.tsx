@@ -1,11 +1,13 @@
 import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { queries } from '@/lib/mock-data';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 
 export default function QueriesPage() {
   return (
-    <PageShell title="Problems & Queries" subtitle="Raise and track support requests">
-      <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+    <ProtectedRoute role="student">
+      <PageShell title="Problems & Queries" subtitle="Raise and track support requests">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <Sidebar active="/student/queries" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
         <div className="grid gap-6">
           <div className="portal-card">
@@ -36,5 +38,6 @@ export default function QueriesPage() {
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }

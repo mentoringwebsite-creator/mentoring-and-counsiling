@@ -1,6 +1,7 @@
 import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { StatCard } from '@/components/stat-card';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 
 const rows = [
   ['C Programming', '18', '19', '84', '9'],
@@ -13,8 +14,9 @@ const rows = [
 
 export default function AcademicPage() {
   return (
-    <PageShell title="Academic Profile" subtitle="Semester overview and performance analytics">
-      <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+    <ProtectedRoute role="student">
+      <PageShell title="Academic Profile" subtitle="Semester overview and performance analytics">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <Sidebar active="/student/academic" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
         <div className="grid gap-6">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(280px,0.7fr)]">
@@ -57,5 +59,6 @@ export default function AcademicPage() {
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }

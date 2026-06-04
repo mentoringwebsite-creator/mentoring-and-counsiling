@@ -1,10 +1,12 @@
 import { PageShell } from '@/components/page-shell';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 import { StatCard } from '@/components/stat-card';
 
 export default function HodPage() {
   return (
-    <PageShell title="HOD Dashboard" subtitle="Department analytics and reports">
+    <ProtectedRoute role="hod">
+      <PageShell title="HOD Dashboard" subtitle="Department analytics and reports">
       <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <Sidebar active="/hod" items={[{ href: '/hod', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
         <div className="grid gap-6">
@@ -28,5 +30,6 @@ export default function HodPage() {
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }

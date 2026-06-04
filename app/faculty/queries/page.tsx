@@ -1,10 +1,12 @@
 import { PageShell } from '@/components/page-shell';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 import { queries } from '@/lib/mock-data';
 
 export default function FacultyQueriesPage() {
   return (
-    <PageShell title="Student Queries" subtitle="Mentor response queue">
+    <ProtectedRoute role="faculty">
+      <PageShell title="Student Queries" subtitle="Mentor response queue">
       <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <Sidebar active="/faculty" items={[{ href: '/faculty', label: 'Profile' }, { href: '/faculty/students', label: 'My Students' }, { href: '/faculty/queries', label: 'Student Queries' }, { href: '/faculty/notes', label: 'Mentor Notes' }]} />
         <div className="portal-card overflow-x-auto">
@@ -28,5 +30,6 @@ export default function FacultyQueriesPage() {
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }

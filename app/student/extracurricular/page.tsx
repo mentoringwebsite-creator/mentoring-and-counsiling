@@ -1,10 +1,12 @@
 import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 
 export default function ExtracurricularPage() {
   return (
-    <PageShell title="Extracurricular Activities" subtitle="Clubs, certifications, and interests">
-      <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+    <ProtectedRoute role="student">
+      <PageShell title="Extracurricular Activities" subtitle="Clubs, certifications, and interests">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <Sidebar active="/student/extracurricular" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
         <div className="grid gap-6">
           <div className="portal-card">
@@ -33,5 +35,6 @@ export default function ExtracurricularPage() {
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }

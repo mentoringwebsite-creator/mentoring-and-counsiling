@@ -1,12 +1,14 @@
 import { PageShell } from '@/components/page-shell';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 import { StatCard } from '@/components/stat-card';
 
 export default function AdminPage() {
   return (
-    <PageShell title="Admin Dashboard" subtitle="Manage portal data and analytics">
+    <ProtectedRoute role="admin">
+      <PageShell title="Admin Dashboard" subtitle="Manage portal data and analytics">
       <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <Sidebar active="/admin" items={[{ href: '/admin', label: 'Overview' }, { href: '/admin/students', label: 'Manage Students' }, { href: '/admin/faculty', label: 'Manage Faculty' }, { href: '/admin/settings', label: 'Database Settings' }]} />
+        <Sidebar active="/admin" items={[{ href: '/admin', label: 'Overview' }, { href: '/admin/pending', label: 'Pending Approvals' }]} />
         <div className="grid gap-6">
           <div className="portal-card">
             <h1 className="text-3xl font-bold">Portal Analytics</h1>
@@ -21,5 +23,6 @@ export default function AdminPage() {
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }

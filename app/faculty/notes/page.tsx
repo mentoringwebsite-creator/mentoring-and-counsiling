@@ -1,9 +1,11 @@
 import { PageShell } from '@/components/page-shell';
+import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 
 export default function FacultyNotesPage() {
   return (
-    <PageShell title="Mentor Notes" subtitle="Internal observations and follow-ups">
+    <ProtectedRoute role="faculty">
+      <PageShell title="Mentor Notes" subtitle="Internal observations and follow-ups">
       <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
         <Sidebar active="/faculty" items={[{ href: '/faculty', label: 'Profile' }, { href: '/faculty/students', label: 'My Students' }, { href: '/faculty/queries', label: 'Student Queries' }, { href: '/faculty/notes', label: 'Mentor Notes' }]} />
         <div className="portal-card grid gap-4">
@@ -13,5 +15,6 @@ export default function FacultyNotesPage() {
         </div>
       </div>
     </PageShell>
+    </ProtectedRoute>
   );
 }
