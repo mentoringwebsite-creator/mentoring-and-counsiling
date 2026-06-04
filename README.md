@@ -46,6 +46,29 @@ npm run build
 - Create Auth users for student, faculty, HOD, and admin roles.
 - Connect storage buckets for resumes, certificates, and profile images.
 
+### Admin login credentials
+
+The repo includes a helper script to create the admin user with the requested login credentials.
+
+- Email: `mentoringwebsite47@gmail.com`
+- Password: `website@123`
+
+Run this locally with your Supabase service role key set:
+
+PowerShell:
+```powershell
+$env:SUPABASE_URL = "https://your-project.supabase.co"
+$env:SUPABASE_SERVICE_ROLE_KEY = "your-service-role-key"
+node scripts/create-admin.js
+```
+
+bash:
+```bash
+SUPABASE_URL=https://your-project.supabase.co SUPABASE_SERVICE_ROLE_KEY=your-service-role-key node scripts/create-admin.js
+```
+
+Once the script succeeds, the admin account will be created and approved for `/admin/login`.
+
 ## Pages
 
 - `/` Home

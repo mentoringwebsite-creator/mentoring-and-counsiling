@@ -133,85 +133,24 @@ export async function loginWithStatusCheck(role: Role, email: string, password: 
 }
 
 export async function registerUser(role: Role, payload: RegistrationPayload): Promise<RegisterResult> {
-  const { email, password, name } = payload as any;
-
-  const { data: signUpData, error: signUpError } = await supabase.auth.signUp({ email, password });
-  if (signUpError) {
-    return { success: false, message: signUpError.message };
-  }
-
-  const authId = signUpData.user?.id;
-  if (!authId) {
-    return { success: false, message: 'Unable to create your account. Please try again later.' };
-  }
-
-  const { error: userInsertError } = await supabase.from('users').insert({
-    id: authId,
-    email,
-    role,
-    status: 'Pending',
-    name
+  const response = await fetch('/api/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role, payload })
   });
 
-  if (userInsertError) {
-    return { success: false, message: userInsertError.message };
-  }
+  const result = await response.json();
 
-  if (role === 'student') {
-    const studentPayload = payload as StudentRegistration;
-    const { error: profileError } = await supabase.from('student_profiles').insert({
-      user_id: authId,
-      roll_number: studentPayload.rollNumber,
-      branch: studentPayload.branch,
-      section: studentPayload.section,
-      academic_year: studentPayload.academicYear,
-      phone: studentPayload.phone,
-      dob: studentPayload.dob,
-      profile_photo: studentPayload.profilePhotoUrl
-    });
-
-    if (profileError) {
-      return { success: false, message: profileError.message };
-    }
-  }
-
-  if (role === 'faculty') {
-    const facultyPayload = payload as FacultyRegistration;
-    const { error: profileError } = await supabase.from('faculty_profiles').insert({
-      user_id: authId,
-      faculty_id: facultyPayload.facultyId,
-      designation: facultyPayload.designation,
-      qualification: facultyPayload.qualification,
-      department: facultyPayload.department,
-      subjects: facultyPayload.subjects,
-      contact_number: facultyPayload.contactNumber,
-      profile_photo: facultyPayload.profilePhotoUrl
-    });
-
-    if (profileError) {
-      return { success: false, message: profileError.message };
-    }
-  }
-
-  if (role === 'hod') {
-    const hodPayload = payload as HodRegistration;
-    const { error: profileError } = await supabase.from('hod_profiles').insert({
-      user_id: authId,
-      faculty_id: hodPayload.facultyId,
-      department: hodPayload.department,
-      designation: hodPayload.designation,
-      contact_number: hodPayload.contactNumber,
-      profile_photo: hodPayload.profilePhotoUrl
-    });
-
-    if (profileError) {
-      return { success: false, message: profileError.message };
-    }
+  if (!response.ok) {
+    return {
+      success: false,
+      message: result?.message ?? 'Registration failed. Please try again later.'
+    };
   }
 
   return {
     success: true,
-    message: 'Registration submitted. Your account is awaiting admin approval.'
+    message: result.message ?? 'Registration submitted. Your account is awaiting admin approval.'
   };
 }
 
