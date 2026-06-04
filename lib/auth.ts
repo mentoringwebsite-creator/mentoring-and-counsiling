@@ -71,10 +71,26 @@ export async function loginWithStatusCheck(role: Role, email: string, password: 
     .single();
 
   if (userError || !userData) {
+    if (role === 'admin') {
+      const response = await fetch('/api/admin/ensure-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: userId,
+          email,
+          name: authData.user?.user_metadata?.name ?? 'Admin'
+        })
+      });
+
+      if (response.ok) {
+        return { success: true, message: 'Login successful.', redirectTo: '/admin' };
+      }
+    }
+
     await supabase.auth.signOut();
     return {
       success: false,
-      message: 'No user record was found. Please register first using the Student Registration page.'
+      message: 'No matching user record was found. Please register first using the correct portal.'
     };
   }
 
