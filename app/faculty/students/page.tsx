@@ -13,7 +13,7 @@ export default function FacultyStudentsPage() {
     <ProtectedRoute role="faculty">
       <PageShell title="My Students" subtitle="Assigned students and risk levels">
       <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <Sidebar active="/faculty" items={[{ href: '/faculty', label: 'Profile' }, { href: '/faculty/students', label: 'My Students' }, { href: '/faculty/queries', label: 'Student Queries' }, { href: '/faculty/notes', label: 'Mentor Notes' }]} />
+        <Sidebar active="/faculty/students" items={[{ href: '/faculty', label: 'Faculty Dashboard' }, { href: '/faculty/profile', label: 'Profile' }, { href: '/faculty/students', label: 'My Students' }, { href: '/faculty/queries', label: 'Student Queries' }, { href: '/faculty/notes', label: 'Mentor Notes' }]} />
         <div className="portal-card overflow-x-auto">
           <table className="w-full border-collapse text-left">
             <thead>

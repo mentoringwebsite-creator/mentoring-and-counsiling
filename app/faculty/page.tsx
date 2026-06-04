@@ -8,7 +8,7 @@ export default function FacultyPage() {
     <ProtectedRoute role="faculty">
       <PageShell title="Faculty Dashboard" subtitle="Mentoring, monitoring, and query handling">
       <div className="grid gap-6 px-5 py-5 md:px-8 md:py-8 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <Sidebar active="/faculty" items={[{ href: '/faculty', label: 'Profile' }, { href: '/faculty/students', label: 'My Students' }, { href: '/faculty/queries', label: 'Student Queries' }, { href: '/faculty/notes', label: 'Mentor Notes' }]} />
+        <Sidebar active="/faculty" items={[{ href: '/faculty', label: 'Faculty Dashboard' }, { href: '/faculty/profile', label: 'Profile' }, { href: '/faculty/students', label: 'My Students' }, { href: '/faculty/queries', label: 'Student Queries' }, { href: '/faculty/notes', label: 'Mentor Notes' }]} />
         <div className="grid gap-6 xl:min-w-0">
           <div className="portal-card grid gap-4 xl:grid-cols-2">
             <div>

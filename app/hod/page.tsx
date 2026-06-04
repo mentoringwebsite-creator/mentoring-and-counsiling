@@ -8,7 +8,7 @@ export default function HodPage() {
     <ProtectedRoute role="hod">
       <PageShell title="HOD Dashboard" subtitle="Department analytics and reports">
       <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <Sidebar active="/hod" items={[{ href: '/hod', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
+        <Sidebar active="/hod" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/profile', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
         <div className="grid gap-6">
           <div className="portal-card grid gap-4 md:grid-cols-[1fr_1fr]">
             <div>
