@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Loader2, User, Phone, Mail, Award, BookOpen, Layers, Briefcase, Calendar } from 'lucide-react';
+import { Loader2, User, Phone, Mail, Award, BookOpen, Layers, Briefcase, Calendar, Edit2, X } from 'lucide-react';
 
 const facultySidebarItems = [
   { href: '/faculty', label: 'Faculty Dashboard' },
@@ -18,55 +18,124 @@ const facultySidebarItems = [
 export default function FacultyProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<any>({
+    name: '',
+    designation: '',
+    qualification: '',
+    department: '',
+    subjects: '',
+    contact: '',
+    photo: ''
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  async function loadFacultyProfile() {
+    try {
+      setLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      const userId = session.user.id;
+      const email = session.user.email || '';
+
+      // Get name
+      const { data: userDb } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', userId)
+        .single();
+
+      // Get faculty details
+      const { data: facultyDb } = await supabase
+        .from('faculty_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      let joinYear = '2018';
+      if (facultyDb?.created_at) {
+        joinYear = new Date(facultyDb.created_at).getFullYear().toString();
+      }
+
+      const initialData = {
+        name: userDb?.name || session.user.user_metadata?.name || 'Dr. Suresh Kumar',
+        designation: facultyDb?.designation || 'Associate Professor',
+        qualification: facultyDb?.qualification || 'PhD (Computer Science), M.Tech',
+        department: facultyDb?.department || 'ECM – Electronics & Computer Engineering',
+        subjects: facultyDb?.subjects || 'Data Structures, DBMS, Operating Systems',
+        yearJoined: joinYear,
+        email: email,
+        contact: facultyDb?.contact_number || '+91 9876543210',
+        photo: facultyDb?.profile_photo || ''
+      };
+
+      setProfile(initialData);
+      setFormData(initialData);
+    } catch (err) {
+      console.error('Error fetching faculty profile:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadFacultyProfile() {
-      try {
-        setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) return;
-        const userId = session.user.id;
-        const email = session.user.email || '';
-
-        // Get name
-        const { data: userDb } = await supabase
-          .from('users')
-          .select('name')
-          .eq('id', userId)
-          .single();
-
-        // Get faculty details
-        const { data: facultyDb } = await supabase
-          .from('faculty_profiles')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-
-        let joinYear = '2018';
-        if (facultyDb?.created_at) {
-          joinYear = new Date(facultyDb.created_at).getFullYear().toString();
-        }
-
-        setProfile({
-          name: userDb?.name || session.user.user_metadata?.name || 'Dr. Suresh Kumar',
-          designation: facultyDb?.designation || 'Associate Professor',
-          qualification: facultyDb?.qualification || 'PhD (Computer Science), M.Tech',
-          department: facultyDb?.department || 'ECM – Electronics & Computer Engineering',
-          subjects: facultyDb?.subjects || 'Data Structures, DBMS, Operating Systems',
-          yearJoined: joinYear,
-          email: email,
-          contact: facultyDb?.contact_number || '+91 9876543210',
-          photo: facultyDb?.profile_photo || ''
-        });
-      } catch (err) {
-        console.error('Error fetching faculty profile:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadFacultyProfile();
   }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setSaveError(null);
+    setSaveMessage(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) throw new Error('No active user session.');
+      const userId = session.user.id;
+
+      // 1. Update user display name in users table
+      const { error: userError } = await supabase
+        .from('users')
+        .update({ name: formData.name })
+        .eq('id', userId);
+
+      if (userError) throw userError;
+
+      // 2. Update faculty_profiles details
+      const { error: profileError } = await supabase
+        .from('faculty_profiles')
+        .update({
+          designation: formData.designation,
+          qualification: formData.qualification,
+          department: formData.department,
+          subjects: formData.subjects,
+          contact_number: formData.contact,
+          profile_photo: formData.photo
+        })
+        .eq('user_id', userId);
+
+      if (profileError) throw profileError;
+
+      setSaveMessage('Profile updated successfully!');
+      await loadFacultyProfile();
+      setTimeout(() => {
+        setIsEditing(false);
+        setSaveMessage(null);
+      }, 3000);
+    } catch (err: any) {
+      console.error('Error updating faculty profile:', err);
+      setSaveError(err.message || 'An error occurred while saving changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <ProtectedRoute role="faculty">
@@ -83,7 +152,18 @@ export default function FacultyProfilePage() {
                 </div>
               </div>
             ) : (
-              <div className="portal-card">
+              <div className="portal-card relative overflow-hidden">
+                <button 
+                  onClick={() => {
+                    setFormData(profile);
+                    setIsEditing(true);
+                  }} 
+                  className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition duration-200 shadow-sm border border-slate-200"
+                  title="Edit Profile"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </button>
+
                 <div className="grid gap-8 md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
                   
                   {/* Left: Profile Photo Container */}
@@ -205,8 +285,146 @@ export default function FacultyProfilePage() {
               </div>
             )}
           </div>
-
         </div>
+
+        {/* Edit Faculty Modal */}
+        {isEditing && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-portal-ink/40 p-4 backdrop-blur-md">
+            <div className="w-full max-w-2xl overflow-hidden rounded-[28px] border border-portal-line bg-white shadow-soft animate-in fade-in zoom-in-95 duration-200">
+              
+              <div className="flex items-center justify-between border-b border-portal-line bg-slate-50 px-6 py-4">
+                <h3 className="text-xl font-bold text-portal-ink">Edit Faculty Profile</h3>
+                <button 
+                  onClick={() => setIsEditing(false)}
+                  className="rounded-full p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-6">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Name</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Designation</label>
+                    <input
+                      type="text"
+                      name="designation"
+                      value={formData.designation}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Qualification</label>
+                    <input
+                      type="text"
+                      name="qualification"
+                      value={formData.qualification}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Department</label>
+                    <input
+                      type="text"
+                      name="department"
+                      value={formData.department}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Subjects Taught</label>
+                    <input
+                      type="text"
+                      name="subjects"
+                      value={formData.subjects}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Contact Number</label>
+                    <input
+                      type="text"
+                      name="contact"
+                      value={formData.contact}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Profile Photo URL</label>
+                    <input
+                      type="text"
+                      name="photo"
+                      value={formData.photo}
+                      onChange={handleChange}
+                      placeholder="https://example.com/photo.jpg"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                </div>
+
+                {saveError && (
+                  <div className="mt-4 rounded-xl bg-rose-50 p-3 text-sm font-semibold text-rose-600 border border-rose-200">
+                    {saveError}
+                  </div>
+                )}
+
+                {saveMessage && (
+                  <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-700 border border-emerald-200">
+                    {saveMessage}
+                  </div>
+                )}
+
+                <div className="mt-6 flex justify-end gap-3 border-t border-portal-line pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 transition disabled:opacity-70"
+                  >
+                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        )}
       </PageShell>
     </ProtectedRoute>
   );
