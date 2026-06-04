@@ -7,7 +7,7 @@ export default function ExtracurricularPage() {
     <ProtectedRoute role="student">
       <PageShell title="Extracurricular Activities" subtitle="Clubs, certifications, and interests">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <Sidebar active="/student/extracurricular" items={[{ href: '/student', label: 'Student Dashboard' }, { href: '/student/profile', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
+        <Sidebar active="/student/extracurricular" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
         <div className="grid gap-6">
           <div className="portal-card">
             <h2 className="text-2xl font-semibold">Clubs & Organizations</h2>
