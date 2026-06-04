@@ -109,27 +109,35 @@ alter table student_profiles enable row level security;
 alter table faculty_profiles enable row level security;
 alter table hod_profiles enable row level security;
 
+-- Drop existing policies to allow re-creation
+drop policy if exists "Allow users to insert their own user record" on users;
+drop policy if exists "Allow users to select their own user record" on users;
+drop policy if exists "Allow admin to manage users" on users;
+drop policy if exists "Allow own student profile insert" on student_profiles;
+drop policy if exists "Allow own student profile select" on student_profiles;
+drop policy if exists "Allow own student profile update" on student_profiles;
+drop policy if exists "Allow own faculty profile insert" on faculty_profiles;
+drop policy if exists "Allow own faculty profile select" on faculty_profiles;
+drop policy if exists "Allow own faculty profile update" on faculty_profiles;
+drop policy if exists "Allow own hod profile insert" on hod_profiles;
+drop policy if exists "Allow own hod profile select" on hod_profiles;
+drop policy if exists "Allow own hod profile update" on hod_profiles;
+
 create policy "Allow users to insert their own user record" on users for insert
   with check (auth.uid() = id);
 
 create policy "Allow users to select their own user record" on users for select
   using (
     auth.uid() = id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 create policy "Allow admin to manage users" on users for update
   using (
-    exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   )
   with check (
-    exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 create policy "Allow own student profile insert" on student_profiles for insert
@@ -138,23 +146,17 @@ create policy "Allow own student profile insert" on student_profiles for insert
 create policy "Allow own student profile select" on student_profiles for select
   using (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 create policy "Allow own student profile update" on student_profiles for update
   using (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   )
   with check (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 create policy "Allow own faculty profile insert" on faculty_profiles for insert
@@ -163,23 +165,17 @@ create policy "Allow own faculty profile insert" on faculty_profiles for insert
 create policy "Allow own faculty profile select" on faculty_profiles for select
   using (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 create policy "Allow own faculty profile update" on faculty_profiles for update
   using (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   )
   with check (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 create policy "Allow own hod profile insert" on hod_profiles for insert
@@ -188,23 +184,31 @@ create policy "Allow own hod profile insert" on hod_profiles for insert
 create policy "Allow own hod profile select" on hod_profiles for select
   using (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 create policy "Allow own hod profile update" on hod_profiles for update
   using (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   )
   with check (
     auth.uid() = user_id
-    or exists(
-      select 1 from users ur where ur.id = auth.uid() and ur.role = 'admin'
-    )
+    or (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
   );
 
 -- Add policies after you define auth roles in Supabase Auth.
+
+-- Insert admin user
+INSERT INTO users (id, email, name, role, status)
+SELECT id, email, 'Admin', 'admin', 'Approved'
+FROM auth.users
+WHERE email = 'mentoringwebsite47@gmail.com'
+ON CONFLICT (id) DO UPDATE SET role = 'admin', status = 'Approved';
+
+-- Insert student user
+INSERT INTO users (id, email, name, role, status)
+SELECT id, email, 'Student', 'student', 'Pending'
+FROM auth.users
+WHERE email = 'student@college.com'
+ON CONFLICT (id) DO UPDATE SET role = 'student', status = 'Pending';

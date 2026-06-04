@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (authError) {
+    console.error('Registration authError:', authError);
     return NextResponse.json({ success: false, message: authError.message }, { status: 400 });
   }
 

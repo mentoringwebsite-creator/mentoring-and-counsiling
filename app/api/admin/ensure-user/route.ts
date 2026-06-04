@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
   );
 
   if (error) {
+    console.error('ensure-user error:', error);
     return NextResponse.json(
       { success: false, message: error.message },
       { status: 500 }
