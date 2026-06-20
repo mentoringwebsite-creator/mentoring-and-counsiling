@@ -49,7 +49,7 @@ export function Sidebar({ items, active }: { items: Item[]; active: string }) {
   };
 
   return (
-    <aside className="hidden w-[260px] shrink-0 rounded-[28px] bg-[linear-gradient(180deg,#1f5f4b_0%,#194a3a_100%)] p-5 text-white shadow-[0_18px_50px_rgba(17,45,33,0.16)] lg:flex lg:flex-col">
+    <aside className="hidden w-[260px] shrink-0 rounded-[28px] bg-[linear-gradient(135deg,rgba(31,95,75,0.95)_0%,rgba(25,74,58,0.95)_100%)] p-5 text-white shadow-[0_20px_60px_rgba(17,45,33,0.2)] border border-white/10 backdrop-blur-xl lg:flex lg:flex-col">
       <div className="mb-6 rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-emerald-100">
         {getPortalTitle()}
       </div>
@@ -61,9 +61,9 @@ export function Sidebar({ items, active }: { items: Item[]; active: string }) {
               key={item.href}
               href={item.href as never}
               className={cn(
-                'flex items-center rounded-2xl px-4 py-3 text-sm font-medium transition duration-200',
+                'flex items-center rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-300 ease-out hover:translate-x-1.5',
                 isActive 
-                  ? 'bg-[#e2f0ea] text-[#1f5f4b] shadow-[0_10px_24px_rgba(0,0,0,0.08)]' 
+                  ? 'bg-gradient-to-r from-white to-[#f4f7f5] text-[#1f5f4b] shadow-[0_12px_24px_rgba(17,45,33,0.12)] border-l-4 border-amber-500 font-semibold' 
                   : 'text-emerald-50/90 hover:bg-white/10 hover:text-white'
               )}
             >
