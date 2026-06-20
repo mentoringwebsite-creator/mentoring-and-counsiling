@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { GraduationCap, BriefcaseBusiness, Landmark, Settings2 } from 'lucide-react';
+import { GraduationCap, BriefcaseBusiness, Landmark, Settings2, ArrowLeft } from 'lucide-react';
 import { Brand } from '@/components/brand';
 
 const roles = [
@@ -19,8 +19,15 @@ export default function LoginPage() {
     >
       <div className="min-h-screen bg-[rgba(255,255,255,0.72)] backdrop-blur-[2px]">
         <header className="flex flex-wrap items-center justify-between gap-4 border-b border-black/5 bg-white/80 backdrop-blur-md px-5 py-4 md:px-8 md:py-5">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Brand compact />
+            <Link 
+              href="/"
+              className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 text-slate-650 hover:bg-slate-100 hover:text-slate-800 transition shadow-sm active:scale-95 shrink-0"
+              aria-label="Go Back"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
             <div className="hidden border-l border-black/10 pl-4 md:block">
               <div className="text-[1.02rem] font-semibold uppercase tracking-[0.12em] text-portal-ink">Student Enhancement &amp; Counselling Portal</div>
               <div className="text-sm text-slate-600">Sreenidhi Institute of Science and Technology</div>

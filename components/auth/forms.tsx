@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginWithStatusCheck, registerUser, type Role } from '@/lib/auth';
+import { ArrowLeft } from 'lucide-react';
 
 const roleNames: Record<Role, string> = {
   student: 'Student',
@@ -102,6 +103,14 @@ export function LoginForm({ role, redirectTo, registerHref, showRegisterLink = t
 
   return (
     <div className="mx-auto w-full max-w-[620px] rounded-[32px] border border-slate-200 bg-white/95 p-8 shadow-[0_20px_60px_rgba(14,38,36,0.12)]">
+      <button 
+        type="button"
+        onClick={() => router.back()}
+        className="mb-6 flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition shadow-sm active:scale-95"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        <span>Back</span>
+      </button>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">{roleNames[role]} Login</h1>
         <p className="mt-2 text-slate-600">Enter your credentials to access your {roleNames[role].toLowerCase()} portal.</p>
@@ -176,6 +185,14 @@ export function RegisterForm({ role, loginHref }: { role: Role; loginHref: strin
 
   return (
     <div className="mx-auto w-full max-w-[720px] rounded-[32px] border border-slate-200 bg-white/95 p-8 shadow-[0_20px_60px_rgba(14,38,36,0.12)]">
+      <button 
+        type="button"
+        onClick={() => router.back()}
+        className="mb-6 flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-800 transition shadow-sm active:scale-95"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        <span>Back</span>
+      </button>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900">{roleNames[role]} Registration</h1>
         <p className="mt-2 text-slate-600">Submit your details and wait for admin approval to access the portal.</p>
