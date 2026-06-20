@@ -1,18 +1,355 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { PageShell } from '@/components/page-shell';
-import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
+import { ProtectedRoute } from '@/components/auth/protected-route';
+import { supabase } from '@/lib/supabase';
+import { getRiskLevel } from '@/lib/risk';
+import { Loader2, Search, ChevronDown, ChevronUp, GraduationCap, Users, UserMinus, ShieldAlert, Award, Phone } from 'lucide-react';
 
 export default function HodStudentsPage() {
+  const [loading, setLoading] = useState(true);
+  const [hodDept, setHodDept] = useState<string>('');
+  const [faculty, setFaculty] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Track which faculty cards are expanded
+  const [expandedFacultyId, setExpandedFacultyId] = useState<string | null>(null);
+  const [unassignedExpanded, setUnassignedExpanded] = useState(false);
+
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) return;
+
+      // 1. Get HOD profile to determine department
+      const { data: hodProfile } = await supabase
+        .from('hod_profiles')
+        .select('department')
+        .eq('user_id', userId)
+        .single();
+
+      const dept = hodProfile?.department || '';
+      setHodDept(dept);
+
+      // 2. Fetch approved faculty
+      const { data: facultyDb, error: fError } = await supabase
+        .from('users')
+        .select(`
+          id, name, email,
+          faculty_profiles!user_id (
+            designation, department, contact_number
+          )
+        `)
+        .eq('role', 'faculty')
+        .eq('status', 'Approved');
+
+      if (fError) throw fError;
+
+      // Filter faculty by HOD's department
+      const deptFaculty = (facultyDb || []).filter((f) => {
+        const fDept = f.faculty_profiles?.[0]?.department;
+        if (!dept || !fDept) return true;
+        return fDept.toLowerCase().trim() === dept.toLowerCase().trim();
+      });
+
+      setFaculty(deptFaculty);
+
+      // 3. Fetch approved students
+      const { data: studentsDb, error: sError } = await supabase
+        .from('users')
+        .select(`
+          id, name, email,
+          student_profiles!user_id (
+            roll_number, branch, section, phone, mentor_id, cgpa, backlogs
+          )
+        `)
+        .eq('role', 'student')
+        .eq('status', 'Approved');
+
+      if (sError) throw sError;
+
+      // Filter students by HOD's department (branch matches department)
+      const deptStudents = (studentsDb || []).filter((s) => {
+        const sBranch = s.student_profiles?.[0]?.branch;
+        if (!dept || !sBranch) return true;
+        return sBranch.toLowerCase().trim() === dept.toLowerCase().trim();
+      });
+
+      setStudents(deptStudents);
+
+    } catch (err: any) {
+      console.error('Error loading HOD roster:', err);
+      setFeedback({ type: 'error', message: err.message || 'Failed to load roster data.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const toggleExpandFaculty = (id: string) => {
+    setExpandedFacultyId(expandedFacultyId === id ? null : id);
+  };
+
+  // Group students under their respective faculty
+  const getStudentsForFaculty = (facultyId: string) => {
+    return students.filter((s) => {
+      const profile = s.student_profiles?.[0] || {};
+      return profile.mentor_id === facultyId;
+    });
+  };
+
+  // Get unassigned students list
+  const getUnassignedStudents = () => {
+    return students.filter((s) => {
+      const profile = s.student_profiles?.[0] || {};
+      return !profile.mentor_id;
+    });
+  };
+
+  // Apply search query filter
+  const matchesSearch = (item: any) => {
+    if (!searchQuery) return true;
+    const name = (item.name || '').toLowerCase();
+    const email = (item.email || '').toLowerCase();
+    const roll = (item.student_profiles?.[0]?.roll_number || '').toLowerCase();
+    const q = searchQuery.toLowerCase();
+    return name.includes(q) || email.includes(q) || roll.includes(q);
+  };
+
+  const unassignedStudents = getUnassignedStudents().filter(matchesSearch);
+
   return (
     <ProtectedRoute role="hod">
-      <PageShell title="Students" subtitle="Department-level roster">
-      <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <Sidebar active="/hod/students" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/profile', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
-        <div className="portal-card">
-          Department student lists and filters go here.
+      <PageShell title="Department Roster" subtitle={`${hodDept ? `${hodDept} Department` : 'Mentoring Overview'}`}>
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <Sidebar active="/hod/students" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/profile', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
+          
+          <div className="space-y-6">
+            {/* Header info */}
+            <div className="portal-card">
+              <h2 className="text-2xl font-semibold">Faculty Mentoring & Assignments</h2>
+              <p className="mt-2 text-slate-600">Review department mentors, inspect their assigned students, and track unassigned student counts.</p>
+            </div>
+
+            {feedback && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-800 shadow-sm">
+                {feedback.message}
+              </div>
+            )}
+
+            {/* Search filter */}
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search student / faculty name or roll no..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-2xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-emerald-600 focus:outline-none shadow-sm"
+              />
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-20 text-slate-500">
+                <Loader2 className="h-8 w-8 animate-spin text-[#1c5644] mr-2" />
+                <span>Loading department roster...</span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                
+                {/* 1. Unassigned Students Card (Highlighted) */}
+                <div className="overflow-hidden rounded-[28px] border border-orange-200 bg-orange-50/20 shadow-sm transition duration-300">
+                  <button 
+                    onClick={() => setUnassignedExpanded(!unassignedExpanded)}
+                    className="flex w-full items-center justify-between p-5 text-left focus:outline-none"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-orange-800 shadow-sm shrink-0">
+                        <ShieldAlert className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-orange-950">Unassigned Students</h3>
+                        <p className="text-xs text-orange-700/80 font-medium">Students currently needing a mentor assignment</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <span className="rounded-full bg-orange-100 px-3.5 py-1 text-xs font-bold text-orange-800 border border-orange-200">
+                        {unassignedStudents.length} Students
+                      </span>
+                      {unassignedExpanded ? <ChevronUp className="h-5 w-5 text-orange-800" /> : <ChevronDown className="h-5 w-5 text-orange-800" />}
+                    </div>
+                  </button>
+
+                  {unassignedExpanded && (
+                    <div className="border-t border-orange-200/50 bg-white p-5">
+                      {unassignedStudents.length === 0 ? (
+                        <p className="text-sm text-slate-500 italic py-3 text-center">No unassigned students found.</p>
+                      ) : (
+                        <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                          <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                            <thead className="bg-slate-50 font-bold text-slate-700">
+                              <tr>
+                                <th className="px-4 py-3">Roll No</th>
+                                <th className="px-4 py-3">Student Name</th>
+                                <th className="px-4 py-3">Branch & Sec</th>
+                                <th className="px-4 py-3">CGPA</th>
+                                <th className="px-4 py-3">Risk Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 bg-white">
+                              {unassignedStudents.map((s) => {
+                                const profile = s.student_profiles?.[0] || {};
+                                const cgpaVal = profile.cgpa !== undefined && profile.cgpa !== null ? Number(profile.cgpa) : 8.0;
+                                const backlogsVal = profile.backlogs !== undefined && profile.backlogs !== null ? Number(profile.backlogs) : 0;
+                                const risk = getRiskLevel(cgpaVal, backlogsVal);
+
+                                return (
+                                  <tr key={s.id} className="hover:bg-slate-50/50 transition">
+                                    <td className="px-4 py-3 font-mono font-bold text-slate-700">{profile.roll_number || '-'}</td>
+                                    <td className="px-4 py-3 font-semibold text-slate-900">{s.name}</td>
+                                    <td className="px-4 py-3 text-slate-700">
+                                      {profile.branch} | Sec {profile.section}
+                                    </td>
+                                    <td className="px-4 py-3 font-semibold text-slate-900">{cgpaVal.toFixed(2)}</td>
+                                    <td className="px-4 py-3">
+                                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                        risk === 'High' ? 'bg-rose-100 text-rose-800' :
+                                        risk === 'Medium' ? 'bg-amber-100 text-amber-800' :
+                                        'bg-emerald-100 text-emerald-800'
+                                      }`}>
+                                        {risk}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Faculty list with assigned students */}
+                <div className="space-y-4 pt-2">
+                  <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2 px-1">
+                    <GraduationCap className="h-5.5 w-5.5 text-emerald-800" />
+                    <span>Faculty Mentors ({faculty.length})</span>
+                  </h3>
+
+                  {faculty.length === 0 ? (
+                    <p className="text-sm text-slate-500 italic py-6 text-center bg-slate-50 rounded-3xl border border-slate-200">
+                      No approved faculty mentors found in this department.
+                    </p>
+                  ) : (
+                    faculty.map((mentor) => {
+                      const mentorProfile = mentor.faculty_profiles?.[0] || {};
+                      const mentorStudents = getStudentsForFaculty(mentor.id).filter(matchesSearch);
+                      const isExpanded = expandedFacultyId === mentor.id;
+
+                      return (
+                        <div 
+                          key={mentor.id} 
+                          className={`overflow-hidden rounded-[28px] border transition duration-300 bg-white ${
+                            isExpanded ? 'border-emerald-700/40 shadow-soft' : 'border-slate-200 shadow-sm hover:shadow-soft'
+                          }`}
+                        >
+                          <button
+                            onClick={() => toggleExpandFaculty(mentor.id)}
+                            className="flex w-full items-center justify-between p-5 text-left focus:outline-none"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-800 shadow-sm shrink-0">
+                                <GraduationCap className="h-5.5 w-5.5" />
+                              </div>
+                              <div>
+                                <h4 className="text-lg font-bold text-slate-900">{mentor.name}</h4>
+                                <p className="text-xs text-slate-500 font-medium">
+                                  {mentorProfile.designation || 'Faculty Mentor'} | {mentor.email}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <span className="rounded-full bg-emerald-50 px-3.5 py-1 text-xs font-bold text-emerald-800 border border-emerald-100">
+                                {mentorStudents.length} Assigned Students
+                              </span>
+                              {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-500" /> : <ChevronDown className="h-5 w-5 text-slate-500" />}
+                            </div>
+                          </button>
+
+                          {isExpanded && (
+                            <div className="border-t border-slate-100 p-5 bg-slate-50/20">
+                              {mentorStudents.length === 0 ? (
+                                <p className="text-sm text-slate-400 italic py-4 text-center">No students currently assigned to this mentor.</p>
+                              ) : (
+                                <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                                  <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+                                    <thead className="bg-slate-50 font-bold text-slate-700">
+                                      <tr>
+                                        <th className="px-4 py-3.5">Roll No</th>
+                                        <th className="px-4 py-3.5">Student Name</th>
+                                        <th className="px-4 py-3.5">Section</th>
+                                        <th className="px-4 py-3.5">Contact Number</th>
+                                        <th className="px-4 py-3.5">CGPA</th>
+                                        <th className="px-4 py-3.5">Risk Status</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 bg-white">
+                                      {mentorStudents.map((student) => {
+                                        const profile = student.student_profiles?.[0] || {};
+                                        const cgpaVal = profile.cgpa !== undefined && profile.cgpa !== null ? Number(profile.cgpa) : 8.0;
+                                        const backlogsVal = profile.backlogs !== undefined && profile.backlogs !== null ? Number(profile.backlogs) : 0;
+                                        const risk = getRiskLevel(cgpaVal, backlogsVal);
+
+                                        return (
+                                          <tr key={student.id} className="hover:bg-slate-50/50 transition">
+                                            <td className="px-4 py-3 font-mono font-bold text-slate-700">{profile.roll_number || '-'}</td>
+                                            <td className="px-4 py-3 font-semibold text-slate-900">{student.name}</td>
+                                            <td className="px-4 py-3 text-slate-700">Sec {profile.section || '-'}</td>
+                                            <td className="px-4 py-3 text-slate-600 font-mono">{profile.phone || '-'}</td>
+                                            <td className="px-4 py-3 font-semibold text-slate-900">{cgpaVal.toFixed(2)}</td>
+                                            <td className="px-4 py-3">
+                                              <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
+                                                risk === 'High' ? 'bg-rose-100 text-rose-800' :
+                                                risk === 'Medium' ? 'bg-amber-100 text-amber-800' :
+                                                'bg-emerald-100 text-emerald-800'
+                                              }`}>
+                                                {risk}
+                                              </span>
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </PageShell>
+      </PageShell>
     </ProtectedRoute>
   );
 }
