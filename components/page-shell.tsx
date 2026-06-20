@@ -15,7 +15,8 @@ import {
   Users, 
   FileText, 
   Landmark, 
-  ShieldCheck 
+  ShieldCheck,
+  ArrowLeft
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
@@ -142,6 +143,15 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-black/5 bg-white/80 backdrop-blur-md px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Brand compact />
+            {pathname !== '/' && !pathname.endsWith('/login') && pathname !== '/student' && pathname !== '/faculty' && pathname !== '/hod' && pathname !== '/admin' && (
+              <button 
+                onClick={() => router.back()}
+                className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 text-slate-650 hover:bg-slate-100 hover:text-slate-800 transition shadow-sm active:scale-95 shrink-0"
+                aria-label="Go Back"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            )}
             {/* Mobile/Tablet Page Title (hidden on Desktop) */}
             <div className="border-l border-slate-200 pl-3 lg:hidden">
               <span className="text-sm font-bold tracking-tight text-portal-ink sm:text-base">{title}</span>
