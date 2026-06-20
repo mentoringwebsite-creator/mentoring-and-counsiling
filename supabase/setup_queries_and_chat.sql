@@ -1,14 +1,25 @@
 -- =========================================================================
--- SQL Migration: Setup Queries and Chat Tables
+-- SQL Migration: Setup Queries and Chat Tables (Clean Recreate)
 -- Run this script in your Supabase SQL Editor.
 -- =========================================================================
 
--- 1. Re-link queries.student_id to refer to users.id instead of students.id
-ALTER TABLE queries DROP CONSTRAINT IF EXISTS queries_student_id_fkey;
-ALTER TABLE queries ADD CONSTRAINT queries_student_id_fkey FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE;
+-- 1. Drop existing tables if they exist to avoid constraint and schema conflicts
+DROP TABLE IF EXISTS query_messages CASCADE;
+DROP TABLE IF EXISTS queries CASCADE;
 
--- 2. Create query_messages table to store chat history
-CREATE TABLE IF NOT EXISTS query_messages (
+-- 2. Create queries table referencing users(id)
+CREATE TABLE queries (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  type text NOT NULL,
+  subject text NOT NULL,
+  description text,
+  status text DEFAULT 'Pending' NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+-- 3. Create query_messages table to store chat history
+CREATE TABLE query_messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   query_id uuid REFERENCES queries(id) ON DELETE CASCADE NOT NULL,
   sender_id uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
@@ -16,17 +27,13 @@ CREATE TABLE IF NOT EXISTS query_messages (
   created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
--- 3. Enable RLS on both tables
+-- 4. Enable RLS on both tables
 ALTER TABLE queries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE query_messages ENABLE ROW LEVEL SECURITY;
 
 -- =========================================================================
--- 4. Recreate Security Policies for queries
+-- 5. Create Security Policies for queries
 -- =========================================================================
-
-DROP POLICY IF EXISTS "Allow select queries" ON queries;
-DROP POLICY IF EXISTS "Allow insert queries" ON queries;
-DROP POLICY IF EXISTS "Allow update queries" ON queries;
 
 -- Students can view their own queries; faculty, HODs, and admins can view all.
 CREATE POLICY "Allow select queries" ON queries
@@ -56,11 +63,8 @@ CREATE POLICY "Allow update queries" ON queries
   );
 
 -- =========================================================================
--- 5. Create Security Policies for query_messages
+-- 6. Create Security Policies for query_messages
 -- =========================================================================
-
-DROP POLICY IF EXISTS "Allow select query_messages" ON query_messages;
-DROP POLICY IF EXISTS "Allow insert query_messages" ON query_messages;
 
 -- Students can read messages for their own queries; faculty, HODs, and admins can read messages for any query.
 CREATE POLICY "Allow select query_messages" ON query_messages
