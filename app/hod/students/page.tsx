@@ -75,11 +75,17 @@ export default function HodStudentsPage() {
 
       if (sError) throw sError;
 
-      // Filter students by HOD's department (branch matches department)
+      // Filter students by HOD's department (branch matches department) OR if they are assigned to a mentor in the department
       const deptStudents = (studentsDb || []).filter((s) => {
-        const sBranch = s.student_profiles?.[0]?.branch;
-        if (!dept || !sBranch) return true;
-        return sBranch.toLowerCase().trim() === dept.toLowerCase().trim();
+        const profile = s.student_profiles?.[0] || {};
+        const sBranch = profile.branch;
+        const mentorId = profile.mentor_id;
+
+        const branchMatches = sBranch && dept && sBranch.toLowerCase().trim() === dept.toLowerCase().trim();
+        const mentorInDept = mentorId && deptFaculty.some((f) => f.id === mentorId);
+
+        if (!dept) return true;
+        return branchMatches || mentorInDept;
       });
 
       setStudents(deptStudents);
