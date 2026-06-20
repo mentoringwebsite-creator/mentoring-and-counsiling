@@ -1,11 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Brand } from '@/components/brand';
-import { LogOut, ChevronDown } from 'lucide-react';
+import { 
+  LogOut, 
+  ChevronDown, 
+  Home, 
+  User, 
+  GraduationCap, 
+  Trophy, 
+  MessageSquare, 
+  Users, 
+  FileText, 
+  Landmark, 
+  ShieldCheck 
+} from 'lucide-react';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 export function PageShell({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
   const [userProfile, setUserProfile] = useState<{ name: string; email: string; photo: string } | null>(null);
@@ -72,12 +86,67 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
     router.replace('/');
   };
 
+  const pathname = usePathname() || '';
+
+  const getMobileNavItems = () => {
+    if (pathname.startsWith('/student')) {
+      return [
+        { href: '/student', label: 'Profile', icon: User },
+        { href: '/student/academic', label: 'Academics', icon: GraduationCap },
+        { href: '/student/extracurricular', label: 'Activities', icon: Trophy },
+        { href: '/student/queries', label: 'Queries', icon: MessageSquare }
+      ];
+    }
+    if (pathname.startsWith('/faculty')) {
+      return [
+        { href: '/faculty', label: 'Home', icon: Home },
+        { href: '/faculty/profile', label: 'Profile', icon: User },
+        { href: '/faculty/students', label: 'Students', icon: Users },
+        { href: '/faculty/queries', label: 'Queries', icon: MessageSquare },
+        { href: '/faculty/notes', label: 'Notes', icon: FileText }
+      ];
+    }
+    if (pathname.startsWith('/hod')) {
+      return [
+        { href: '/hod', label: 'Home', icon: Home },
+        { href: '/hod/profile', label: 'Profile', icon: User },
+        { href: '/hod/students', label: 'Students', icon: Users },
+        { href: '/hod/queries', label: 'Queries', icon: MessageSquare },
+        { href: '/hod/reports', label: 'Reports', icon: FileText }
+      ];
+    }
+    if (pathname.startsWith('/admin')) {
+      return [
+        { href: '/admin', label: 'Home', icon: Home },
+        { href: '/admin/faculty', label: 'Faculty', icon: Users },
+        { href: '/admin/hod', label: 'HODs', icon: Landmark },
+        { href: '/admin/students', label: 'Students', icon: Users },
+        { href: '/admin/pending', label: 'Approvals', icon: ShieldCheck }
+      ];
+    }
+    return [];
+  };
+
+  const mobileItems = getMobileNavItems();
+
+  const isTabActive = (href: string) => {
+    if (href === '/student' || href === '/faculty' || href === '/hod' || href === '/admin') {
+      return pathname === href;
+    }
+    return pathname.startsWith(href);
+  };
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(199,217,207,0.42),transparent_30%),radial-gradient(circle_at_top_right,rgba(234,218,177,0.30),transparent_28%),linear-gradient(180deg,#f4f7f4_0%,#edf2ee_100%)] text-portal-ink">
       <div className="min-h-screen w-full overflow-hidden bg-white/94 backdrop-blur-xl flex flex-col">
-        <header className="sticky top-0 z-40 flex flex-wrap items-center justify-between gap-4 border-b border-black/5 bg-white/80 backdrop-blur-md px-6 py-5 md:px-8">
-          <div className="flex items-center gap-4">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-black/5 bg-white/80 backdrop-blur-md px-4 sm:px-6">
+          <div className="flex items-center gap-3">
             <Brand compact />
+            {/* Mobile/Tablet Page Title (hidden on Desktop) */}
+            <div className="border-l border-slate-200 pl-3 lg:hidden">
+              <span className="text-sm font-bold tracking-tight text-portal-ink sm:text-base">{title}</span>
+            </div>
+            {/* Desktop Subtitle */}
             <div className="hidden border-l border-black/10 pl-4 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[#315d47] md:grid">
               <span>Sreenidhi</span>
               <span>Student</span>
@@ -85,16 +154,16 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6">
             <div className="hidden sm:text-right md:block">
               <div className="text-xl font-semibold tracking-[-0.04em]">{title}</div>
               {subtitle ? <div className="text-sm text-slate-600">{subtitle}</div> : null}
             </div>
 
             {userProfile && (
-              <div className="flex items-center gap-3 border-l border-slate-200 pl-6">
+              <div className="flex items-center gap-2 border-l border-slate-200 pl-4 sm:gap-3 sm:pl-6">
                 <span className="hidden text-sm font-semibold text-portal-ink md:inline">{userProfile.name}</span>
-                <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-emerald-500/20 bg-emerald-50">
+                <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-emerald-500/20 bg-emerald-50 shrink-0">
                   {userProfile.photo && (userProfile.photo.startsWith('data:') || userProfile.photo.startsWith('http') || userProfile.photo.startsWith('/')) ? (
                     <img
                       src={userProfile.photo}
@@ -117,7 +186,7 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
                     className="flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-portal-ink transition duration-150"
                   >
                     <span className="hidden sm:inline">Logout</span>
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown className="h-4 w-4 shrink-0" />
                   </button>
                   
                   {dropdownOpen && (
@@ -136,9 +205,43 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
             )}
           </div>
         </header>
-        <main className="flex-1 w-full animate-slide-up">
+        <main className={cn("flex-1 w-full animate-slide-up", mobileItems.length > 0 && "pb-24 lg:pb-0")}>
           {children}
         </main>
+
+        {/* Dynamic Mobile Bottom Navigation Bar */}
+        {mobileItems.length > 0 && (
+          <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/80 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur-lg shadow-[0_-8px_30px_rgba(0,0,0,0.06)] lg:hidden">
+            <div className="flex items-center justify-around px-2">
+              {mobileItems.map((item) => {
+                const Icon = item.icon;
+                const active = isTabActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href as never}
+                    className={cn(
+                      "flex flex-col items-center gap-1 px-2 py-0.5 rounded-xl transition-all duration-250 active:scale-90",
+                      active 
+                        ? "text-emerald-800 font-bold" 
+                        : "text-slate-500 hover:text-slate-700 font-medium"
+                    )}
+                  >
+                    <div className={cn(
+                      "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-250",
+                      active 
+                        ? "bg-emerald-50 text-emerald-800 shadow-[0_4px_12px_rgba(16,185,129,0.12)] scale-105" 
+                        : "bg-transparent text-slate-500"
+                    )}>
+                      <Icon className="h-5 w-5 stroke-[2.25]" />
+                    </div>
+                    <span className="text-[0.65rem] tracking-tight">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        )}
       </div>
     </div>
   );
