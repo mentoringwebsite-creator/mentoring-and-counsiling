@@ -37,7 +37,7 @@ export default function FacultyStudentsPage() {
         .from('users')
         .select(`
           id, name, email,
-          student_profiles (
+          student_profiles!user_id (
             roll_number, branch, section, phone, dob, profile_photo, mentor_id, cgpa, backlogs
           )
         `)

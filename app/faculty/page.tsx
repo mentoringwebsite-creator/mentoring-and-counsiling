@@ -62,7 +62,7 @@ export default function FacultyPage() {
           .from('users')
           .select(`
             id, name,
-            student_profiles (
+            student_profiles!user_id (
               mentor_id, cgpa, backlogs
             )
           `)

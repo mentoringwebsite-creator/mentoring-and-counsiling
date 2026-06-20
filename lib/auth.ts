@@ -172,7 +172,7 @@ export async function getPendingApprovals() {
     .from('users')
     .select(
       `id, name, email, role, status,
-      student_profiles(roll_number,branch,section,academic_year,phone,dob,profile_photo),
+      student_profiles!user_id(roll_number,branch,section,academic_year,phone,dob,profile_photo),
       faculty_profiles(faculty_id,department,designation,qualification,subjects,contact_number,profile_photo),
       hod_profiles(faculty_id,department,designation,contact_number,profile_photo)`
     )

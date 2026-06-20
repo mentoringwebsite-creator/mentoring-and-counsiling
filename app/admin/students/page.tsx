@@ -18,6 +18,7 @@ const adminSidebarItems = [
 
 export default function AdminStudentsPage() {
   const [students, setStudents] = useState<any[]>([]);
+  const [facultyList, setFacultyList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -28,8 +29,8 @@ export default function AdminStudentsPage() {
         .from('users')
         .select(`
           id, name, email, role, status,
-          student_profiles (
-            roll_number, branch, section, academic_year, phone, dob, profile_photo
+          student_profiles!user_id (
+            roll_number, branch, section, academic_year, phone, dob, profile_photo, mentor_id
           )
         `)
         .eq('role', 'student')
@@ -44,9 +45,41 @@ export default function AdminStudentsPage() {
     }
   };
 
+  const fetchFaculty = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name')
+        .eq('role', 'faculty')
+        .eq('status', 'Approved');
+      if (error) throw error;
+      setFacultyList(data || []);
+    } catch (err: any) {
+      console.error('Error fetching faculty list:', err);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
+    fetchFaculty();
   }, []);
+
+  const handleMentorChange = async (studentUserId: string, newMentorId: string) => {
+    try {
+      setFeedback(null);
+      const { error } = await supabase
+        .from('student_profiles')
+        .update({ mentor_id: newMentorId || null })
+        .eq('user_id', studentUserId);
+
+      if (error) throw error;
+
+      setFeedback({ type: 'success', message: 'Student mentor updated successfully.' });
+      fetchStudents();
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to update student mentor.' });
+    }
+  };
 
   const handleStatusUpdate = async (userId: string, newStatus: 'Pending' | 'Rejected') => {
     try {
@@ -115,13 +148,14 @@ export default function AdminStudentsPage() {
                     <th className="px-5 py-4 font-semibold">Roll Number</th>
                     <th className="px-5 py-4 font-semibold">Branch & Section</th>
                     <th className="px-5 py-4 font-semibold">Contact Info</th>
+                    <th className="px-5 py-4 font-semibold">Assigned Mentor</th>
                     <th className="px-5 py-4 font-semibold text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {loading ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={5}>
+                      <td className="px-5 py-8 text-slate-500" colSpan={6}>
                         <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
                           <span>Loading students…</span>
@@ -130,7 +164,7 @@ export default function AdminStudentsPage() {
                     </tr>
                   ) : students.length === 0 ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={5}>No approved students found.</td>
+                      <td className="px-5 py-8 text-slate-500" colSpan={6}>No approved students found.</td>
                     </tr>
                   ) : null}
                   {students.map((student) => {
@@ -167,6 +201,20 @@ export default function AdminStudentsPage() {
                         <td className="px-5 py-4 text-slate-700">
                           <div>Primary: {profile.phone || '-'}</div>
                           <div className="text-xs text-slate-500">Alt: {profile.alternate_phone || '-'}</div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <select
+                            value={profile.mentor_id || ''}
+                            onChange={(e) => handleMentorChange(student.id, e.target.value)}
+                            className="rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:border-emerald-600 focus:outline-none w-full max-w-[170px]"
+                          >
+                            <option value="">Unassigned</option>
+                            {facultyList.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {f.name}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center justify-center gap-2">

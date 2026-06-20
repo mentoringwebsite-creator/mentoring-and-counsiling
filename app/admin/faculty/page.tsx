@@ -18,6 +18,7 @@ const adminSidebarItems = [
 
 export default function AdminFacultyPage() {
   const [facultyList, setFacultyList] = useState<any[]>([]);
+  const [hodList, setHodList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -29,7 +30,7 @@ export default function AdminFacultyPage() {
         .select(`
           id, name, email, role, status,
           faculty_profiles (
-            faculty_id, department, designation, qualification, subjects, contact_number, profile_photo
+            faculty_id, department, designation, qualification, subjects, contact_number, profile_photo, hod_id
           )
         `)
         .eq('role', 'faculty')
@@ -44,9 +45,41 @@ export default function AdminFacultyPage() {
     }
   };
 
+  const fetchHodList = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, name')
+        .eq('role', 'hod')
+        .eq('status', 'Approved');
+      if (error) throw error;
+      setHodList(data || []);
+    } catch (err: any) {
+      console.error('Error fetching HOD list:', err);
+    }
+  };
+
   useEffect(() => {
     fetchFaculty();
+    fetchHodList();
   }, []);
+
+  const handleHodChange = async (facultyUserId: string, newHodId: string) => {
+    try {
+      setFeedback(null);
+      const { error } = await supabase
+        .from('faculty_profiles')
+        .update({ hod_id: newHodId || null })
+        .eq('user_id', facultyUserId);
+
+      if (error) throw error;
+
+      setFeedback({ type: 'success', message: 'Faculty HOD updated successfully.' });
+      fetchFaculty();
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to update faculty HOD.' });
+    }
+  };
 
   const handleStatusUpdate = async (userId: string, newStatus: 'Pending' | 'Rejected') => {
     try {
@@ -114,13 +147,14 @@ export default function AdminFacultyPage() {
                     <th className="px-5 py-4 font-semibold">Faculty ID</th>
                     <th className="px-5 py-4 font-semibold">Department & Designation</th>
                     <th className="px-5 py-4 font-semibold">Qualification & Subjects</th>
+                    <th className="px-5 py-4 font-semibold">Assigned HOD</th>
                     <th className="px-5 py-4 font-semibold text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {loading ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={5}>
+                      <td className="px-5 py-8 text-slate-500" colSpan={6}>
                         <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
                           <span>Loading faculty…</span>
@@ -129,7 +163,7 @@ export default function AdminFacultyPage() {
                     </tr>
                   ) : facultyList.length === 0 ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={5}>No approved faculty found.</td>
+                      <td className="px-5 py-8 text-slate-500" colSpan={6}>No approved faculty found.</td>
                     </tr>
                   ) : null}
                   {facultyList.map((faculty) => {
@@ -167,6 +201,20 @@ export default function AdminFacultyPage() {
                         <td className="px-5 py-4 text-slate-700">
                           <div>Qual: {profile.qualification || '-'}</div>
                           <div className="text-xs text-slate-500 break-words max-w-[200px]">Subjects: {profile.subjects || '-'}</div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <select
+                            value={profile.hod_id || ''}
+                            onChange={(e) => handleHodChange(faculty.id, e.target.value)}
+                            className="rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:border-emerald-600 focus:outline-none w-full max-w-[170px]"
+                          >
+                            <option value="">Unassigned</option>
+                            {hodList.map((h) => (
+                              <option key={h.id} value={h.id}>
+                                {h.name}
+                              </option>
+                            ))}
+                          </select>
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center justify-center gap-2">
