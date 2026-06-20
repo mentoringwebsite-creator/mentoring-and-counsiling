@@ -29,7 +29,7 @@ export default function AdminFacultyPage() {
         .from('users')
         .select(`
           id, name, email, role, status,
-          faculty_profiles (
+          faculty_profiles!user_id (
             faculty_id, department, designation, qualification, subjects, contact_number, profile_photo, hod_id
           )
         `)
