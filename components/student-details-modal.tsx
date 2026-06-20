@@ -1,0 +1,622 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { getRiskLevel } from '@/lib/risk';
+import { 
+  Loader2, X, User, Mail, Phone, Calendar, BookOpen, 
+  TrendingUp, BarChart3, Sparkles, Heart, Target, 
+  Award, Users, ExternalLink, Image as ImageIcon, 
+  GraduationCap, AlertTriangle, ShieldCheck
+} from 'lucide-react';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, BarChart, Bar 
+} from 'recharts';
+
+interface StudentDetailsModalProps {
+  studentUserId: string | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentDetailsModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [student, setStudent] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars'>('profile');
+  const [selectedSemester, setSelectedSemester] = useState<string>('All');
+  const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !studentUserId) {
+      setStudent(null);
+      setError(null);
+      return;
+    }
+
+    const fetchStudentDetails = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        setActiveTab('profile');
+        setSelectedSemester('All');
+        setSelectedCertImage(null);
+
+        const { data, error: dbError } = await supabase
+          .from('users')
+          .select(`
+            id, name, email,
+            student_profiles!user_id (
+              roll_number, branch, section, academic_year, phone, alternate_phone, dob, profile_photo,
+              cgpa, backlogs, sgpa, academic_subjects, interests, dreams, career_goals, clubs, certifications
+            )
+          `)
+          .eq('id', studentUserId)
+          .single();
+
+        if (dbError) throw dbError;
+        setStudent(data);
+      } catch (err: any) {
+        console.error('Error fetching student details:', err);
+        setError(err.message || 'Failed to load student details.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentDetails();
+  }, [studentUserId, isOpen]);
+
+  // Prevent closing when clicking modal content
+  const handleContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  if (!isOpen) return null;
+
+  const profile = student?.student_profiles?.[0] || {};
+  const cgpaVal = profile.cgpa !== undefined && profile.cgpa !== null ? Number(profile.cgpa) : 8.0;
+  const sgpaVal = profile.sgpa !== undefined && profile.sgpa !== null ? Number(profile.sgpa) : 8.0;
+  const backlogsVal = profile.backlogs !== undefined && profile.backlogs !== null ? Number(profile.backlogs) : 0;
+  const risk = getRiskLevel(cgpaVal, backlogsVal);
+
+  const subjects = profile.academic_subjects || [];
+  const filteredSubjects = subjects.filter((sub: any) => {
+    if (selectedSemester === 'All') return true;
+    return sub.semester?.toString() === selectedSemester;
+  });
+
+  // Calculate SGPA chart data dynamically
+  const getSemesterGPAData = () => {
+    const semMap: { [key: number]: number[] } = {};
+    subjects.forEach((sub: any) => {
+      const sem = parseInt(sub.semester);
+      const gpa = parseFloat(sub.gpa);
+      if (!isNaN(sem) && !isNaN(gpa)) {
+        if (!semMap[sem]) semMap[sem] = [];
+        semMap[sem].push(gpa);
+      }
+    });
+
+    return Object.keys(semMap)
+      .map((semStr) => {
+        const sem = parseInt(semStr);
+        const gpas = semMap[sem];
+        const avg = gpas.reduce((a, b) => a + b, 0) / gpas.length;
+        return {
+          name: `Sem ${sem}`,
+          GPA: Number(avg.toFixed(2)),
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const gpaChartData = getSemesterGPAData();
+
+  // Subject GPA distribution data
+  const getSubjectGPADistribution = () => {
+    return filteredSubjects
+      .map((sub: any) => {
+        const gpaVal = parseFloat(sub.gpa);
+        return {
+          name: sub.name,
+          GPA: isNaN(gpaVal) ? 0 : gpaVal,
+        };
+      })
+      .filter((d: any) => d.GPA > 0);
+  };
+
+  const subjectChartData = getSubjectGPADistribution();
+
+  const clubsList = profile.clubs || [];
+  const certificationsList = profile.certifications || [];
+
+  return (
+    <div 
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md animate-fade-in"
+    >
+      <div 
+        onClick={handleContentClick}
+        className="relative flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/80 backdrop-blur-xl shadow-2xl transition duration-300 animate-scale-in"
+      >
+        {/* Close Button */}
+        <button 
+          onClick={onClose}
+          className="absolute right-6 top-6 z-20 rounded-full p-2 text-slate-400 bg-white/80 border border-slate-100 hover:bg-slate-100 hover:text-slate-700 transition"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {loading ? (
+          <div className="flex flex-1 flex-col items-center justify-center text-slate-500 py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-[#1c5644] mb-3" />
+            <p className="font-semibold text-sm">Loading student profile details...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-1 flex-col items-center justify-center text-rose-800 p-8 text-center">
+            <AlertTriangle className="h-12 w-12 text-rose-500 mb-3" />
+            <p className="font-bold text-lg">Error Loading Profile</p>
+            <p className="text-sm mt-1 text-rose-600 max-w-md">{error}</p>
+            <button 
+              onClick={onClose}
+              className="mt-6 rounded-2xl bg-slate-800 text-white px-5 py-2 text-xs font-semibold hover:bg-slate-700 transition"
+            >
+              Close
+            </button>
+          </div>
+        ) : !student ? (
+          <div className="flex flex-1 flex-col items-center justify-center text-slate-500 py-20">
+            <User className="h-10 w-10 text-slate-300 mb-3" />
+            <p className="font-semibold text-sm">No student selected</p>
+          </div>
+        ) : (
+          <>
+            {/* Header / Demographics Banner */}
+            <div className="border-b border-slate-200/60 bg-gradient-to-r from-emerald-50/50 via-white/50 to-orange-50/20 px-6 py-6 md:px-8">
+              <div className="flex flex-col gap-5 md:flex-row md:items-center">
+                {/* Photo */}
+                <div className="h-20 w-20 rounded-[24px] border-2 border-white bg-white shadow-md overflow-hidden flex items-center justify-center shrink-0">
+                  {profile.profile_photo ? (
+                    <img src={profile.profile_photo} alt={student.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-10 w-10 text-emerald-800/60" />
+                  )}
+                </div>
+
+                {/* Text Info */}
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-2xl font-black text-slate-900 leading-tight">{student.name}</h2>
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                      risk === 'High' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
+                      risk === 'Medium' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                      'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    }`}>
+                      {risk} Risk Status
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 font-medium">
+                    <span className="font-mono font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg">{profile.roll_number || 'No Roll No'}</span>
+                    <span>&bull;</span>
+                    <span>{profile.branch} Department</span>
+                    <span>&bull;</span>
+                    <span>Section {profile.section || '-'}</span>
+                    <span>&bull;</span>
+                    <span>Year: {profile.academic_year || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tab Navigation */}
+              <div className="mt-6 flex border-b border-slate-200/50">
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className={`border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
+                    activeTab === 'profile'
+                      ? 'border-[#1c5644] text-[#1c5644]'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  General Profile
+                </button>
+                <button
+                  onClick={() => setActiveTab('academics')}
+                  className={`border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
+                    activeTab === 'academics'
+                      ? 'border-[#1c5644] text-[#1c5644]'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Academics & Analytics
+                </button>
+                <button
+                  onClick={() => setActiveTab('extracurriculars')}
+                  className={`border-b-2 px-4 py-2.5 text-xs font-bold transition-all duration-200 ${
+                    activeTab === 'extracurriculars'
+                      ? 'border-[#1c5644] text-[#1c5644]'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Extracurriculars & Goals
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50/20">
+              
+              {/* Tab 1: Profile */}
+              {activeTab === 'profile' && (
+                <div className="space-y-6">
+                  {/* Bio details card */}
+                  <div className="rounded-[24px] border border-slate-200/60 bg-white p-6 shadow-sm">
+                    <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <User className="h-4.5 w-4.5 text-emerald-800" />
+                      <span>Student Demographics & Bio</span>
+                    </h3>
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                      <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date of Birth</div>
+                        <div className="mt-1 text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                          <Calendar className="h-4 w-4 text-slate-400" />
+                          <span>{profile.dob ? new Date(profile.dob).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'Not Specified'}</span>
+                        </div>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Branch / Course</div>
+                        <div className="mt-1 text-sm font-semibold text-slate-800">{profile.branch || 'Not Specified'}</div>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Section</div>
+                        <div className="mt-1 text-sm font-semibold text-slate-800">Section {profile.section || 'N/A'}</div>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Academic Year</div>
+                        <div className="mt-1 text-sm font-semibold text-slate-800">{profile.academic_year || 'Not Specified'}</div>
+                      </div>
+                      <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role & Status</div>
+                        <div className="mt-1 text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                          <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                          <span>Approved Student</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Information card */}
+                  <div className="rounded-[24px] border border-slate-200/60 bg-white p-6 shadow-sm">
+                    <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <Phone className="h-4.5 w-4.5 text-[#1c5644]" />
+                      <span>Contact Directory</span>
+                    </h3>
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-150 p-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-800">
+                          <Mail className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Official Email</div>
+                          <a href={`mailto:${student.email}`} className="text-xs font-semibold text-slate-800 hover:text-emerald-700 break-all">{student.email}</a>
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-150 p-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-850">
+                          <Phone className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Mobile Number</div>
+                          <span className="text-xs font-mono font-bold text-slate-800">{profile.phone || 'N/A'}</span>
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-150 p-4 flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-800">
+                          <Phone className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Alternate Contact</div>
+                          <span className="text-xs font-mono font-bold text-slate-800">{profile.alternate_phone || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Academics */}
+              {activeTab === 'academics' && (
+                <div className="space-y-6">
+                  {/* Scorecard grid */}
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5 shadow-sm">
+                      <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider opacity-85">Latest SGPA</div>
+                      <div className="mt-2 text-3xl font-black text-emerald-950">{sgpaVal.toFixed(2)}</div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider opacity-85">Cumulative CGPA</div>
+                      <div className="mt-2 text-3xl font-black text-slate-900">{cgpaVal.toFixed(2)}</div>
+                    </div>
+                    <div className={`rounded-2xl border p-5 shadow-sm ${
+                      backlogsVal > 0 
+                        ? 'border-rose-100 bg-rose-50/40 text-rose-955' 
+                        : 'border-orange-100 bg-orange-50/40 text-orange-955'
+                    }`}>
+                      <div className="text-xs font-bold uppercase tracking-wider opacity-85">Active Backlogs</div>
+                      <div className="mt-2 text-3xl font-black">{backlogsVal}</div>
+                    </div>
+                  </div>
+
+                  {/* Registered Courses table */}
+                  <div className="rounded-[24px] border border-slate-200/60 bg-white p-6 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+                      <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <BookOpen className="h-5 w-5 text-emerald-800" />
+                        <span>Semester Performance Ledger</span>
+                      </h3>
+                      
+                      <select
+                        value={selectedSemester}
+                        onChange={(e) => setSelectedSemester(e.target.value)}
+                        className="rounded-2xl border border-slate-350 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 focus:border-emerald-600 focus:outline-none"
+                      >
+                        <option value="All">All Semesters</option>
+                        <option value="1">Semester 1</option>
+                        <option value="2">Semester 2</option>
+                        <option value="3">Semester 3</option>
+                        <option value="4">Semester 4</option>
+                        <option value="5">Semester 5</option>
+                        <option value="6">Semester 6</option>
+                        <option value="7">Semester 7</option>
+                        <option value="8">Semester 8</option>
+                      </select>
+                    </div>
+
+                    {filteredSubjects.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-8">
+                        No subject marks entered for this filter.
+                      </p>
+                    ) : (
+                      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                        <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+                          <thead className="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider">
+                            <tr>
+                              <th className="px-4 py-3">Subject Name</th>
+                              <th className="px-4 py-3">Sem</th>
+                              <th className="px-4 py-3">Mid 1</th>
+                              <th className="px-4 py-3">Mid 2</th>
+                              <th className="px-4 py-3">Sem Exam</th>
+                              <th className="px-4 py-3">Grade GPA</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {filteredSubjects.map((sub: any, idx: number) => (
+                              <tr key={idx} className="hover:bg-slate-55/30 transition">
+                                <td className="px-4 py-3 font-semibold text-slate-900">{sub.name}</td>
+                                <td className="px-4 py-3 text-slate-600">Sem {sub.semester}</td>
+                                <td className="px-4 py-3 text-slate-650 font-mono">{sub.mid1 ?? '-'}</td>
+                                <td className="px-4 py-3 text-slate-650 font-mono">{sub.mid2 ?? '-'}</td>
+                                <td className="px-4 py-3 text-slate-650 font-mono">{sub.semester_marks ?? '-'}</td>
+                                <td className="px-4 py-3 font-bold text-slate-900 font-mono">{sub.gpa ?? '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Recharts Analytics Charts */}
+                  {subjects.length > 0 && (
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {/* Trend line */}
+                      {gpaChartData.length > 0 && (
+                        <div className="rounded-[24px] border border-slate-200/60 bg-white p-5 shadow-sm">
+                          <div className="flex items-center gap-2 mb-4">
+                            <TrendingUp className="h-5 w-5 text-emerald-800" />
+                            <h4 className="text-sm font-bold text-slate-800">Semester-wise GPA Track</h4>
+                          </div>
+                          <div className="h-60 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={gpaChartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(71, 101, 93, 0.15)" />
+                                <XAxis dataKey="name" stroke="#60756d" fontSize={10} fontWeight={600} />
+                                <YAxis stroke="#60756d" domain={[0, 10]} fontSize={10} fontWeight={600} />
+                                <Tooltip />
+                                <Line type="monotone" dataKey="GPA" stroke="#1c5644" strokeWidth={3} dot={{ r: 4 }} />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Subject bar chart */}
+                      {subjectChartData.length > 0 && (
+                        <div className="rounded-[24px] border border-slate-200/60 bg-white p-5 shadow-sm">
+                          <div className="flex items-center gap-2 mb-4">
+                            <BarChart3 className="h-5 w-5 text-orange-600" />
+                            <h4 className="text-sm font-bold text-slate-800">
+                              {selectedSemester === 'All' ? 'Overall Subject Grade Points' : `Sem ${selectedSemester} Subject Grade Points`}
+                            </h4>
+                          </div>
+                          <div className="h-60 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={subjectChartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(71, 101, 93, 0.15)" />
+                                <XAxis dataKey="name" stroke="#60756d" fontSize={9} tickFormatter={(v) => v.length > 12 ? `${v.substring(0, 12)}...` : v} />
+                                <YAxis stroke="#60756d" domain={[0, 10]} fontSize={10} fontWeight={600} />
+                                <Tooltip />
+                                <Bar dataKey="GPA" fill="#d47b10" radius={[5, 5, 0, 0]} barSize={20} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 3: Extracurriculars */}
+              {activeTab === 'extracurriculars' && (
+                <div className="space-y-6">
+                  {/* Personal aspirations */}
+                  <div className="rounded-[24px] border border-slate-200/60 bg-white p-6 shadow-sm">
+                    <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-amber-500" />
+                      <span>Career Goals & Personal Aspirations</span>
+                    </h3>
+                    <div className="grid gap-6 md:grid-cols-3">
+                      {/* Interests Column */}
+                      <div className="rounded-2xl border border-emerald-50 bg-[#f0f6f3]/50 p-4">
+                        <div className="flex items-center gap-1.5 text-emerald-850 mb-2">
+                          <Heart className="h-4.5 w-4.5 fill-emerald-800/10 text-emerald-800" />
+                          <h4 className="font-bold text-xs">Core Interests</h4>
+                        </div>
+                        <p className="text-[11px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
+                          {profile.interests?.trim() || 'No interests documented yet.'}
+                        </p>
+                      </div>
+
+                      {/* Dreams Column */}
+                      <div className="rounded-2xl border border-blue-50 bg-[#f1f9ff]/50 p-4">
+                        <div className="flex items-center gap-1.5 text-blue-900 mb-2">
+                          <Sparkles className="h-4.5 w-4.5 text-blue-800" />
+                          <h4 className="font-bold text-xs">Ultimate Dream</h4>
+                        </div>
+                        <p className="text-[11px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
+                          {profile.dreams?.trim() || 'No ultimate dreams documented yet.'}
+                        </p>
+                      </div>
+
+                      {/* Career Goals Column */}
+                      <div className="rounded-2xl border border-orange-50 bg-[#fffaf2]/50 p-4">
+                        <div className="flex items-center gap-1.5 text-orange-900 mb-2">
+                          <Target className="h-4.5 w-4.5 text-orange-850" />
+                          <h4 className="font-bold text-xs">Who they want to become</h4>
+                        </div>
+                        <p className="text-[11px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
+                          {profile.career_goals?.trim() || 'No career goals specified.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clubs & Orgs */}
+                  <div className="rounded-[24px] border border-slate-200/60 bg-white p-6 shadow-sm">
+                    <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <Users className="h-5 w-5 text-emerald-800" />
+                      <span>Clubs & Student Organizations</span>
+                    </h3>
+
+                    {clubsList.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                        Not active in any student clubs.
+                      </p>
+                    ) : (
+                      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                        {clubsList.map((club: any, index: number) => (
+                          <div key={index} className="rounded-2xl bg-slate-50 p-4 border border-slate-150 flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-white border border-slate-200 overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
+                              {club.logo ? (
+                                <img src={club.logo} alt={club.name} className="h-full w-full object-cover" />
+                              ) : (
+                                <Users className="h-4 w-4 text-emerald-850" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-slate-805 leading-tight">{club.name}</div>
+                              <div className="text-[9px] font-bold text-slate-400 uppercase mt-0.5 tracking-wider">{club.role}</div>
+                              <div className="text-[9px] font-semibold text-slate-500 mt-0.5">Joined: {club.joined}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Certifications */}
+                  <div className="rounded-[24px] border border-slate-200/60 bg-white p-6 shadow-sm">
+                    <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <Award className="h-5 w-5 text-emerald-800" />
+                      <span>Certifications & Achievements</span>
+                    </h3>
+
+                    {certificationsList.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic text-center py-6 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+                        No certifications registered.
+                      </p>
+                    ) : (
+                      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+                        {certificationsList.map((item: any, index: number) => (
+                          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col justify-between min-h-[120px] shadow-sm">
+                            <div>
+                              <div className="font-bold text-slate-800 text-xs leading-snug">{item.name}</div>
+                              
+                              {item.image && (
+                                <div 
+                                  onClick={() => setSelectedCertImage(item.image)}
+                                  className="mt-2.5 relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 cursor-pointer group hover:brightness-95 transition"
+                                  title="Click to view full certificate"
+                                >
+                                  <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                                  <div className="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-[9px] font-bold gap-1">
+                                    <ImageIcon className="h-3 w-3" />
+                                    <span>Expand</span>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div className="mt-3">
+                              {item.link ? (
+                                <a 
+                                  href={item.link} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-0.5 text-[10px] font-bold text-sky-600 hover:text-sky-700 hover:underline"
+                                >
+                                  <span>Verify credential</span>
+                                  <ExternalLink className="h-2.5 w-2.5" />
+                                </a>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">No link provided</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Full Screen Lightbox Preview for Certificates inside Modal */}
+      {selectedCertImage && (
+        <div 
+          onClick={() => setSelectedCertImage(null)}
+          className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md animate-fade-in"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl bg-white p-2 border border-white/10 shadow-2xl flex flex-col items-center animate-scale-in"
+          >
+            <button 
+              onClick={() => setSelectedCertImage(null)}
+              className="absolute right-4 top-4 rounded-full p-2 bg-slate-900/80 text-white hover:bg-slate-800 transition"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <img src={selectedCertImage} alt="Certificate Document" className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-sm" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

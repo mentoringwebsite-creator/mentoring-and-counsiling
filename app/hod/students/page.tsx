@@ -7,6 +7,8 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
 import { getRiskLevel } from '@/lib/risk';
 import { Loader2, Search, ChevronDown, ChevronUp, GraduationCap, Users, UserMinus, ShieldAlert, Award, Phone } from 'lucide-react';
+import { StudentDetailsModal } from '@/components/student-details-modal';
+import { FacultyDetailsModal } from '@/components/faculty-details-modal';
 
 export default function HodStudentsPage() {
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,9 @@ export default function HodStudentsPage() {
   // Track which faculty cards are expanded
   const [expandedFacultyId, setExpandedFacultyId] = useState<string | null>(null);
   const [unassignedExpanded, setUnassignedExpanded] = useState(false);
+
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [selectedFacultyId, setSelectedFacultyId] = useState<string | null>(null);
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
@@ -223,7 +228,14 @@ export default function HodStudentsPage() {
                                 return (
                                   <tr key={s.id} className="hover:bg-slate-50/50 transition">
                                     <td className="px-4 py-3 font-mono font-bold text-slate-700">{profile.roll_number || '-'}</td>
-                                    <td className="px-4 py-3 font-semibold text-slate-900">{s.name}</td>
+                                    <td className="px-4 py-3 font-semibold text-slate-900">
+                                      <button 
+                                        onClick={() => setSelectedStudentId(s.id)}
+                                        className="hover:underline hover:text-emerald-700 text-left font-semibold focus:outline-none"
+                                      >
+                                        {s.name}
+                                      </button>
+                                    </td>
                                     <td className="px-4 py-3 text-slate-700">
                                       {profile.branch} | Sec {profile.section}
                                     </td>
@@ -281,7 +293,17 @@ export default function HodStudentsPage() {
                                 <GraduationCap className="h-5.5 w-5.5" />
                               </div>
                               <div>
-                                <h4 className="text-lg font-bold text-slate-900">{mentor.name}</h4>
+                                <h4 className="text-lg font-bold text-slate-900">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedFacultyId(mentor.id);
+                                    }}
+                                    className="hover:underline hover:text-emerald-700 text-left font-bold focus:outline-none"
+                                  >
+                                    {mentor.name}
+                                  </button>
+                                </h4>
                                 <p className="text-xs text-slate-500 font-medium">
                                   {mentorProfile.designation || 'Faculty Mentor'} | {mentor.email}
                                 </p>
@@ -323,7 +345,14 @@ export default function HodStudentsPage() {
                                         return (
                                           <tr key={student.id} className="hover:bg-slate-50/50 transition">
                                             <td className="px-4 py-3 font-mono font-bold text-slate-700">{profile.roll_number || '-'}</td>
-                                            <td className="px-4 py-3 font-semibold text-slate-900">{student.name}</td>
+                                            <td className="px-4 py-3 font-semibold text-slate-900">
+                                              <button 
+                                                onClick={() => setSelectedStudentId(student.id)}
+                                                className="hover:underline hover:text-emerald-700 text-left font-semibold focus:outline-none"
+                                              >
+                                                {student.name}
+                                              </button>
+                                            </td>
                                             <td className="px-4 py-3 text-slate-700">Sec {profile.section || '-'}</td>
                                             <td className="px-4 py-3 text-slate-600 font-mono">{profile.phone || '-'}</td>
                                             <td className="px-4 py-3 font-semibold text-slate-900">{cgpaVal.toFixed(2)}</td>
@@ -355,6 +384,18 @@ export default function HodStudentsPage() {
             )}
           </div>
         </div>
+        
+        <StudentDetailsModal 
+          studentUserId={selectedStudentId}
+          isOpen={selectedStudentId !== null}
+          onClose={() => setSelectedStudentId(null)}
+        />
+
+        <FacultyDetailsModal 
+          facultyUserId={selectedFacultyId}
+          isOpen={selectedFacultyId !== null}
+          onClose={() => setSelectedFacultyId(null)}
+        />
       </PageShell>
     </ProtectedRoute>
   );

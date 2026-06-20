@@ -7,6 +7,7 @@ import { Sidebar } from '@/components/sidebar';
 import { supabase } from '@/lib/supabase';
 import { getRiskLevel } from '@/lib/risk';
 import { Loader2, Search, UserCheck, UserPlus, UserMinus } from 'lucide-react';
+import { StudentDetailsModal } from '@/components/student-details-modal';
 
 const facultySidebarItems = [
   { href: '/faculty', label: 'Faculty Dashboard' },
@@ -22,6 +23,7 @@ export default function FacultyStudentsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'my-students' | 'unassigned' | 'all'>('my-students');
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const loadData = async () => {
@@ -221,7 +223,14 @@ export default function FacultyStudentsPage() {
                     return (
                       <tr key={student.id} className="hover:bg-slate-50/50">
                         <td className="px-5 py-4 font-mono font-semibold text-slate-700">{profile.roll_number || '-'}</td>
-                        <td className="px-5 py-4 font-semibold text-slate-900">{student.name}</td>
+                        <td className="px-5 py-4 font-semibold text-slate-900">
+                          <button 
+                            onClick={() => setSelectedStudentId(student.id)}
+                            className="hover:underline hover:text-emerald-700 text-left font-semibold focus:outline-none"
+                          >
+                            {student.name}
+                          </button>
+                        </td>
                         <td className="px-5 py-4 text-slate-700">{profile.branch || '-'}</td>
                         <td className="px-5 py-4 text-slate-700 font-medium">{cgpaVal.toFixed(2)}</td>
                         <td className="px-5 py-4">
@@ -265,6 +274,12 @@ export default function FacultyStudentsPage() {
 
           </div>
         </div>
+
+        <StudentDetailsModal 
+          studentUserId={selectedStudentId}
+          isOpen={selectedStudentId !== null}
+          onClose={() => setSelectedStudentId(null)}
+        />
       </PageShell>
     </ProtectedRoute>
   );
