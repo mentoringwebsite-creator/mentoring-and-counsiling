@@ -140,22 +140,26 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(199,217,207,0.42),transparent_30%),radial-gradient(circle_at_top_right,rgba(234,218,177,0.30),transparent_28%),linear-gradient(180deg,#f4f7f4_0%,#edf2ee_100%)] text-portal-ink">
       <div className="min-h-screen w-full overflow-hidden bg-white/94 backdrop-blur-xl flex flex-col">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-black/5 bg-white/80 backdrop-blur-md px-4 sm:px-6">
-          <div className="flex items-center gap-3">
-            <Brand compact />
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-black/5 bg-white/80 backdrop-blur-md px-3 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-3 max-w-[70%] sm:max-w-[75%] overflow-hidden">
             <button 
               onClick={() => router.back()}
-              className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 text-slate-650 hover:bg-slate-100 hover:text-slate-800 transition shadow-sm active:scale-95 shrink-0"
+              className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 text-slate-655 hover:bg-slate-100 hover:text-slate-800 transition shadow-sm active:scale-95 shrink-0"
               aria-label="Go Back"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
+            
+            <div className="hidden sm:block shrink-0">
+              <Brand compact />
+            </div>
+
             {/* Mobile/Tablet Page Title (hidden on Desktop) */}
-            <div className="border-l border-slate-200 pl-3 lg:hidden">
-              <span className="text-sm font-bold tracking-tight text-portal-ink sm:text-base">{title}</span>
+            <div className="border-l border-slate-200 pl-2 sm:pl-3 lg:hidden overflow-hidden text-ellipsis whitespace-nowrap">
+              <span className="text-xs sm:text-sm font-bold tracking-tight text-portal-ink sm:text-base">{title}</span>
             </div>
             {/* Desktop Subtitle */}
-            <div className="hidden border-l border-black/10 pl-4 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[#315d47] md:grid">
+            <div className="hidden border-l border-black/10 pl-4 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[#315d47] md:grid shrink-0">
               <span>Sreenidhi</span>
               <span>Student</span>
               <span>Portal</span>

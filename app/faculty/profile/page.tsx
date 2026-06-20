@@ -211,8 +211,8 @@ export default function FacultyProfilePage() {
                 <div className="grid gap-8 md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
                   
                   {/* Left: Profile Photo Container */}
-                  <div className="rounded-3xl bg-[linear-gradient(180deg,#f0f6f3,#e7f0eb)] p-4 flex flex-col items-center justify-center">
-                    <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-white shadow-inner flex items-center justify-center">
+                  <div className="rounded-3xl bg-[linear-gradient(180deg,#f0f6f3,#e7f0eb)] p-4 flex flex-col items-center justify-center shrink-0">
+                    <div className="relative aspect-square w-32 h-32 md:w-full md:h-auto overflow-hidden rounded-2xl bg-white shadow-inner flex items-center justify-center">
                       {profile.photo ? (
                         <img
                           src={profile.photo}
@@ -224,8 +224,8 @@ export default function FacultyProfilePage() {
                         />
                       ) : (
                         <div className="flex h-full w-full flex-col items-center justify-center text-slate-455">
-                          <User className="h-16 w-16 text-emerald-800/40" />
-                          <span className="mt-2 text-xs font-semibold text-emerald-800/40">No photo uploaded</span>
+                          <User className="h-10 w-10 md:h-16 md:w-16 text-emerald-800/40" />
+                          <span className="mt-2 text-[10px] md:text-xs font-semibold text-emerald-800/40 text-center">No photo</span>
                         </div>
                       )}
                     </div>
