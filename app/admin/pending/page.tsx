@@ -96,7 +96,7 @@ export default function AdminPendingApprovalsPage() {
   return (
     <ProtectedRoute role="admin">
       <PageShell title="Pending Approvals" subtitle="Review and approve new user registrations">
-      <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+      <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
         <Sidebar
           active="/admin/pending"
           items={[
@@ -108,7 +108,7 @@ export default function AdminPendingApprovalsPage() {
             { href: '/admin/settings', label: 'Settings' }
           ]}
         />
-        <div className="space-y-6">
+        <div className="space-y-6 w-full min-w-0">
           <div className="portal-card">
             <h2 className="text-2xl font-semibold">Pending Approvals</h2>
             <p className="mt-2 text-slate-600">Approve or reject new student, faculty, and HOD accounts before they can sign in.</p>
@@ -118,7 +118,7 @@ export default function AdminPendingApprovalsPage() {
             <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{feedback}</div>
           ) : null}
 
-          <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto w-full rounded-[28px] border border-slate-200 bg-white shadow-sm">
             <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
               <thead className="bg-slate-50 text-slate-700">
                 <tr>

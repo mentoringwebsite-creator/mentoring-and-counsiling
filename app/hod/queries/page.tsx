@@ -199,12 +199,12 @@ export default function HodQueriesPage() {
   return (
     <ProtectedRoute role="hod">
       <PageShell title="Student Queries" subtitle="Department query watchlist">
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/hod/queries" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/profile', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
           
-          <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+          <div className="grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0">
             {/* Left Column: Queries List */}
-            <div className={selectedQuery ? "hidden lg:block space-y-6" : "space-y-6"}>
+            <div className={selectedQuery ? "hidden lg:block space-y-6 w-full min-w-0" : "space-y-6 w-full min-w-0"}>
               <div className="portal-card">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold">Department Watchlist</h2>
@@ -225,9 +225,9 @@ export default function HodQueriesPage() {
                   </div>
                 )}
 
-                <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-left text-sm">
+                <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm w-full min-w-0">
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full border-collapse text-left text-sm min-w-[360px]">
                       <thead>
                         <tr className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
                           <th className="p-4">Student</th>

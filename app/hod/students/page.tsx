@@ -142,10 +142,10 @@ export default function HodStudentsPage() {
   return (
     <ProtectedRoute role="hod">
       <PageShell title="Department Roster" subtitle={`${hodDept ? `${hodDept} Department` : 'Mentoring Overview'}`}>
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/hod/students" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/profile', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
           
-          <div className="space-y-6">
+          <div className="space-y-6 w-full min-w-0">
             {/* Header info */}
             <div className="portal-card">
               <h2 className="text-2xl font-semibold">Faculty Mentoring & Assignments</h2>

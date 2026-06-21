@@ -199,20 +199,20 @@ export default function QueriesPage() {
   return (
     <ProtectedRoute role="student">
       <PageShell title="Problems & Queries" subtitle="Raise and track support requests">
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/student/queries" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
           
-          <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+          <div className="grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0">
             {/* Left side: Query List */}
-            <div className={selectedQuery ? "hidden lg:block space-y-6" : "space-y-6"}>
+            <div className={selectedQuery ? "hidden lg:block space-y-6 w-full min-w-0" : "space-y-6 w-full min-w-0"}>
               <div className="portal-card">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <h2 className="text-2xl font-semibold">Recent Queries</h2>
                   <button 
                     onClick={() => setIsModalOpen(true)}
-                    className="rounded-2xl bg-sky-600 hover:bg-sky-700 px-4 py-3 font-semibold text-white transition shadow-sm"
+                    className="rounded-2xl bg-sky-600 hover:bg-sky-700 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-white transition shadow-sm"
                   >
-                    + Raise New Query
+                    + Raise Query
                   </button>
                 </div>
 
@@ -224,9 +224,9 @@ export default function QueriesPage() {
                   </div>
                 )}
 
-                <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse text-left text-sm">
+                <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white w-full min-w-0">
+                  <div className="overflow-x-auto w-full">
+                    <table className="w-full border-collapse text-left text-sm min-w-[360px]">
                       <thead>
                         <tr className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
                           <th className="p-4">Type</th>

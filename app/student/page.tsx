@@ -210,10 +210,10 @@ export default function StudentProfilePage() {
   return (
     <ProtectedRoute role="student">
       <PageShell title="Profile" subtitle="Student Enhancement & Counselling Portal">
-        <div className="grid gap-6 px-5 py-5 md:px-8 md:py-8 xl:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 px-5 py-5 md:px-8 md:py-8 xl:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/student" items={studentSidebarItems} />
 
-          <div className="grid gap-6 xl:min-w-0">
+          <div className="grid gap-6 w-full min-w-0">
             {loading ? (
               <div className="portal-card flex h-[350px] items-center justify-center">
                 <div className="flex flex-col items-center gap-3 text-slate-500">

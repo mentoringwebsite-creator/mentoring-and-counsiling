@@ -75,7 +75,7 @@ export default function AdminPage() {
   return (
     <ProtectedRoute role="admin">
       <PageShell title="Admin Dashboard" subtitle="Manage portal data and analytics">
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar
             active="/admin"
             items={[
@@ -87,7 +87,7 @@ export default function AdminPage() {
               { href: '/admin/settings', label: 'Settings' }
             ]}
           />
-          <div className="grid gap-6">
+          <div className="grid gap-6 w-full min-w-0">
             <div className="portal-card">
               <h1 className="text-3xl font-bold">Portal Analytics</h1>
               <p className="mt-2 text-slate-600">

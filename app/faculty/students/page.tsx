@@ -115,10 +115,10 @@ export default function FacultyStudentsPage() {
   return (
     <ProtectedRoute role="faculty">
       <PageShell title="My Students" subtitle="Manage and monitor your assigned students">
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/faculty/students" items={facultySidebarItems} />
 
-          <div className="space-y-6">
+          <div className="space-y-6 w-full min-w-0">
             <div className="portal-card">
               <h2 className="text-2xl font-semibold">Student Mentor Assignment</h2>
               <p className="mt-2 text-slate-600">Select students to assign them to your mentoring queue, or monitor details of already assigned students.</p>
@@ -184,7 +184,7 @@ export default function FacultyStudentsPage() {
             </div>
 
             {/* Students Table */}
-            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-x-auto w-full rounded-[28px] border border-slate-200 bg-white shadow-sm">
               <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
                 <thead className="bg-slate-50 text-slate-700">
                   <tr>

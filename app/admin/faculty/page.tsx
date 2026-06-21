@@ -120,10 +120,10 @@ export default function AdminFacultyPage() {
   return (
     <ProtectedRoute role="admin">
       <PageShell title="Manage Faculty" subtitle="View and manage approved faculty accounts">
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/admin/faculty" items={adminSidebarItems} />
 
-          <div className="space-y-6">
+          <div className="space-y-6 w-full min-w-0">
             <div className="portal-card">
               <h2 className="text-2xl font-semibold">Approved Faculty</h2>
               <p className="mt-2 text-slate-600">Review, suspend, or delete faculty profiles currently active in the system.</p>
@@ -139,7 +139,7 @@ export default function AdminFacultyPage() {
               </div>
             )}
 
-            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-x-auto w-full rounded-[28px] border border-slate-200 bg-white shadow-sm">
               <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
                 <thead className="bg-slate-50 text-slate-700">
                   <tr>

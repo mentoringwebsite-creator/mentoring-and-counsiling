@@ -287,10 +287,10 @@ export default function AdminStudentsPage() {
   return (
     <ProtectedRoute role="admin">
       <PageShell title="Manage Students" subtitle="View and manage approved student accounts">
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/admin/students" items={adminSidebarItems} />
 
-          <div className="space-y-6">
+          <div className="space-y-6 w-full min-w-0">
             <div className="portal-card">
               <h2 className="text-2xl font-semibold">Approved Students</h2>
               <p className="mt-2 text-slate-600">Review student profiles, manage their assignments, update academic marks, or suspend accounts.</p>
@@ -306,7 +306,7 @@ export default function AdminStudentsPage() {
               </div>
             )}
 
-            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm overflow-x-auto">
+            <div className="overflow-x-auto w-full rounded-[28px] border border-slate-200 bg-white shadow-sm">
               <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
                 <thead className="bg-slate-50 text-slate-700">
                   <tr>

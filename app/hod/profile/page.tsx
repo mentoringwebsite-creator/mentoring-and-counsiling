@@ -173,10 +173,10 @@ export default function HodProfilePage() {
   return (
     <ProtectedRoute role="hod">
       <PageShell title="HOD Profile" subtitle="Sreenidhi Institute of Science and Technology">
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/hod/profile" items={hodSidebarItems} />
 
-          <div className="grid gap-6">
+          <div className="grid gap-6 w-full min-w-0">
             {loading ? (
               <div className="portal-card flex h-[350px] items-center justify-center">
                 <div className="flex flex-col items-center gap-3 text-slate-500">

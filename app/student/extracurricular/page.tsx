@@ -271,10 +271,10 @@ export default function ExtracurricularPage() {
   return (
     <ProtectedRoute role="student">
       <PageShell title="Extracurricular Activities" subtitle="Clubs, certifications, and career aspirations">
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/student/extracurricular" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
           
-          <div className="grid gap-6">
+          <div className="grid gap-6 w-full min-w-0">
             {feedback && (
               <div className={`rounded-2xl border p-3 text-sm font-semibold shadow-sm animate-fade-in ${
                 feedback.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'

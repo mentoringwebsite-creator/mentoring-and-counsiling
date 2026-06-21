@@ -138,10 +138,10 @@ export default function FacultyPage() {
   return (
     <ProtectedRoute role="faculty">
       <PageShell title="Faculty Dashboard" subtitle="Mentoring, monitoring, and query handling">
-        <div className="grid gap-6 px-5 py-5 md:px-8 md:py-8 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="grid gap-6 px-5 py-5 md:px-8 md:py-8 xl:grid-cols-[300px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/faculty" items={facultySidebarItems} />
           
-          <div className="grid gap-6 xl:min-w-0">
+          <div className="grid gap-6 w-full min-w-0">
             {loading ? (
               <div className="portal-card flex h-[350px] items-center justify-center">
                 <div className="flex flex-col items-center gap-3 text-slate-500">
