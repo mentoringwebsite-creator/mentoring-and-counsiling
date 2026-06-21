@@ -204,7 +204,7 @@ export default function QueriesPage() {
           
           <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
             {/* Left side: Query List */}
-            <div className="space-y-6">
+            <div className={selectedQuery ? "hidden lg:block space-y-6" : "space-y-6"}>
               <div className="portal-card">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <h2 className="text-2xl font-semibold">Recent Queries</h2>
@@ -296,11 +296,18 @@ export default function QueriesPage() {
             </div>
 
             {/* Right side: Chat Window */}
-            <div className="portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white">
+            <div className={selectedQuery ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden lg:flex portal-card h-[600px] flex-col justify-between border border-slate-200 bg-white"}>
               {selectedQuery ? (
                 <>
                   {/* Chat Header */}
                   <div className="border-b border-slate-200 pb-4">
+                    {/* Mobile Back Button */}
+                    <button
+                      onClick={() => setSelectedQuery(null)}
+                      className="mb-3 flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700 lg:hidden"
+                    >
+                      &larr; Back to Queries
+                    </button>
                     <div className="flex items-center justify-between">
                       <div>
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{selectedQuery.type} Query</span>

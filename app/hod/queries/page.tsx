@@ -204,7 +204,7 @@ export default function HodQueriesPage() {
           
           <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
             {/* Left Column: Queries List */}
-            <div className="space-y-6">
+            <div className={selectedQuery ? "hidden lg:block space-y-6" : "space-y-6"}>
               <div className="portal-card">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold">Department Watchlist</h2>
@@ -290,11 +290,18 @@ export default function HodQueriesPage() {
             </div>
 
             {/* Right Column: Chat Window */}
-            <div className="portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white">
+            <div className={selectedQuery ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden lg:flex portal-card h-[600px] flex-col justify-between border border-slate-200 bg-white"}>
               {selectedQuery ? (
                 <>
                   {/* Chat Header */}
                   <div className="border-b border-slate-200 pb-4">
+                    {/* Mobile Back Button */}
+                    <button
+                      onClick={() => setSelectedQuery(null)}
+                      className="mb-3 flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-855 lg:hidden"
+                    >
+                      &larr; Back to Queries
+                    </button>
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
