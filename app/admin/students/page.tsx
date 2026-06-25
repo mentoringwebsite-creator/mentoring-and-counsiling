@@ -37,9 +37,11 @@ export default function AdminStudentsPage() {
   // AI OCR Parser states
   const [parsingMarksheet, setParsingMarksheet] = useState(false);
   const [parsingFeedback, setParsingFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [geminiKey, setGeminiKey] = useState('');
   const [groqKey, setGroqKey] = useState('');
   const [groqModel, setGroqModel] = useState('meta-llama/llama-4-scout-17b-16e-instruct');
-  const [aiEngine] = useState<'gemini' | 'groq'>('groq');
+  const [aiEngine, setAiEngine] = useState<'gemini' | 'groq'>('gemini');
+  const [serverGeminiConfigured, setServerGeminiConfigured] = useState(false);
   const [serverGroqConfigured, setServerGroqConfigured] = useState(false);
 
   // Cumulative score input states
@@ -104,12 +106,28 @@ export default function AdminStudentsPage() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
+          setServerGeminiConfigured(data.geminiConfigured);
           setServerGroqConfigured(data.groqConfigured);
+          
+          // Determine default engine dynamically if not stored in localStorage
+          if (typeof window !== 'undefined') {
+            const storedEngine = localStorage.getItem('admin_ai_engine') as 'gemini' | 'groq';
+            if (storedEngine) {
+              setAiEngine(storedEngine);
+            } else if (data.groqConfigured && !data.geminiConfigured) {
+              setAiEngine('groq');
+              localStorage.setItem('admin_ai_engine', 'groq');
+            } else {
+              setAiEngine('gemini');
+              localStorage.setItem('admin_ai_engine', 'gemini');
+            }
+          }
         }
       })
       .catch(err => console.error('Failed to load server config status:', err));
 
     if (typeof window !== 'undefined') {
+      setGeminiKey(localStorage.getItem('admin_gemini_key') || '');
       setGroqKey(localStorage.getItem('admin_groq_key') || '');
       const storedModel = localStorage.getItem('admin_groq_model');
       if (storedModel) setGroqModel(storedModel);
@@ -299,7 +317,7 @@ export default function AdminStudentsPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-gemini-key': '',
+          'x-gemini-key': geminiKey.trim(),
           'x-groq-key': groqKey.trim()
         },
         body: JSON.stringify({
@@ -325,6 +343,25 @@ export default function AdminStudentsPage() {
 
       const parsedData = result.data;
       
+      // Smart Merging Logic:
+      // Merge newly parsed subjects with existing subjects (academicSubjects)
+      // Check if subject name and semester match. If yes, update it. If not, append it.
+      const existingSubjects = academicSubjects || [];
+      const newSubjects = parsedData.subjects || [];
+      
+      const mergedSubjects = [...existingSubjects];
+      newSubjects.forEach((newSub: any) => {
+        const idx = mergedSubjects.findIndex(
+          (s) => (s.name || '').toLowerCase().trim() === (newSub.name || '').toLowerCase().trim() && 
+                 Number(s.semester) === Number(newSub.semester)
+        );
+        if (idx > -1) {
+          mergedSubjects[idx] = { ...mergedSubjects[idx], ...newSub };
+        } else {
+          mergedSubjects.push(newSub);
+        }
+      });
+
       setAcademicSgpa(Number(parsedData.sgpa) || 8.0);
       setAcademicCgpa(Number(parsedData.cgpa) || 8.0);
       setAcademicBacklogs(Number(parsedData.backlogs) || 0);
@@ -333,18 +370,18 @@ export default function AdminStudentsPage() {
       setInputCgpa((Number(parsedData.cgpa) || 8.0).toString());
       setInputBacklogs((Number(parsedData.backlogs) || 0).toString());
 
-      setAcademicSubjects(parsedData.subjects || []);
+      setAcademicSubjects(mergedSubjects);
 
       setParsingFeedback({
         type: 'success',
-        message: `Successfully parsed marksheet! (${result.source || 'AI Extraction'}) loaded ${parsedData.subjects?.length || 0} subjects.`
+        message: `Successfully parsed marksheet! (${result.source || 'AI Extraction'}) loaded ${newSubjects.length} subjects (total: ${mergedSubjects.length}).`
       });
 
       await handleAcademicSave(
         Number(parsedData.sgpa) || 8.0,
         Number(parsedData.cgpa) || 8.0,
         Number(parsedData.backlogs) || 0,
-        parsedData.subjects || []
+        mergedSubjects
       );
 
     } catch (err: any) {
@@ -631,44 +668,70 @@ export default function AdminStudentsPage() {
                     <Sparkles className="h-4.5 w-4.5 text-emerald-800" />
                     <span>AI Marksheet Document Scanner</span>
                   </div>
-                                   {/* Engine & Key Selectors */}
+                  {/* Engine & Key Selectors */}
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-xs font-bold text-slate-650">Groq Vision Model:</span>
                     <select
-                      value={groqModel}
+                      value={aiEngine}
                       onChange={(e) => {
-                        const model = e.target.value;
-                        setGroqModel(model);
-                        localStorage.setItem('admin_groq_model', model);
+                        const engine = e.target.value as 'gemini' | 'groq';
+                        setAiEngine(engine);
+                        localStorage.setItem('admin_ai_engine', engine);
                         setParsingFeedback(null);
                       }}
                       className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none"
                     >
-                      <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B (Recommended)</option>
-                      <option value="qwen/qwen3.6-27b">Qwen 3.6 27B</option>
-                      <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B (Vision)</option>
+                      <option value="gemini">Google Gemini (PDF/Image)</option>
+                      <option value="groq">Groq AI (Image only)</option>
                     </select>
+
+                    {aiEngine === 'groq' && (
+                      <select
+                        value={groqModel}
+                        onChange={(e) => {
+                          const model = e.target.value;
+                          setGroqModel(model);
+                          localStorage.setItem('admin_groq_model', model);
+                          setParsingFeedback(null);
+                        }}
+                        className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none"
+                      >
+                        <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B (Recommended)</option>
+                        <option value="qwen/qwen3.6-27b">Qwen 3.6 27B</option>
+                        <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B (Vision)</option>
+                      </select>
+                    )}
 
                     <input 
                       type="password"
-                      placeholder={serverGroqConfigured ? "Groq Key Active on Server" : "Paste Groq API Key..."}
-                      value={groqKey}
+                      placeholder={
+                        aiEngine === 'groq'
+                          ? (serverGroqConfigured ? "Groq Key Active on Server" : "Paste Groq API Key...")
+                          : (serverGeminiConfigured ? "Gemini Key Active on Server" : "Paste Gemini API Key...")
+                      }
+                      value={aiEngine === 'groq' ? groqKey : geminiKey}
                       onChange={(e) => {
-                        setGroqKey(e.target.value);
-                        localStorage.setItem('admin_groq_key', e.target.value);
+                        if (aiEngine === 'groq') {
+                          setGroqKey(e.target.value);
+                          localStorage.setItem('admin_groq_key', e.target.value);
+                        } else {
+                          setGeminiKey(e.target.value);
+                          localStorage.setItem('admin_gemini_key', e.target.value);
+                        }
                       }}
                       className="rounded-xl border border-slate-350 bg-white px-3 py-1.5 text-[10px] focus:outline-none w-[200px] focus:border-emerald-600 font-semibold"
                     />
                   </div>
-                </div>                 <div className="flex flex-col gap-4 md:flex-row items-center justify-between">
+                </div>
+
+                <div className="flex flex-col gap-4 md:flex-row items-center justify-between">
                   <div className="text-xs text-slate-650 max-w-md">
-                    Upload a marksheet image (PNG/JPG). The Groq AI will extract all subjects, marks, SGPA, and CGPA automatically!
+                    Upload a marksheet image (PNG/JPG) or PDF. The AI will extract all subjects, marks, SGPA, and CGPA automatically!
                   </div>
 
                   <div className="relative shrink-0 w-full md:w-auto">
                     <input 
                       type="file"
-                      accept="image/*"
+                      accept="image/*,application/pdf"
                       disabled={parsingMarksheet}
                       onChange={handleMarksheetUpload}
                       className="hidden"
@@ -686,7 +749,7 @@ export default function AdminStudentsPage() {
                       ) : (
                         <>
                           <Upload className="h-4 w-4 mr-1" />
-                          <span>Upload Marksheet Image</span>
+                          <span>Upload Marksheet PDF / Image</span>
                         </>
                       )}
                     </label>
