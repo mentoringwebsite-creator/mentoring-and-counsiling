@@ -3,7 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { fileBase64, fileName, mimeType } = body ?? {};
+    const { 
+      fileBase64, 
+      fileName, 
+      mimeType, 
+      engine = 'gemini', 
+      groqModel = 'meta-llama/llama-4-scout-17b-16e-instruct' 
+    } = body ?? {};
 
     if (!fileBase64) {
       return NextResponse.json(
@@ -12,15 +18,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    const clientApiKey = request.headers.get('x-gemini-key');
-    const activeKey = apiKey || clientApiKey;
+    // PDF validation for Groq
+    if (engine === 'groq' && mimeType === 'application/pdf') {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: `PDF parsing is not supported by the Groq model "${groqModel}". Please upload an image marksheet (PNG/JPG) to use Groq, or select Google Gemini to process PDF files.` 
+        },
+        { status: 400 }
+      );
+    }
+
+    const serverGeminiKey = process.env.GEMINI_API_KEY;
+    const serverGroqKey = process.env.GROQ_API_KEY;
+    const clientGeminiKey = request.headers.get('x-gemini-key');
+    const clientGroqKey = request.headers.get('x-groq-key');
+
+    const activeKey = engine === 'groq' 
+      ? (serverGroqKey || clientGroqKey)
+      : (serverGeminiKey || clientGeminiKey);
 
     if (!activeKey) {
-      // Return a simulated high-quality mock parse of the marksheet for demo purposes
-      console.log('No Gemini API key found. Returning simulated parse data.');
+      console.log(`No active API key found for engine "${engine}". Returning simulated parse data.`);
       
-      // Let's create a realistic mock parse based on the fileName or simple default
       const lowerName = (fileName || '').toLowerCase();
       let semester = 1;
       if (lowerName.includes('sem-2') || lowerName.includes('sem2') || lowerName.includes('semester2') || lowerName.includes('semester-2')) {
@@ -45,17 +65,103 @@ export async function POST(request: NextRequest) {
         ]
       };
 
-      // Add a simulated small delay
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       return NextResponse.json({
         success: true,
-        source: 'Simulated AI Parser (No API Key)',
+        source: `Simulated AI Parser (${engine.toUpperCase()} - No API Key)`,
         data: mockData
       });
     }
 
-    // Call the Google Gemini API using fetch
+    // ==================== ENGINE: GROQ ====================
+    if (engine === 'groq') {
+      const groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
+      
+      const promptText = `
+        Analyze this student marksheet/report card image. Extract all academic records and return a valid JSON object matching this schema exactly: 
+        {
+          "sgpa": 8.12, 
+          "cgpa": 8.12, 
+          "backlogs": 0, 
+          "subjects": [
+            {
+              "name": "C Programming", 
+              "semester": 1, 
+              "mid1": "18", 
+              "mid2": "19", 
+              "semester_marks": "84", 
+              "gpa": "9.0"
+            }
+          ]
+        }
+        
+        Requirements:
+        1. semester must be a number from 1 to 8.
+        2. mid1, mid2, semester_marks, and gpa must be strings. If a mark is missing, use "-".
+        3. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
+      `;
+
+      const response = await fetch(groqUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${activeKey}`
+        },
+        body: JSON.stringify({
+          model: groqModel,
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: promptText
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${mimeType || 'image/jpeg'};base64,${fileBase64}`
+                  }
+                }
+              ]
+            }
+          ],
+          response_format: {
+            type: 'json_object'
+          },
+          temperature: 0.1
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Groq API returned error code ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      const content = result.choices?.[0]?.message?.content;
+
+      if (!content) {
+        throw new Error('Groq API returned an empty completion response.');
+      }
+
+      let parsedData;
+      try {
+        parsedData = JSON.parse(content);
+      } catch (e) {
+        console.error('Failed to parse Groq output as JSON:', content);
+        throw new Error('Groq AI output was not in valid JSON format.');
+      }
+
+      return NextResponse.json({
+        success: true,
+        source: `Groq ${groqModel} API`,
+        data: parsedData
+      });
+    }
+
+    // ==================== ENGINE: GEMINI (Default) ====================
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
 
     const promptText = `
@@ -79,7 +185,7 @@ export async function POST(request: NextRequest) {
       Requirements:
       1. semester must be a number from 1 to 8.
       2. mid1, mid2, semester_marks, and gpa must be strings. If a mark is missing, use "-".
-      3. Return ONLY the JSON object. Do not wrap it in markdown code blocks or html.
+      3. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
     `;
 
     const response = await fetch(geminiUrl, {
@@ -126,12 +232,12 @@ export async function POST(request: NextRequest) {
       parsedData = JSON.parse(parsedText);
     } catch (e) {
       console.error('Failed to parse Gemini output as JSON:', parsedText);
-      throw new Error('AI output was not in valid JSON format.');
+      throw new Error('Gemini AI output was not in valid JSON format.');
     }
 
     return NextResponse.json({
       success: true,
-      source: 'Gemini AI Vision API',
+      source: 'Gemini 1.5 Flash Vision API',
       data: parsedData
     });
 
@@ -139,7 +245,7 @@ export async function POST(request: NextRequest) {
     console.error('parse-marksheet API error:', err);
     return NextResponse.json(
       { success: false, message: err.message || 'Failed to parse marksheet.' },
-      { status: 550 }
+      { status: 500 }
     );
   }
 }

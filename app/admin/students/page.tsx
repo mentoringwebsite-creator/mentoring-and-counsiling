@@ -37,7 +37,10 @@ export default function AdminStudentsPage() {
   // AI OCR Parser states
   const [parsingMarksheet, setParsingMarksheet] = useState(false);
   const [parsingFeedback, setParsingFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [geminiKey, setGeminiKey] = useState('');
+  const [groqKey, setGroqKey] = useState('');
+  const [groqModel, setGroqModel] = useState('meta-llama/llama-4-scout-17b-16e-instruct');
+  const [aiEngine] = useState<'gemini' | 'groq'>('groq');
+  const [serverGroqConfigured, setServerGroqConfigured] = useState(false);
 
   // Cumulative score input states
   const [statsEditMode, setStatsEditMode] = useState(false);
@@ -95,8 +98,21 @@ export default function AdminStudentsPage() {
   useEffect(() => {
     fetchStudents();
     fetchFaculty();
+
+    // Check server key configuration
+    fetch('/api/admin/config-status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setServerGroqConfigured(data.groqConfigured);
+        }
+      })
+      .catch(err => console.error('Failed to load server config status:', err));
+
     if (typeof window !== 'undefined') {
-      setGeminiKey(localStorage.getItem('admin_gemini_key') || '');
+      setGroqKey(localStorage.getItem('admin_groq_key') || '');
+      const storedModel = localStorage.getItem('admin_groq_model');
+      if (storedModel) setGroqModel(storedModel);
     }
   }, []);
 
@@ -226,63 +242,114 @@ export default function AdminStudentsPage() {
       setParsingMarksheet(true);
       setParsingFeedback(null);
 
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const base64String = (reader.result as string).split(',')[1];
-          
-          const response = await fetch('/api/admin/parse-marksheet', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'x-gemini-key': geminiKey.trim()
-            },
-            body: JSON.stringify({
-              fileBase64: base64String,
-              fileName: file.name,
-              mimeType: file.type
-            })
-          });
+      const getFileBase64 = (): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxDim = 1200;
+                let width = img.width;
+                let height = img.height;
 
-          const result = await response.json();
-          if (!response.ok || !result.success) {
-            throw new Error(result.message || 'Failed to parse marksheet.');
+                if (width > height) {
+                  if (width > maxDim) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                  }
+                } else {
+                  if (height > maxDim) {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                  }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                  ctx.drawImage(img, 0, 0, width, height);
+                  const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+                  resolve(dataUrl.split(',')[1]);
+                } else {
+                  reject(new Error('Canvas context not available'));
+                }
+              };
+              img.onerror = () => reject(new Error('Failed to load image'));
+              img.src = event.target?.result as string;
+            };
+            reader.onerror = () => reject(new Error('Failed to read image'));
+            reader.readAsDataURL(file);
+          } else {
+            const reader = new FileReader();
+            reader.onload = () => {
+              resolve((reader.result as string).split(',')[1]);
+            };
+            reader.onerror = () => reject(new Error('Failed to read PDF file'));
+            reader.readAsDataURL(file);
           }
-
-          const parsedData = result.data;
-          
-          setAcademicSgpa(Number(parsedData.sgpa) || 8.0);
-          setAcademicCgpa(Number(parsedData.cgpa) || 8.0);
-          setAcademicBacklogs(Number(parsedData.backlogs) || 0);
-
-          setInputSgpa((Number(parsedData.sgpa) || 8.0).toString());
-          setInputCgpa((Number(parsedData.cgpa) || 8.0).toString());
-          setInputBacklogs((Number(parsedData.backlogs) || 0).toString());
-
-          setAcademicSubjects(parsedData.subjects || []);
-
-          setParsingFeedback({
-            type: 'success',
-            message: `Successfully parsed marksheet! (${result.source || 'AI Extraction'}) loaded ${parsedData.subjects?.length || 0} subjects.`
-          });
-
-          await handleAcademicSave(
-            Number(parsedData.sgpa) || 8.0,
-            Number(parsedData.cgpa) || 8.0,
-            Number(parsedData.backlogs) || 0,
-            parsedData.subjects || []
-          );
-
-        } catch (err: any) {
-          console.error(err);
-          setParsingFeedback({ type: 'error', message: err.message || 'Failed to parse file.' });
-        }
+        });
       };
 
-      reader.readAsDataURL(file);
+      const base64String = await getFileBase64();
+      
+      const response = await fetch('/api/admin/parse-marksheet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-gemini-key': '',
+          'x-groq-key': groqKey.trim()
+        },
+        body: JSON.stringify({
+          fileBase64: base64String,
+          fileName: file.name,
+          mimeType: file.type,
+          engine: aiEngine,
+          groqModel: groqModel
+        })
+      });
+
+      const responseText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (jsonErr) {
+        throw new Error(`Server returned invalid response: ${responseText.substring(0, 150)}`);
+      }
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to parse marksheet.');
+      }
+
+      const parsedData = result.data;
+      
+      setAcademicSgpa(Number(parsedData.sgpa) || 8.0);
+      setAcademicCgpa(Number(parsedData.cgpa) || 8.0);
+      setAcademicBacklogs(Number(parsedData.backlogs) || 0);
+
+      setInputSgpa((Number(parsedData.sgpa) || 8.0).toString());
+      setInputCgpa((Number(parsedData.cgpa) || 8.0).toString());
+      setInputBacklogs((Number(parsedData.backlogs) || 0).toString());
+
+      setAcademicSubjects(parsedData.subjects || []);
+
+      setParsingFeedback({
+        type: 'success',
+        message: `Successfully parsed marksheet! (${result.source || 'AI Extraction'}) loaded ${parsedData.subjects?.length || 0} subjects.`
+      });
+
+      await handleAcademicSave(
+        Number(parsedData.sgpa) || 8.0,
+        Number(parsedData.cgpa) || 8.0,
+        Number(parsedData.backlogs) || 0,
+        parsedData.subjects || []
+      );
+
     } catch (err: any) {
       console.error(err);
-      setParsingFeedback({ type: 'error', message: err.message || 'Failed to process file.' });
+      setParsingFeedback({ type: 'error', message: err.message || 'Failed to parse file.' });
     } finally {
       setParsingMarksheet(false);
     }
@@ -559,34 +626,49 @@ export default function AdminStudentsPage() {
 
               {/* AI Marksheet Scanner (OCR & Parsing) */}
               <div className="mt-5 p-5 rounded-3xl border border-emerald-100 bg-emerald-50/20 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-3 mb-4">
                   <div className="flex items-center gap-1.5 text-emerald-950 font-bold text-sm">
                     <Sparkles className="h-4.5 w-4.5 text-emerald-800" />
                     <span>AI Marksheet Document Scanner</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                                   {/* Engine & Key Selectors */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xs font-bold text-slate-650">Groq Vision Model:</span>
+                    <select
+                      value={groqModel}
+                      onChange={(e) => {
+                        const model = e.target.value;
+                        setGroqModel(model);
+                        localStorage.setItem('admin_groq_model', model);
+                        setParsingFeedback(null);
+                      }}
+                      className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none"
+                    >
+                      <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B (Recommended)</option>
+                      <option value="qwen/qwen3.6-27b">Qwen 3.6 27B</option>
+                      <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B (Vision)</option>
+                    </select>
+
                     <input 
                       type="password"
-                      placeholder="Paste Gemini API Key for Live AI..."
-                      value={geminiKey}
+                      placeholder={serverGroqConfigured ? "Groq Key Active on Server" : "Paste Groq API Key..."}
+                      value={groqKey}
                       onChange={(e) => {
-                        setGeminiKey(e.target.value);
-                        localStorage.setItem('admin_gemini_key', e.target.value);
+                        setGroqKey(e.target.value);
+                        localStorage.setItem('admin_groq_key', e.target.value);
                       }}
-                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] focus:outline-none w-[180px] focus:border-emerald-605 font-semibold"
+                      className="rounded-xl border border-slate-350 bg-white px-3 py-1.5 text-[10px] focus:outline-none w-[200px] focus:border-emerald-600 font-semibold"
                     />
                   </div>
-                </div>
-
-                <div className="flex flex-col gap-4 md:flex-row items-center justify-between">
+                </div>                 <div className="flex flex-col gap-4 md:flex-row items-center justify-between">
                   <div className="text-xs text-slate-650 max-w-md">
-                    Upload a marksheet image (PNG/JPG) or PDF. The AI will extract all subjects, marks, SGPA, and CGPA automatically!
+                    Upload a marksheet image (PNG/JPG). The Groq AI will extract all subjects, marks, SGPA, and CGPA automatically!
                   </div>
 
                   <div className="relative shrink-0 w-full md:w-auto">
                     <input 
                       type="file"
-                      accept="image/*,application/pdf"
+                      accept="image/*"
                       disabled={parsingMarksheet}
                       onChange={handleMarksheetUpload}
                       className="hidden"
@@ -604,7 +686,7 @@ export default function AdminStudentsPage() {
                       ) : (
                         <>
                           <Upload className="h-4 w-4 mr-1" />
-                          <span>Upload Marksheet PDF / Image</span>
+                          <span>Upload Marksheet Image</span>
                         </>
                       )}
                     </label>
