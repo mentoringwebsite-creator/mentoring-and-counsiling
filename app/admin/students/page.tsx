@@ -5,7 +5,8 @@ import { PageShell } from '@/components/page-shell';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Trash2, ShieldAlert, GraduationCap, Plus, X, Edit2, Award, BookOpen } from 'lucide-react';
+import { Loader2, Trash2, ShieldAlert, GraduationCap, Plus, X, Edit2, Award, BookOpen, Sparkles, Upload, TrendingUp, BarChart3 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 const adminSidebarItems = [
   { href: '/admin', label: 'Overview' },
@@ -32,6 +33,11 @@ export default function AdminStudentsPage() {
   const [academicSubjects, setAcademicSubjects] = useState<any[]>([]);
   const [academicSelectedSem, setAcademicSelectedSem] = useState<string>('All');
   const [academicSaving, setAcademicSaving] = useState(false);
+
+  // AI OCR Parser states
+  const [parsingMarksheet, setParsingMarksheet] = useState(false);
+  const [parsingFeedback, setParsingFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [geminiKey, setGeminiKey] = useState('');
 
   // Cumulative score input states
   const [statsEditMode, setStatsEditMode] = useState(false);
@@ -89,6 +95,9 @@ export default function AdminStudentsPage() {
   useEffect(() => {
     fetchStudents();
     fetchFaculty();
+    if (typeof window !== 'undefined') {
+      setGeminiKey(localStorage.getItem('admin_gemini_key') || '');
+    }
   }, []);
 
   const handleMentorChange = async (studentUserId: string, newMentorId: string) => {
@@ -209,6 +218,76 @@ export default function AdminStudentsPage() {
     }
   };
 
+  const handleMarksheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setParsingMarksheet(true);
+      setParsingFeedback(null);
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64String = (reader.result as string).split(',')[1];
+          
+          const response = await fetch('/api/admin/parse-marksheet', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-gemini-key': geminiKey.trim()
+            },
+            body: JSON.stringify({
+              fileBase64: base64String,
+              fileName: file.name,
+              mimeType: file.type
+            })
+          });
+
+          const result = await response.json();
+          if (!response.ok || !result.success) {
+            throw new Error(result.message || 'Failed to parse marksheet.');
+          }
+
+          const parsedData = result.data;
+          
+          setAcademicSgpa(Number(parsedData.sgpa) || 8.0);
+          setAcademicCgpa(Number(parsedData.cgpa) || 8.0);
+          setAcademicBacklogs(Number(parsedData.backlogs) || 0);
+
+          setInputSgpa((Number(parsedData.sgpa) || 8.0).toString());
+          setInputCgpa((Number(parsedData.cgpa) || 8.0).toString());
+          setInputBacklogs((Number(parsedData.backlogs) || 0).toString());
+
+          setAcademicSubjects(parsedData.subjects || []);
+
+          setParsingFeedback({
+            type: 'success',
+            message: `Successfully parsed marksheet! (${result.source || 'AI Extraction'}) loaded ${parsedData.subjects?.length || 0} subjects.`
+          });
+
+          await handleAcademicSave(
+            Number(parsedData.sgpa) || 8.0,
+            Number(parsedData.cgpa) || 8.0,
+            Number(parsedData.backlogs) || 0,
+            parsedData.subjects || []
+          );
+
+        } catch (err: any) {
+          console.error(err);
+          setParsingFeedback({ type: 'error', message: err.message || 'Failed to parse file.' });
+        }
+      };
+
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      console.error(err);
+      setParsingFeedback({ type: 'error', message: err.message || 'Failed to process file.' });
+    } finally {
+      setParsingMarksheet(false);
+    }
+  };
+
   const handleStatsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newSgpa = Number(inputSgpa) || 0;
@@ -283,6 +362,46 @@ export default function AdminStudentsPage() {
     if (academicSelectedSem === 'All') return true;
     return sub.semester?.toString() === academicSelectedSem;
   });
+
+  const getSemesterGPAData = () => {
+    const semMap: { [key: number]: number[] } = {};
+    academicSubjects.forEach((sub) => {
+      const sem = parseInt(sub.semester);
+      const gpa = parseFloat(sub.gpa);
+      if (!isNaN(sem) && !isNaN(gpa)) {
+        if (!semMap[sem]) semMap[sem] = [];
+        semMap[sem].push(gpa);
+      }
+    });
+
+    return Object.keys(semMap)
+      .map((semStr) => {
+        const sem = parseInt(semStr);
+        const gpas = semMap[sem];
+        const avg = gpas.reduce((a, b) => a + b, 0) / gpas.length;
+        return {
+          name: `Sem ${sem}`,
+          GPA: Number(avg.toFixed(2)),
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const gpaChartData = getSemesterGPAData();
+
+  const getSubjectGPADistribution = () => {
+    return filteredAcademicSubjects
+      .map((sub) => {
+        const gpaVal = parseFloat(sub.gpa);
+        return {
+          name: sub.name,
+          GPA: isNaN(gpaVal) ? 0 : gpaVal,
+        };
+      })
+      .filter((d) => d.GPA > 0);
+  };
+
+  const subjectChartData = getSubjectGPADistribution();
 
   return (
     <ProtectedRoute role="admin">
@@ -436,6 +555,69 @@ export default function AdminStudentsPage() {
                   <h3 className="text-xl font-bold text-slate-900">Manage Academic Profile</h3>
                   <p className="text-xs text-slate-500">Student: <span className="font-bold text-slate-800">{selectedStudentForAcademic.name}</span> ({selectedStudentForAcademic.student_profiles?.[0]?.roll_number || 'No Roll No.'})</p>
                 </div>
+              </div>
+
+              {/* AI Marksheet Scanner (OCR & Parsing) */}
+              <div className="mt-5 p-5 rounded-3xl border border-emerald-100 bg-emerald-50/20 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-1.5 text-emerald-950 font-bold text-sm">
+                    <Sparkles className="h-4.5 w-4.5 text-emerald-800" />
+                    <span>AI Marksheet Document Scanner</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input 
+                      type="password"
+                      placeholder="Paste Gemini API Key for Live AI..."
+                      value={geminiKey}
+                      onChange={(e) => {
+                        setGeminiKey(e.target.value);
+                        localStorage.setItem('admin_gemini_key', e.target.value);
+                      }}
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[10px] focus:outline-none w-[180px] focus:border-emerald-605 font-semibold"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4 md:flex-row items-center justify-between">
+                  <div className="text-xs text-slate-650 max-w-md">
+                    Upload a marksheet image (PNG/JPG) or PDF. The AI will extract all subjects, marks, SGPA, and CGPA automatically!
+                  </div>
+
+                  <div className="relative shrink-0 w-full md:w-auto">
+                    <input 
+                      type="file"
+                      accept="image/*,application/pdf"
+                      disabled={parsingMarksheet}
+                      onChange={handleMarksheetUpload}
+                      className="hidden"
+                      id="marksheet-upload-input"
+                    />
+                    <label 
+                      htmlFor="marksheet-upload-input"
+                      className={`cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl bg-[#1c5644] hover:bg-[#154335] px-5 py-3 text-xs font-bold text-white transition shadow-sm w-full md:w-auto ${parsingMarksheet ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {parsingMarksheet ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin text-white mr-1" />
+                          <span>AI Parsing Document...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-1" />
+                          <span>Upload Marksheet PDF / Image</span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+                </div>
+
+                {parsingFeedback && (
+                  <div className={`mt-3.5 rounded-2xl border px-4 py-3 text-xs font-semibold ${
+                    parsingFeedback.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'
+                  }`}>
+                    {parsingFeedback.message}
+                  </div>
+                )}
               </div>
 
               {/* Cumulative stats section */}
@@ -626,6 +808,55 @@ export default function AdminStudentsPage() {
                   </div>
                 )}
               </div>
+
+              {/* Recharts Analytics Charts */}
+              {academicSubjects.length > 0 && (
+                <div className="grid gap-6 md:grid-cols-2 mt-6 border-t border-slate-100 pt-6">
+                  {/* Trend line */}
+                  {gpaChartData.length > 0 && (
+                    <div className="rounded-[24px] border border-slate-200/60 bg-white p-5 shadow-sm">
+                      <div className="flex items-center gap-2 mb-4">
+                        <TrendingUp className="h-5 w-5 text-emerald-800" />
+                        <h4 className="text-sm font-bold text-slate-800">Semester-wise GPA Track</h4>
+                      </div>
+                      <div className="h-60 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={gpaChartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(71, 101, 93, 0.15)" />
+                            <XAxis dataKey="name" stroke="#60756d" fontSize={10} fontWeight={600} />
+                            <YAxis stroke="#60756d" domain={[0, 10]} fontSize={10} fontWeight={600} />
+                            <Tooltip />
+                            <Line type="monotone" dataKey="GPA" stroke="#1c5644" strokeWidth={3} dot={{ r: 4 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Subject bar chart */}
+                  {subjectChartData.length > 0 && (
+                    <div className="rounded-[24px] border border-slate-200/60 bg-white p-5 shadow-sm">
+                      <div className="flex items-center gap-2 mb-4">
+                        <BarChart3 className="h-5 w-5 text-orange-655" />
+                        <h4 className="text-sm font-bold text-slate-800">
+                          {academicSelectedSem === 'All' ? 'Overall Subject Grade Points' : `Sem ${academicSelectedSem} Subject Grade Points`}
+                        </h4>
+                      </div>
+                      <div className="h-60 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={subjectChartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(71, 101, 93, 0.15)" />
+                            <XAxis dataKey="name" stroke="#60756d" fontSize={9} tickFormatter={(v) => v.length > 12 ? `${v.substring(0, 12)}...` : v} />
+                            <YAxis stroke="#60756d" domain={[0, 10]} fontSize={10} fontWeight={600} />
+                            <Tooltip />
+                            <Bar dataKey="GPA" fill="#d47b10" radius={[5, 5, 0, 0]} barSize={20} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
