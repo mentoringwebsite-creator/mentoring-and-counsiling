@@ -7,7 +7,8 @@ import {
   Loader2, X, User, Mail, Phone, Calendar, BookOpen, 
   TrendingUp, BarChart3, Sparkles, Heart, Target, 
   Award, Users, ExternalLink, Image as ImageIcon, 
-  GraduationCap, AlertTriangle, ShieldCheck
+  GraduationCap, AlertTriangle, ShieldCheck, Zap, 
+  ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -87,15 +88,35 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
     return sub.semester?.toString() === selectedSemester;
   });
 
+  // Helper to convert letter grades to GPA numbers
+  const convertGradeToGP = (gpaStr: string | number | undefined | null): number | null => {
+    if (gpaStr === undefined || gpaStr === null) return null;
+    const str = String(gpaStr).trim().toUpperCase();
+    const num = parseFloat(str);
+    if (!isNaN(num)) return num;
+    
+    switch (str) {
+      case 'O': case 'S': case '10': return 10.0;
+      case 'A+': case '9': return 9.0;
+      case 'A': case '8': return 8.0;
+      case 'B+': case '7': return 7.0;
+      case 'B': case '6': return 6.0;
+      case 'C': case '5': return 5.0;
+      case 'D': case '4': return 4.0;
+      case 'F': return 0.0;
+      default: return null; // Ignore non-grade strings like '-'
+    }
+  };
+
   // Calculate SGPA chart data dynamically
   const getSemesterGPAData = () => {
     const semMap: { [key: number]: number[] } = {};
     subjects.forEach((sub: any) => {
       const sem = parseInt(sub.semester);
-      const gpa = parseFloat(sub.gpa);
-      if (!isNaN(sem) && !isNaN(gpa)) {
+      const gp = convertGradeToGP(sub.gpa);
+      if (!isNaN(sem) && gp !== null) {
         if (!semMap[sem]) semMap[sem] = [];
-        semMap[sem].push(gpa);
+        semMap[sem].push(gp);
       }
     });
 
@@ -118,16 +139,85 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   const getSubjectGPADistribution = () => {
     return filteredSubjects
       .map((sub: any) => {
-        const gpaVal = parseFloat(sub.gpa);
+        const gp = convertGradeToGP(sub.gpa);
         return {
           name: sub.name,
-          GPA: isNaN(gpaVal) ? 0 : gpaVal,
+          GPA: gp === null ? 0 : gp,
         };
       })
       .filter((d: any) => d.GPA > 0);
   };
 
   const subjectChartData = getSubjectGPADistribution();
+
+  // Automated Strengths, Weaknesses, and Progress Momentum Analysis
+  const getAcademicAnalysis = () => {
+    if (subjects.length === 0) return null;
+
+    // 1. Core strengths (GPAs >= 9.0 or grades O/S/A+)
+    const isStrength = (gpaStr: string) => {
+      const gp = convertGradeToGP(gpaStr);
+      return gp !== null && gp >= 9.0;
+    };
+    const strengths = subjects.filter((s: any) => isStrength(s.gpa)).map((s: any) => s.name);
+
+    // 2. Focus areas (GPAs < 7.5 or grades B/C/F)
+    const isWeakness = (gpaStr: string) => {
+      const gp = convertGradeToGP(gpaStr);
+      return gp !== null && gp < 7.5;
+    };
+    const weaknesses = subjects.filter((s: any) => isWeakness(s.gpa)).map((s: any) => s.name);
+
+    // 3. GPA Momentum (Latest vs Previous Semester)
+    const semGPAs: { [key: number]: number } = {};
+    const semMap: { [key: number]: number[] } = {};
+    subjects.forEach((sub: any) => {
+      const sem = parseInt(sub.semester);
+      const gp = convertGradeToGP(sub.gpa);
+      if (!isNaN(sem) && gp !== null) {
+        if (!semMap[sem]) semMap[sem] = [];
+        semMap[sem].push(gp);
+      }
+    });
+
+    Object.keys(semMap).forEach(semStr => {
+      const sem = parseInt(semStr);
+      const gpas = semMap[sem];
+      semGPAs[sem] = gpas.reduce((a, b) => a + b, 0) / gpas.length;
+    });
+
+    const semesters = Object.keys(semGPAs).map(Number).sort((a, b) => a - b);
+    let momentum: 'up' | 'down' | 'stable' = 'stable';
+    let momentumVal = 0;
+    
+    if (semesters.length >= 2) {
+      const latest = semesters[semesters.length - 1];
+      const prev = semesters[semesters.length - 2];
+      momentumVal = Number((semGPAs[latest] - semGPAs[prev]).toFixed(2));
+      if (momentumVal > 0.05) momentum = 'up';
+      else if (momentumVal < -0.05) momentum = 'down';
+    }
+
+    // 4. Career placement readiness score
+    let placementScore = 75;
+    if (cgpaVal >= 8.5) placementScore = 95;
+    else if (cgpaVal >= 8.0) placementScore = 88;
+    else if (cgpaVal >= 7.0) placementScore = 78;
+    else if (cgpaVal >= 6.0) placementScore = 65;
+    else placementScore = 45;
+
+    if (backlogsVal > 0) placementScore = Math.max(30, placementScore - 15);
+
+    return {
+      strengths: strengths.slice(0, 3), // Top 3
+      weaknesses: weaknesses.slice(0, 3), // Top 3
+      momentum,
+      momentumVal,
+      placementScore
+    };
+  };
+
+  const analysis = getAcademicAnalysis();
 
   const clubsList = profile.clubs || [];
   const certificationsList = profile.certifications || [];
@@ -453,6 +543,118 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                           </div>
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {/* AI Professional Analysis Card */}
+                  {subjects.length > 0 && analysis && (
+                    <div className="mt-6 border-t border-slate-100 pt-6">
+                      <div className="rounded-[28px] border border-slate-150 bg-[linear-gradient(180deg,#ffffff,#fafcfb)] p-6 shadow-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-3">
+                          <Sparkles className="h-5 w-5 text-emerald-800 opacity-20" />
+                        </div>
+
+                        <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
+                          <Sparkles className="h-4.5 w-4.5 text-emerald-800" />
+                          <span>AI Academic Profiler (Academic Insights)</span>
+                        </h3>
+
+                        <div className="grid gap-6 md:grid-cols-3">
+                          {/* Left: Placement Readiness Gauge */}
+                          <div className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-center">
+                            <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-2">
+                              <span className="flex items-center gap-1.5">
+                                <Target className="h-4 w-4 text-emerald-700" />
+                                Placement Readiness
+                              </span>
+                              <span className="font-extrabold text-slate-900">{analysis.placementScore}%</span>
+                            </div>
+                            <div className="w-full bg-slate-150 rounded-full h-2 mb-3">
+                              <div 
+                                className="bg-[linear-gradient(90deg,#1c5644,#34d399)] h-2 rounded-full transition-all duration-500" 
+                                style={{ width: `${analysis.placementScore}%` }}
+                              />
+                            </div>
+                            <p className="text-[10px] text-slate-450 leading-relaxed">
+                              Estimated placement readiness based on CGPA of {cgpaVal.toFixed(2)} and {backlogsVal} active backlogs.
+                            </p>
+                          </div>
+
+                          {/* Middle: Key Strengths & Weaknesses */}
+                          <div className="space-y-4">
+                            {analysis.strengths.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1 mb-2">
+                                  <Zap className="h-3.5 w-3.5 text-emerald-700 fill-emerald-100" />
+                                  Key Strengths
+                                </h4>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {analysis.strengths.map((str: string, idx: number) => (
+                                    <span key={idx} className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1">
+                                      {str}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {analysis.weaknesses.length > 0 && (
+                              <div>
+                                <h4 className="text-xs font-bold text-amber-905 uppercase tracking-wide flex items-center gap-1 mb-2">
+                                  <AlertTriangle className="h-3.5 w-3.5 text-amber-605" />
+                                  Focus Subject Areas
+                                </h4>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {analysis.weaknesses.map((weak: string, idx: number) => (
+                                    <span key={idx} className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1">
+                                      {weak}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right: Performance Momentum */}
+                          <div className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-center">
+                            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
+                              Performance Momentum
+                            </h4>
+                            <div className="flex items-start gap-3">
+                              {analysis.momentum === 'up' ? (
+                                <>
+                                  <div className="rounded-xl bg-emerald-100 p-2 text-emerald-850 shrink-0">
+                                    <ArrowUpRight className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-800">Upward Trajectory</p>
+                                    <p className="text-[10px] text-slate-505 mt-1 font-semibold">+{analysis.momentumVal} GPA increase compared to the previous semester.</p>
+                                  </div>
+                                </>
+                              ) : analysis.momentum === 'down' ? (
+                                <>
+                                  <div className="rounded-xl bg-rose-100 p-2 text-rose-850 shrink-0">
+                                    <ArrowDownRight className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-805">Downward Trajectory</p>
+                                    <p className="text-[10px] text-slate-505 mt-1 font-semibold">{analysis.momentumVal} GPA drop. Action required.</p>
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <div className="rounded-xl bg-slate-100 p-2 text-slate-700 shrink-0">
+                                    <TrendingUp className="h-5 w-5 opacity-40" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-800">Consistent Performance</p>
+                                    <p className="text-[10px] text-slate-505 mt-1 font-semibold">Grades remain stable and aligned with academic history.</p>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
