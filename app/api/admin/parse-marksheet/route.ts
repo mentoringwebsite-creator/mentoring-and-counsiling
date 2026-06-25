@@ -8,23 +8,13 @@ export async function POST(request: NextRequest) {
       fileName, 
       mimeType, 
       engine = 'gemini', 
-      groqModel = 'meta-llama/llama-4-scout-17b-16e-instruct' 
+      groqModel = 'meta-llama/llama-4-scout-17b-16e-instruct',
+      pdfText
     } = body ?? {};
 
-    if (!fileBase64) {
+    if (!fileBase64 && !pdfText) {
       return NextResponse.json(
-        { success: false, message: 'Missing file data (fileBase64).' },
-        { status: 400 }
-      );
-    }
-
-    // PDF validation for Groq
-    if (engine === 'groq' && mimeType === 'application/pdf') {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: `PDF parsing is not supported by the Groq model "${groqModel}". Please upload an image marksheet (PNG/JPG) to use Groq, or select Google Gemini to process PDF files.` 
-        },
+        { success: false, message: 'Missing file data (fileBase64 or pdfText).' },
         { status: 400 }
       );
     }
@@ -102,6 +92,40 @@ export async function POST(request: NextRequest) {
         3. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
       `;
 
+      let messages = [];
+      let activeModel = groqModel;
+
+      if (pdfText) {
+        // If it's text-only, we map to llama-3.3-70b-versatile which is excellent for table data
+        if (groqModel.includes('vision') || groqModel.includes('scout')) {
+          activeModel = 'llama-3.3-70b-versatile';
+        }
+        messages = [
+          {
+            role: 'user',
+            content: `${promptText}\n\nHere is the raw text extracted from the student marksheet PDF:\n${pdfText}`
+          }
+        ];
+      } else {
+        messages = [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: promptText
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${mimeType || 'image/jpeg'};base64,${fileBase64}`
+                }
+              }
+            ]
+          }
+        ];
+      }
+
       const response = await fetch(groqUrl, {
         method: 'POST',
         headers: {
@@ -109,24 +133,8 @@ export async function POST(request: NextRequest) {
           'Authorization': `Bearer ${activeKey}`
         },
         body: JSON.stringify({
-          model: groqModel,
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: promptText
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:${mimeType || 'image/jpeg'};base64,${fileBase64}`
-                  }
-                }
-              ]
-            }
-          ],
+          model: activeModel,
+          messages,
           response_format: {
             type: 'json_object'
           },
@@ -156,7 +164,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        source: `Groq ${groqModel} API`,
+        source: `Groq ${pdfText ? 'llama-3.3-70b-versatile' : groqModel} API`,
         data: parsedData
       });
     }

@@ -37,11 +37,9 @@ export default function AdminStudentsPage() {
   // AI OCR Parser states
   const [parsingMarksheet, setParsingMarksheet] = useState(false);
   const [parsingFeedback, setParsingFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [geminiKey, setGeminiKey] = useState('');
   const [groqKey, setGroqKey] = useState('');
   const [groqModel, setGroqModel] = useState('meta-llama/llama-4-scout-17b-16e-instruct');
-  const [aiEngine, setAiEngine] = useState<'gemini' | 'groq'>('gemini');
-  const [serverGeminiConfigured, setServerGeminiConfigured] = useState(false);
+  const [aiEngine] = useState<'gemini' | 'groq'>('groq');
   const [serverGroqConfigured, setServerGroqConfigured] = useState(false);
 
   // Cumulative score input states
@@ -106,28 +104,12 @@ export default function AdminStudentsPage() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          setServerGeminiConfigured(data.geminiConfigured);
           setServerGroqConfigured(data.groqConfigured);
-          
-          // Determine default engine dynamically if not stored in localStorage
-          if (typeof window !== 'undefined') {
-            const storedEngine = localStorage.getItem('admin_ai_engine') as 'gemini' | 'groq';
-            if (storedEngine) {
-              setAiEngine(storedEngine);
-            } else if (data.groqConfigured && !data.geminiConfigured) {
-              setAiEngine('groq');
-              localStorage.setItem('admin_ai_engine', 'groq');
-            } else {
-              setAiEngine('gemini');
-              localStorage.setItem('admin_ai_engine', 'gemini');
-            }
-          }
         }
       })
       .catch(err => console.error('Failed to load server config status:', err));
 
     if (typeof window !== 'undefined') {
-      setGeminiKey(localStorage.getItem('admin_gemini_key') || '');
       setGroqKey(localStorage.getItem('admin_groq_key') || '');
       const storedModel = localStorage.getItem('admin_groq_model');
       if (storedModel) setGroqModel(storedModel);
@@ -252,6 +234,58 @@ export default function AdminStudentsPage() {
     }
   };
 
+  const processPdfFile = async (file: File): Promise<{ pdfText?: string, fileBase64?: string, mimeType: string }> => {
+    const loadPdfJS = (): Promise<any> => {
+      return new Promise((resolve, reject) => {
+        if ((window as any).pdfjsLib) {
+          resolve((window as any).pdfjsLib);
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        script.onload = () => {
+          const pdfjsLib = (window as any).pdfjsLib;
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          resolve(pdfjsLib);
+        };
+        script.onerror = () => reject(new Error('Failed to load PDF.js from CDN'));
+        document.head.appendChild(script);
+      });
+    };
+
+    const pdfjsLib = await loadPdfJS();
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    
+    let fullText = "";
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item: any) => item.str).join(' ');
+      fullText += `--- Page ${i} ---\n${pageText}\n\n`;
+    }
+
+    if (fullText.trim().length > 100) {
+      console.log('Extracted text from PDF:', fullText.trim().substring(0, 200));
+      return { pdfText: fullText, mimeType: 'text/plain' };
+    }
+
+    console.log('No text found in PDF. Rendering page to image...');
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Could not create 2D canvas context for rendering PDF.');
+    }
+    
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    return { fileBase64: base64, mimeType: 'image/jpeg' };
+  };
+
   const handleMarksheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -260,9 +294,13 @@ export default function AdminStudentsPage() {
       setParsingMarksheet(true);
       setParsingFeedback(null);
 
-      const getFileBase64 = (): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          if (file.type.startsWith('image/')) {
+      let payload: { fileBase64?: string; pdfText?: string; mimeType: string } = { mimeType: file.type };
+
+      if (file.type === 'application/pdf') {
+        payload = await processPdfFile(file);
+      } else {
+        const getFileBase64 = (): Promise<string> => {
+          return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (event) => {
               const img = new Image();
@@ -300,31 +338,25 @@ export default function AdminStudentsPage() {
             };
             reader.onerror = () => reject(new Error('Failed to read image'));
             reader.readAsDataURL(file);
-          } else {
-            const reader = new FileReader();
-            reader.onload = () => {
-              resolve((reader.result as string).split(',')[1]);
-            };
-            reader.onerror = () => reject(new Error('Failed to read PDF file'));
-            reader.readAsDataURL(file);
-          }
-        });
-      };
+          });
+        };
 
-      const base64String = await getFileBase64();
-      
+        const base64 = await getFileBase64();
+        payload = { fileBase64: base64, mimeType: file.type };
+      }
+
       const response = await fetch('/api/admin/parse-marksheet', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-gemini-key': geminiKey.trim(),
           'x-groq-key': groqKey.trim()
         },
         body: JSON.stringify({
-          fileBase64: base64String,
+          fileBase64: payload.fileBase64,
+          pdfText: payload.pdfText,
           fileName: file.name,
-          mimeType: file.type,
-          engine: aiEngine,
+          mimeType: payload.mimeType,
+          engine: 'groq',
           groqModel: groqModel
         })
       });
@@ -670,53 +702,29 @@ export default function AdminStudentsPage() {
                   </div>
                   {/* Engine & Key Selectors */}
                   <div className="flex flex-wrap items-center gap-3">
+                    <span className="text-xs font-bold text-slate-650">Groq Vision Model:</span>
                     <select
-                      value={aiEngine}
+                      value={groqModel}
                       onChange={(e) => {
-                        const engine = e.target.value as 'gemini' | 'groq';
-                        setAiEngine(engine);
-                        localStorage.setItem('admin_ai_engine', engine);
+                        const model = e.target.value;
+                        setGroqModel(model);
+                        localStorage.setItem('admin_groq_model', model);
                         setParsingFeedback(null);
                       }}
                       className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none"
                     >
-                      <option value="gemini">Google Gemini (PDF/Image)</option>
-                      <option value="groq">Groq AI (Image only)</option>
+                      <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B (Recommended)</option>
+                      <option value="qwen/qwen3.6-27b">Qwen 3.6 27B</option>
+                      <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B (Vision)</option>
                     </select>
-
-                    {aiEngine === 'groq' && (
-                      <select
-                        value={groqModel}
-                        onChange={(e) => {
-                          const model = e.target.value;
-                          setGroqModel(model);
-                          localStorage.setItem('admin_groq_model', model);
-                          setParsingFeedback(null);
-                        }}
-                        className="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 focus:outline-none"
-                      >
-                        <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B (Recommended)</option>
-                        <option value="qwen/qwen3.6-27b">Qwen 3.6 27B</option>
-                        <option value="llama-3.2-11b-vision-preview">Llama 3.2 11B (Vision)</option>
-                      </select>
-                    )}
 
                     <input 
                       type="password"
-                      placeholder={
-                        aiEngine === 'groq'
-                          ? (serverGroqConfigured ? "Groq Key Active on Server" : "Paste Groq API Key...")
-                          : (serverGeminiConfigured ? "Gemini Key Active on Server" : "Paste Gemini API Key...")
-                      }
-                      value={aiEngine === 'groq' ? groqKey : geminiKey}
+                      placeholder={serverGroqConfigured ? "Groq Key Active on Server" : "Paste Groq API Key..."}
+                      value={groqKey}
                       onChange={(e) => {
-                        if (aiEngine === 'groq') {
-                          setGroqKey(e.target.value);
-                          localStorage.setItem('admin_groq_key', e.target.value);
-                        } else {
-                          setGeminiKey(e.target.value);
-                          localStorage.setItem('admin_gemini_key', e.target.value);
-                        }
+                        setGroqKey(e.target.value);
+                        localStorage.setItem('admin_groq_key', e.target.value);
                       }}
                       className="rounded-xl border border-slate-350 bg-white px-3 py-1.5 text-[10px] focus:outline-none w-[200px] focus:border-emerald-600 font-semibold"
                     />
