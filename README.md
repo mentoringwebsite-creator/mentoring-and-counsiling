@@ -98,4 +98,4 @@ Push to GitHub, import the repo in Vercel, add the Supabase environment variable
 python -m http.server 8000
 ```
 
-Then visit http://localhost:8000 in your browser.indu love afif
+Then visit http://localhost:8000 in your browser.afif
