@@ -238,7 +238,7 @@ export default function AdminStudentsPage() {
     }
   };
 
-  const processPdfFile = async (file: File): Promise<{ pdfText?: string, fileBase64?: string, mimeType: string }> => {
+  const processPdfFile = async (file: File): Promise<{ pdfText?: string, fileBase64s?: string[], mimeType: string }> => {
     const loadPdfJS = (): Promise<any> => {
       return new Promise((resolve, reject) => {
         if ((window as any).pdfjsLib) {
@@ -274,20 +274,22 @@ export default function AdminStudentsPage() {
       return { pdfText: fullText, mimeType: 'text/plain' };
     }
 
-    console.log('No text found in PDF. Rendering page to image...');
-    const page = await pdf.getPage(1);
-    const viewport = page.getViewport({ scale: 1.5 });
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Could not create 2D canvas context for rendering PDF.');
+    console.log(`No text found in PDF. Rendering all ${pdf.numPages} pages to images...`);
+    const base64s: string[] = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+        base64s.push(base64);
+      }
     }
-    
-    await page.render({ canvasContext: ctx, viewport }).promise;
-    const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-    return { fileBase64: base64, mimeType: 'image/jpeg' };
+    return { fileBase64s: base64s, mimeType: 'image/jpeg' };
   };
 
   const handleMarksheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -298,7 +300,7 @@ export default function AdminStudentsPage() {
       setParsingMarksheet(true);
       setParsingFeedback(null);
 
-      let payload: { fileBase64?: string; pdfText?: string; mimeType: string } = { mimeType: file.type };
+      let payload: { fileBase64?: string; fileBase64s?: string[]; pdfText?: string; mimeType: string } = { mimeType: file.type };
 
       if (file.type === 'application/pdf') {
         payload = await processPdfFile(file);
@@ -357,6 +359,7 @@ export default function AdminStudentsPage() {
         },
         body: JSON.stringify({
           fileBase64: payload.fileBase64,
+          fileBase64s: payload.fileBase64s,
           pdfText: payload.pdfText,
           fileName: file.name,
           mimeType: payload.mimeType,

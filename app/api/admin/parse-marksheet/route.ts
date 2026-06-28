@@ -5,6 +5,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { 
       fileBase64, 
+      fileBase64s,
       fileName, 
       mimeType, 
       engine = 'gemini', 
@@ -12,9 +13,9 @@ export async function POST(request: NextRequest) {
       pdfText
     } = body ?? {};
 
-    if (!fileBase64 && !pdfText) {
+    if (!fileBase64 && !fileBase64s && !pdfText) {
       return NextResponse.json(
-        { success: false, message: 'Missing file data (fileBase64 or pdfText).' },
+        { success: false, message: 'Missing file data (fileBase64, fileBase64s or pdfText).' },
         { status: 400 }
       );
     }
@@ -105,7 +106,9 @@ export async function POST(request: NextRequest) {
            - IV Year I Semester / Year 4 Sem 1 / 4-1 / IV B.Tech I Semester -> 7
            - IV Year II Semester / Year 4 Sem 2 / 4-2 / IV B.Tech II Semester -> 8
         2. mid1, mid2, semester_marks, and gpa must be strings. If a mark is missing, use "-".
-        3. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
+        3. For "sgpa" and "cgpa" at the root level, return the values corresponding to the LATEST semester found in the marksheet (e.g. if the marksheet contains semesters 1, 2, and 3, return the Semester 3 SGPA and CGPA).
+        4. For "backlogs" at the root level, return the total number of active backlogs across all semesters.
+        5. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
       `;
 
       let messages = [];
@@ -123,21 +126,35 @@ export async function POST(request: NextRequest) {
           }
         ];
       } else {
+        const imageContent: any[] = [
+          {
+            type: 'text',
+            text: promptText
+          }
+        ];
+
+        if (fileBase64s && fileBase64s.length > 0) {
+          fileBase64s.forEach((b64: string) => {
+            imageContent.push({
+              type: 'image_url',
+              image_url: {
+                url: `data:${mimeType || 'image/jpeg'};base64,${b64}`
+              }
+            });
+          });
+        } else if (fileBase64) {
+          imageContent.push({
+            type: 'image_url',
+            image_url: {
+              url: `data:${mimeType || 'image/jpeg'};base64,${fileBase64}`
+            }
+          });
+        }
+
         messages = [
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: promptText
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${mimeType || 'image/jpeg'};base64,${fileBase64}`
-                }
-              }
-            ]
+            content: imageContent
           }
         ];
       }
@@ -223,8 +240,30 @@ export async function POST(request: NextRequest) {
          - IV Year I Semester / Year 4 Sem 1 / 4-1 / IV B.Tech I Semester -> 7
          - IV Year II Semester / Year 4 Sem 2 / 4-2 / IV B.Tech II Semester -> 8
       2. mid1, mid2, semester_marks, and gpa must be strings. If a mark is missing, use "-".
-      3. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
+      3. For "sgpa" and "cgpa" at the root level, return the values corresponding to the LATEST semester found in the marksheet (e.g. if the marksheet contains semesters 1, 2, and 3, return the Semester 3 SGPA and CGPA).
+      4. For "backlogs" at the root level, return the total number of active backlogs across all semesters.
+      5. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
     `;
+
+    const parts: any[] = [];
+    if (fileBase64s && fileBase64s.length > 0) {
+      fileBase64s.forEach((b64: string) => {
+        parts.push({
+          inlineData: {
+            mimeType: mimeType || 'image/jpeg',
+            data: b64
+          }
+        });
+      });
+    } else if (fileBase64) {
+      parts.push({
+        inlineData: {
+          mimeType: mimeType || 'image/jpeg',
+          data: fileBase64
+        }
+      });
+    }
+    parts.push({ text: promptText });
 
     const response = await fetch(geminiUrl, {
       method: 'POST',
@@ -234,17 +273,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         contents: [
           {
-            parts: [
-              {
-                inlineData: {
-                  mimeType: mimeType || 'image/jpeg',
-                  data: fileBase64
-                }
-              },
-              {
-                text: promptText
-              }
-            ]
+            parts: parts
           }
         ],
         generationConfig: {
