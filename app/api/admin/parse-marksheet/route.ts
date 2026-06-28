@@ -33,12 +33,20 @@ export async function POST(request: NextRequest) {
       
       const lowerName = (fileName || '').toLowerCase();
       let semester = 1;
-      if (lowerName.includes('sem-2') || lowerName.includes('sem2') || lowerName.includes('semester2') || lowerName.includes('semester-2')) {
+      if (lowerName.includes('sem-2') || lowerName.includes('sem2') || lowerName.includes('semester2') || lowerName.includes('semester-2') || lowerName.includes('1-2') || lowerName.includes('1_2') || lowerName.includes('1 2')) {
         semester = 2;
-      } else if (lowerName.includes('sem-3') || lowerName.includes('sem3') || lowerName.includes('semester3')) {
+      } else if (lowerName.includes('sem-3') || lowerName.includes('sem3') || lowerName.includes('semester3') || lowerName.includes('semester-3') || lowerName.includes('2-1') || lowerName.includes('2_1') || lowerName.includes('2 1')) {
         semester = 3;
-      } else if (lowerName.includes('sem-4') || lowerName.includes('sem4')) {
+      } else if (lowerName.includes('sem-4') || lowerName.includes('sem4') || lowerName.includes('semester4') || lowerName.includes('semester-4') || lowerName.includes('2-2') || lowerName.includes('2_2') || lowerName.includes('2 2')) {
         semester = 4;
+      } else if (lowerName.includes('sem-5') || lowerName.includes('sem5') || lowerName.includes('semester5') || lowerName.includes('semester-5') || lowerName.includes('3-1') || lowerName.includes('3_1') || lowerName.includes('3 1')) {
+        semester = 5;
+      } else if (lowerName.includes('sem-6') || lowerName.includes('sem6') || lowerName.includes('semester6') || lowerName.includes('semester-6') || lowerName.includes('3-2') || lowerName.includes('3_2') || lowerName.includes('3 2')) {
+        semester = 6;
+      } else if (lowerName.includes('sem-7') || lowerName.includes('sem7') || lowerName.includes('semester7') || lowerName.includes('semester-7') || lowerName.includes('4-1') || lowerName.includes('4_1') || lowerName.includes('4 1')) {
+        semester = 7;
+      } else if (lowerName.includes('sem-8') || lowerName.includes('sem8') || lowerName.includes('semester8') || lowerName.includes('semester-8') || lowerName.includes('4-2') || lowerName.includes('4_2') || lowerName.includes('4 2')) {
+        semester = 8;
       }
 
       const mockData = {
@@ -69,7 +77,7 @@ export async function POST(request: NextRequest) {
       const groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
       
       const promptText = `
-        Analyze this student marksheet/report card image. Extract all academic records and return a valid JSON object matching this schema exactly: 
+        Analyze this student marksheet/report card image or text. Extract all academic records and return a valid JSON object matching this schema exactly: 
         {
           "sgpa": 8.12, 
           "cgpa": 8.12, 
@@ -87,7 +95,15 @@ export async function POST(request: NextRequest) {
         }
         
         Requirements:
-        1. semester must be a number from 1 to 8.
+        1. semester must be a number from 1 to 8. You MUST map the year and semester of the marksheet to a number from 1 to 8:
+           - I Year I Semester / Year 1 Sem 1 / 1-1 / I B.Tech I Semester -> 1
+           - I Year II Semester / Year 1 Sem 2 / 1-2 / I B.Tech II Semester -> 2
+           - II Year I Semester / Year 2 Sem 1 / 2-1 / II B.Tech I Semester -> 3
+           - II Year II Semester / Year 2 Sem 2 / 2-2 / II B.Tech II Semester -> 4
+           - III Year I Semester / Year 3 Sem 1 / 3-1 / III B.Tech I Semester -> 5
+           - III Year II Semester / Year 3 Sem 2 / 3-2 / III B.Tech II Semester -> 6
+           - IV Year I Semester / Year 4 Sem 1 / 4-1 / IV B.Tech I Semester -> 7
+           - IV Year II Semester / Year 4 Sem 2 / 4-2 / IV B.Tech II Semester -> 8
         2. mid1, mid2, semester_marks, and gpa must be strings. If a mark is missing, use "-".
         3. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
       `;
@@ -96,9 +112,9 @@ export async function POST(request: NextRequest) {
       let activeModel = groqModel;
 
       if (pdfText) {
-        // If it's text-only, we map to llama-3.3-70b-versatile which is excellent for table data
+        // If it's text-only, we map to llama-3.1-8b-instant which is extremely fast and prevents timeouts
         if (groqModel.includes('vision') || groqModel.includes('scout')) {
-          activeModel = 'llama-3.3-70b-versatile';
+          activeModel = 'llama-3.1-8b-instant';
         }
         messages = [
           {
@@ -156,7 +172,13 @@ export async function POST(request: NextRequest) {
 
       let parsedData;
       try {
-        parsedData = JSON.parse(content);
+        let cleanedContent = content.trim();
+        if (cleanedContent.startsWith('```')) {
+          cleanedContent = cleanedContent.replace(/^```(?:json)?\n?/i, '');
+          cleanedContent = cleanedContent.replace(/\n?```$/, '');
+        }
+        cleanedContent = cleanedContent.trim();
+        parsedData = JSON.parse(cleanedContent);
       } catch (e) {
         console.error('Failed to parse Groq output as JSON:', content);
         throw new Error('Groq AI output was not in valid JSON format.');
@@ -164,7 +186,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        source: `Groq ${pdfText ? 'llama-3.3-70b-versatile' : groqModel} API`,
+        source: `Groq ${activeModel} API`,
         data: parsedData
       });
     }
@@ -191,7 +213,15 @@ export async function POST(request: NextRequest) {
       }
       
       Requirements:
-      1. semester must be a number from 1 to 8.
+      1. semester must be a number from 1 to 8. You MUST map the year and semester of the marksheet to a number from 1 to 8:
+         - I Year I Semester / Year 1 Sem 1 / 1-1 / I B.Tech I Semester -> 1
+         - I Year II Semester / Year 1 Sem 2 / 1-2 / I B.Tech II Semester -> 2
+         - II Year I Semester / Year 2 Sem 1 / 2-1 / II B.Tech I Semester -> 3
+         - II Year II Semester / Year 2 Sem 2 / 2-2 / II B.Tech II Semester -> 4
+         - III Year I Semester / Year 3 Sem 1 / 3-1 / III B.Tech I Semester -> 5
+         - III Year II Semester / Year 3 Sem 2 / 3-2 / III B.Tech II Semester -> 6
+         - IV Year I Semester / Year 4 Sem 1 / 4-1 / IV B.Tech I Semester -> 7
+         - IV Year II Semester / Year 4 Sem 2 / 4-2 / IV B.Tech II Semester -> 8
       2. mid1, mid2, semester_marks, and gpa must be strings. If a mark is missing, use "-".
       3. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
     `;
@@ -237,7 +267,13 @@ export async function POST(request: NextRequest) {
 
     let parsedData;
     try {
-      parsedData = JSON.parse(parsedText);
+      let cleanedText = parsedText.trim();
+      if (cleanedText.startsWith('```')) {
+        cleanedText = cleanedText.replace(/^```(?:json)?\n?/i, '');
+        cleanedText = cleanedText.replace(/\n?```$/, '');
+      }
+      cleanedText = cleanedText.trim();
+      parsedData = JSON.parse(cleanedText);
     } catch (e) {
       console.error('Failed to parse Gemini output as JSON:', parsedText);
       throw new Error('Gemini AI output was not in valid JSON format.');
