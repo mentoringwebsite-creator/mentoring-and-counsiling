@@ -123,6 +123,7 @@ function renderField(field: { name: string; label: string; type: string; placeho
             required={field.required !== false && !value['profilePhotoUrl']}
           />
         </div>
+        <p className="mt-1 text-xs text-slate-450">Choose a real image file from your device. The image will be compressed automatically before saving.</p>
       </div>
     );
   }
