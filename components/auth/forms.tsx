@@ -21,7 +21,7 @@ const studentFields = [
   { name: 'branch', label: 'Branch', type: 'text' },
   { name: 'section', label: 'Section', type: 'text' },
   { name: 'academicYear', label: 'Academic Year', type: 'text' },
-  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg', required: false },
+  { name: 'profilePhotoUrl', label: 'Profile Photo', type: 'file', required: false },
   { name: 'password', label: 'Password', type: 'password' }
 ];
 
@@ -34,7 +34,7 @@ const facultyFields = [
   { name: 'department', label: 'Department', type: 'text' },
   { name: 'subjects', label: 'Subjects Taught', type: 'text', placeholder: 'Data Structures, DBMS' },
   { name: 'contactNumber', label: 'Contact Number', type: 'text' },
-  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg', required: false },
+  { name: 'profilePhotoUrl', label: 'Profile Photo', type: 'file', required: false },
   { name: 'password', label: 'Password', type: 'password' }
 ];
 
@@ -45,7 +45,7 @@ const hodFields = [
   { name: 'department', label: 'Department', type: 'text' },
   { name: 'designation', label: 'Designation', type: 'text' },
   { name: 'contactNumber', label: 'Contact Number', type: 'text' },
-  { name: 'profilePhotoUrl', label: 'Profile Photo URL', type: 'text', placeholder: 'https://example.com/photo.jpg', required: false },
+  { name: 'profilePhotoUrl', label: 'Profile Photo', type: 'file', required: false },
   { name: 'password', label: 'Password', type: 'password' }
 ];
 
@@ -55,6 +55,78 @@ const loginFields = [
 ];
 
 function renderField(field: { name: string; label: string; type: string; placeholder?: string; required?: boolean }, value: Record<string, string>, onChange: (name: string, value: string) => void) {
+  if (field.name === 'profilePhotoUrl') {
+    return (
+      <div key={field.name} className="grid gap-2 text-sm font-medium text-slate-700">
+        <span>{field.label}</span>
+        <div className="flex items-center gap-4 mt-1">
+          {value['profilePhotoUrl'] && (
+            <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shrink-0">
+              <img
+                src={value['profilePhotoUrl']}
+                alt="Profile Preview"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          )}
+          <input
+            name={field.name}
+            type="file"
+            accept="image/*"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              if (!file.type.startsWith('image/')) {
+                alert('Please select an image file.');
+                return;
+              }
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  const maxDim = 300;
+                  let width = img.width;
+                  let height = img.height;
+
+                  if (width > height) {
+                    if (width > maxDim) {
+                      height = Math.round((height * maxDim) / width);
+                      width = maxDim;
+                    }
+                  } else {
+                    if (height > maxDim) {
+                      width = Math.round((width * maxDim) / height);
+                      height = maxDim;
+                    }
+                  }
+
+                  canvas.width = width;
+                  canvas.height = height;
+                  const ctx = canvas.getContext('2d');
+                  if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    onChange(field.name, dataUrl);
+                  }
+                };
+                img.src = e.target?.result as string;
+              };
+              reader.readAsDataURL(file);
+            }}
+            className="block w-full text-sm text-slate-550
+              file:mr-4 file:py-2.5 file:px-4
+              file:rounded-3xl file:border-0
+              file:text-sm file:font-semibold
+              file:bg-emerald-50 file:text-emerald-700
+              hover:file:bg-emerald-100 transition cursor-pointer"
+            required={field.required !== false && !value['profilePhotoUrl']}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <label key={field.name} className="grid gap-2 text-sm font-medium text-slate-700">
       <span>{field.label}</span>
