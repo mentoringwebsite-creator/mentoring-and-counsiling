@@ -563,6 +563,23 @@ export default function AdminStudentsPage() {
 
   const gpaChartData = getSemesterGPAData();
 
+  const selectedSemesterSGPA = (() => {
+    if (academicSelectedSem === 'All') return null;
+    const semNum = parseInt(academicSelectedSem);
+    if (isNaN(semNum)) return null;
+
+    const subjectsInSem = academicSubjects.filter(
+      (sub) => parseInt(sub.semester) === semNum
+    );
+    const validGPs = subjectsInSem
+      .map((sub) => convertGradeToGP(sub.gpa))
+      .filter((gp): gp is number => gp !== null);
+
+    if (validGPs.length === 0) return null;
+    const avg = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
+    return Number(avg.toFixed(2));
+  })();
+
   const getSubjectGPADistribution = () => {
     return filteredAcademicSubjects
       .map((sub) => {
@@ -977,7 +994,7 @@ export default function AdminStudentsPage() {
               {/* Subject overview list inside modal */}
               <div className="mt-6">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3 mb-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-3">
                     <h4 className="font-bold text-slate-800 text-base">Course Subjects & Marks</h4>
                     
                     <select
@@ -995,6 +1012,13 @@ export default function AdminStudentsPage() {
                       <option value="7">IV Year I Semester (4-1)</option>
                       <option value="8">IV Year II Semester (4-2)</option>
                     </select>
+
+                    {selectedSemesterSGPA !== null && (
+                      <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-250 px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm">
+                        <Sparkles className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                        <span>Semester SGPA: {selectedSemesterSGPA}</span>
+                      </span>
+                    )}
                   </div>
 
                   <button

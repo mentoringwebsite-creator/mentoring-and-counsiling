@@ -113,6 +113,23 @@ export default function AcademicPage() {
     }
   };
 
+  const selectedSemesterSGPA = (() => {
+    if (selectedSemester === 'All') return null;
+    const semNum = parseInt(selectedSemester);
+    if (isNaN(semNum)) return null;
+
+    const subjectsInSem = subjects.filter(
+      (sub) => parseInt(sub.semester) === semNum
+    );
+    const validGPs = subjectsInSem
+      .map((sub) => convertGradeToGP(sub.gpa))
+      .filter((gp): gp is number => gp !== null);
+
+    if (validGPs.length === 0) return null;
+    const avg = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
+    return Number(avg.toFixed(2));
+  })();
+
   // Calculate SGPA chart data dynamically (Student vs Class Average)
   const getSgpaTrendData = () => {
     const semMap: { [key: number]: number[] } = {};
@@ -352,21 +369,30 @@ export default function AcademicPage() {
                       <h2 className="text-lg font-bold text-slate-900">Semester Ledger</h2>
                     </div>
 
-                    <select
-                      value={selectedSemester}
-                      onChange={(e) => setSelectedSemester(e.target.value)}
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-[#1c5644] focus:outline-none"
-                    >
-                      <option value="All">All Semesters</option>
-                      <option value="1">I Year I Semester (1-1)</option>
-                      <option value="2">I Year II Semester (1-2)</option>
-                      <option value="3">II Year I Semester (2-1)</option>
-                      <option value="4">II Year II Semester (2-2)</option>
-                      <option value="5">III Year I Semester (3-1)</option>
-                      <option value="6">III Year II Semester (3-2)</option>
-                      <option value="7">IV Year I Semester (4-1)</option>
-                      <option value="8">IV Year II Semester (4-2)</option>
-                    </select>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <select
+                        value={selectedSemester}
+                        onChange={(e) => setSelectedSemester(e.target.value)}
+                        className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-[#1c5644] focus:outline-none"
+                      >
+                        <option value="All">All Semesters</option>
+                        <option value="1">I Year I Semester (1-1)</option>
+                        <option value="2">I Year II Semester (1-2)</option>
+                        <option value="3">II Year I Semester (2-1)</option>
+                        <option value="4">II Year II Semester (2-2)</option>
+                        <option value="5">III Year I Semester (3-1)</option>
+                        <option value="6">III Year II Semester (3-2)</option>
+                        <option value="7">IV Year I Semester (4-1)</option>
+                        <option value="8">IV Year II Semester (4-2)</option>
+                      </select>
+
+                      {selectedSemesterSGPA !== null && (
+                        <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-250 px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm">
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                          <span>Semester SGPA: {selectedSemesterSGPA}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {loading ? (
