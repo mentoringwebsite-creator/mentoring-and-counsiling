@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Phone, Smartphone, Edit2, Loader2, X, User } from 'lucide-react';
+import { Phone, Smartphone, Edit2, Loader2, X, User, GraduationCap, Mail } from 'lucide-react';
 
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
@@ -80,6 +80,31 @@ export default function StudentProfilePage() {
   useEffect(() => {
     loadProfile();
   }, []);
+
+  const getStudentBTechYear = (roll: string, acYear: string) => {
+    const acYearStr = String(acYear || '').toLowerCase();
+    if (acYearStr.includes('1') || acYearStr.includes('i year') || acYearStr.includes('first')) return 'I Year';
+    if (acYearStr.includes('2') || acYearStr.includes('ii year') || acYearStr.includes('second')) return 'II Year';
+    if (acYearStr.includes('3') || acYearStr.includes('iii year') || acYearStr.includes('third')) return 'III Year';
+    if (acYearStr.includes('4') || acYearStr.includes('iv year') || acYearStr.includes('fourth')) return 'IV Year';
+
+    const r = String(roll || '').trim();
+    if (r.length >= 2) {
+      const joinYearDigits = parseInt(r.substring(0, 2));
+      if (!isNaN(joinYearDigits)) {
+        const currentYear = 2026;
+        const currentYearDigits = currentYear % 100; // 26
+        const diff = currentYearDigits - joinYearDigits;
+        if (diff === 0 || diff === 1) return 'I Year';
+        if (diff === 2) return 'II Year';
+        if (diff === 3) return 'III Year';
+        if (diff >= 4) return 'IV Year';
+      }
+    }
+    return 'I Year';
+  };
+
+  const bTechYear = profile ? getStudentBTechYear(profile.rollNumber, profile.academic_year) : '';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -224,124 +249,190 @@ export default function StudentProfilePage() {
             ) : (
               <div className="grid gap-6">
                 
-                {/* Main Profile Card matching Rahul's screenshot layout */}
-                <div className="portal-card relative overflow-hidden">
+            {/* Main Profile Dashboard Layout */}
+            <div className="grid gap-6 lg:grid-cols-3">
+              
+              {/* Left Column - Quick Overview */}
+              <div className="lg:col-span-1 space-y-6">
+                
+                {/* Profile Photo & Primary Stats Card */}
+                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group">
+                  <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-r from-emerald-800 to-teal-800 opacity-90" />
+                  
+                  {/* Edit Floating Action */}
                   <button 
                     onClick={() => {
                       setFormData(profile);
                       setIsEditing(true);
                     }} 
-                    className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition duration-200 shadow-sm border border-slate-200"
+                    className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 backdrop-blur-md transition duration-200 shadow-sm"
                     title="Edit Profile"
                   >
-                    <Edit2 className="h-4 w-4" />
+                    <Edit2 className="h-3.5 w-3.5" />
                   </button>
 
-                  <div className="grid gap-6 md:grid-cols-[260px_1fr] lg:grid-cols-[280px_1fr]">
+                  {/* Profile Picture */}
+                  <div className="relative mt-8 z-10 h-32 w-32 rounded-3xl overflow-hidden border-4 border-white shadow-md bg-slate-100 flex items-center justify-center shrink-0">
+                    {profile.profile_photo ? (
+                      <img
+                        src={profile.profile_photo}
+                        alt={profile.name}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(profile.name)}`;
+                        }}
+                      />
+                    ) : (
+                      <User className="h-16 w-16 text-emerald-850/40" />
+                    )}
+                  </div>
+
+                  {/* Name and Roll No */}
+                  <div className="mt-4">
+                    <h2 className="text-xl font-black text-slate-800 leading-tight">{profile.name}</h2>
+                    <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider font-mono">{profile.rollNumber}</p>
+                  </div>
+
+                  {/* B.Tech Year Tag */}
+                  <span className="mt-3.5 inline-flex items-center gap-1 rounded-2xl bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm">
+                    <GraduationCap className="h-3.5 w-3.5 text-emerald-700" />
+                    <span>{bTechYear}</span>
+                  </span>
+
+                  <div className="w-full h-px bg-slate-100 my-5" />
+
+                  {/* Quick Contacts */}
+                  <div className="w-full space-y-3 text-left">
+                    <div className="flex items-center gap-3 text-slate-650">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
+                        <Smartphone className="h-4 w-4 text-emerald-800" />
+                      </div>
+                      <div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Primary Mobile</div>
+                        <span className="text-xs font-extrabold text-slate-800">{profile.phone || '-'}</span>
+                      </div>
+                    </div>
                     
-                    {/* Left: Profile Photo Container */}
-                    <div className="rounded-3xl bg-[linear-gradient(180deg,#f0f6f3,#e7f0eb)] p-4 flex flex-col items-center justify-center md:justify-between shrink-0">
-                      <div className="relative aspect-square w-32 h-32 md:w-full md:h-auto overflow-hidden rounded-2xl bg-white shadow-inner flex items-center justify-center">
-                        {profile.profile_photo ? (
-                          <img
-                            src={profile.profile_photo}
-                            alt={profile.name}
-                            className="h-full w-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(profile.name)}`;
-                            }}
-                          />
-                        ) : (
-                          <div className="flex h-full w-full flex-col items-center justify-center text-slate-400">
-                            <User className="h-10 w-10 md:h-16 md:w-16 text-emerald-800/40" />
-                            <span className="mt-2 text-[10px] md:text-xs font-semibold text-emerald-800/40 text-center">No photo</span>
-                          </div>
-                        )}
+                    <div className="flex items-center gap-3 text-slate-650">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
+                        <Phone className="h-4 w-4 text-emerald-800" />
+                      </div>
+                      <div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Alternate Mobile</div>
+                        <span className="text-xs font-extrabold text-slate-800">{profile.alternate_phone || '-'}</span>
                       </div>
                     </div>
 
-                    {/* Right: Personal & Contact Grid */}
-                    <div className="flex flex-col justify-center">
-                      <div className="mb-4">
-                        <h2 className="text-3xl font-bold tracking-tight text-portal-ink">{profile.name}</h2>
-                        <p className="mt-1 text-sm font-semibold tracking-wider text-slate-500 uppercase">{profile.rollNumber}</p>
+                    <div className="flex items-center gap-3 text-slate-650">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
+                        <Mail className="h-4 w-4 text-emerald-800" />
                       </div>
-
-                      <div className="h-px bg-slate-200/80 my-4" />
-
-                      {/* Phone contacts matching the design details */}
-                      <div className="grid gap-3 mb-4">
-                        <div className="flex items-center gap-3 text-slate-700">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
-                            <Phone className="h-4 w-4" />
-                          </div>
-                          <span className="text-sm font-medium">{profile.alternate_phone || 'None'}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-slate-700">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
-                            <Smartphone className="h-4 w-4" />
-                          </div>
-                          <span className="text-sm font-medium">{profile.phone}</span>
-                        </div>
+                      <div className="min-w-0">
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">College Email</div>
+                        <span className="text-xs font-extrabold text-slate-850 truncate block">{profile.email || '-'}</span>
                       </div>
-
-                      <div className="h-px bg-slate-200/80 my-4" />
-
-                      {/* Detail listing summary grid */}
-                      <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2 text-sm text-slate-700">
-                        <div>
-                          <span className="text-slate-400 font-medium">Name: </span>
-                          <span className="font-semibold text-portal-ink">{profile.name}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-medium">Roll Number: </span>
-                          <span className="font-semibold text-portal-ink">{profile.rollNumber}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-medium">Date of Birth: </span>
-                          <span className="font-semibold text-portal-ink">{profile.dob}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-medium">Contact Number: </span>
-                          <span className="font-semibold text-portal-ink">{profile.phone}</span>
-                        </div>
-                      </div>
-
                     </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Right Column - Academic & Personal Details */}
+              <div className="lg:col-span-2 space-y-6">
+                
+                {/* Academic & Institutional Card */}
+                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4 mb-5">
+                    <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-2 text-emerald-800">
+                      <GraduationCap className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-800">Academic & Institutional Profile</h3>
+                      <p className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider mt-0.5">SNIST Official Registrar Enrollment</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    
+                    <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">B.Tech Year</div>
+                        <div className="text-sm font-extrabold text-emerald-900 mt-1 uppercase">{bTechYear}</div>
+                      </div>
+                      <span className="text-xs font-black text-slate-300">YEAR</span>
+                    </div>
+
+                    <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Registered Branch</div>
+                        <div className="text-sm font-extrabold text-slate-850 mt-1 uppercase">{profile.branch || '-'}</div>
+                      </div>
+                      <span className="text-xs font-black text-slate-300">DEPT</span>
+                    </div>
+
+                    <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Class Section</div>
+                        <div className="text-sm font-extrabold text-slate-855 mt-1 uppercase">{profile.section || '-'}</div>
+                      </div>
+                      <span className="text-xs font-black text-slate-300">SEC</span>
+                    </div>
+
+                    <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Academic Year</div>
+                        <div className="text-sm font-extrabold text-slate-850 mt-1">{profile.academic_year || '-'}</div>
+                      </div>
+                      <span className="text-xs font-black text-slate-300">BATCH</span>
+                    </div>
+
+                    <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 sm:col-span-2 flex items-center justify-between">
+                      <div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Enrollment Roll No</div>
+                        <div className="text-sm font-mono font-extrabold text-slate-855 mt-1 uppercase">{profile.rollNumber || '-'}</div>
+                      </div>
+                      <span className="text-xs font-black text-slate-300">UID</span>
+                    </div>
+
                   </div>
                 </div>
 
-                {/* Additional details listing at the bottom matching layout */}
-                <div className="portal-card">
-                  <h3 className="text-lg font-bold text-portal-ink mb-6 pb-2 border-b border-portal-line">Academic & Institutional Profile</h3>
-                  
+                {/* Personal Profile Details Card */}
+                <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                  <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4 mb-5">
+                    <div className="rounded-xl bg-blue-50 border border-blue-100 p-2 text-blue-800">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-slate-800">Personal Specifications</h3>
+                      <p className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider mt-0.5">Student General Profile Information</p>
+                    </div>
+                  </div>
+
                   <div className="divide-y divide-slate-100 text-sm">
-                    <div className="grid grid-cols-[160px_1fr] py-4">
-                      <span className="font-semibold text-slate-500">Roll Number</span>
-                      <span className="font-semibold text-portal-ink">{profile.rollNumber}</span>
+                    <div className="grid grid-cols-[160px_1fr] py-3.5">
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Full Name</span>
+                      <span className="font-extrabold text-slate-850">{profile.name}</span>
                     </div>
-                    <div className="grid grid-cols-[160px_1fr] py-4">
-                      <span className="font-semibold text-slate-500">Date of Birth</span>
-                      <span className="font-semibold text-portal-ink">{profile.dob}</span>
+                    <div className="grid grid-cols-[160px_1fr] py-3.5">
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Date of Birth</span>
+                      <span className="font-extrabold text-slate-850">{profile.dob || '-'}</span>
                     </div>
-                    <div className="grid grid-cols-[160px_1fr] py-4">
-                      <span className="font-semibold text-slate-500">Branch</span>
-                      <span className="font-semibold text-portal-ink">{profile.branch}</span>
+                    <div className="grid grid-cols-[160px_1fr] py-3.5">
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Alternate Mobile</span>
+                      <span className="font-extrabold text-slate-850">{profile.alternate_phone || '-'}</span>
                     </div>
-                    <div className="grid grid-cols-[160px_1fr] py-4">
-                      <span className="font-semibold text-slate-500">Section</span>
-                      <span className="font-semibold text-portal-ink">{profile.section}</span>
-                    </div>
-                    <div className="grid grid-cols-[160px_1fr] py-4">
-                      <span className="font-semibold text-slate-500">Academic Year</span>
-                      <span className="font-semibold text-portal-ink">{profile.academic_year}</span>
-                    </div>
-                    <div className="grid grid-cols-[160px_1fr] py-4">
-                      <span className="font-semibold text-slate-500">College Email</span>
-                      <span className="font-semibold text-emerald-800 underline break-all">{profile.email}</span>
+                    <div className="grid grid-cols-[160px_1fr] py-3.5">
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Primary Contact</span>
+                      <span className="font-extrabold text-slate-850">{profile.phone || '-'}</span>
                     </div>
                   </div>
                 </div>
+
+              </div>
+
+            </div>
 
               </div>
             )}
