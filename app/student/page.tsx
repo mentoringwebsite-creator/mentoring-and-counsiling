@@ -431,9 +431,9 @@ export default function StudentProfilePage() {
         {/* Edit Profile Modal */}
         {isEditing && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-portal-ink/40 p-4 backdrop-blur-md">
-            <div className="w-full max-w-2xl overflow-hidden rounded-[28px] border border-portal-line bg-white shadow-soft animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-[28px] border border-portal-line bg-white shadow-soft animate-in fade-in zoom-in-95 duration-200">
               
-              <div className="flex items-center justify-between border-b border-portal-line bg-slate-50 px-6 py-4">
+              <div className="flex items-center justify-between border-b border-portal-line bg-slate-50 px-6 py-4 shrink-0">
                 <h3 className="text-xl font-bold text-portal-ink">Edit Profile Details</h3>
                 <button 
                   onClick={() => setIsEditing(false)}
@@ -443,8 +443,9 @@ export default function StudentProfilePage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6">
-                <div className="grid gap-4 sm:grid-cols-2">
+              <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+                <div className="p-6 overflow-y-auto flex-1">
+                  <div className="grid gap-4 sm:grid-cols-2">
                   
                   <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Name</label>
@@ -597,29 +598,30 @@ export default function StudentProfilePage() {
                     {saveMessage}
                   </div>
                 )}
+              </div>
 
-                <div className="mt-6 flex justify-end gap-3 border-t border-portal-line pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(false)}
-                    className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
-                  >
-                    <ArrowLeft className="h-4 w-4 text-slate-550" />
-                    <span>Back</span>
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 transition disabled:opacity-70"
-                  >
-                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <span>Save Changes</span>
-                  </button>
-                </div>
+              <div className="border-t border-portal-line p-6 bg-slate-50 flex justify-end gap-3 shrink-0 rounded-b-[28px]">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  <ArrowLeft className="h-4 w-4 text-slate-550" />
+                  <span>Back</span>
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 transition disabled:opacity-70"
+                >
+                  {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <span>Save Changes</span>
+                </button>
+              </div>
 
-              </form>
-            </div>
+            </form>
           </div>
+        </div>
         )}
 
       </PageShell>
