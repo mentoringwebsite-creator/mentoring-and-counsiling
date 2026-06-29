@@ -49,12 +49,13 @@ const semesterLabels: Record<string | number, { full: string; short: string }> =
 
 export default function AcademicPage() {
   const [loading, setLoading] = useState(true);
-  const [sgpa, setSgpa] = useState<number>(8.0);
-  const [cgpa, setCgpa] = useState<number>(8.12);
+  const [sgpa, setSgpa] = useState<number>(0);
+  const [cgpa, setCgpa] = useState<number>(0);
   const [backlogs, setBacklogs] = useState<number>(0);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<string>('All');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [classAverage, setClassAverage] = useState<number>(7.80);
 
   const loadAcademicProfile = async () => {
     try {
@@ -71,10 +72,69 @@ export default function AcademicPage() {
 
       if (error) throw error;
 
-      setSgpa(data.sgpa !== undefined && data.sgpa !== null ? Number(data.sgpa) : 8.0);
-      setCgpa(data.cgpa !== undefined && data.cgpa !== null ? Number(data.cgpa) : 8.12);
-      setBacklogs(data.backlogs !== undefined && data.backlogs !== null ? Number(data.backlogs) : 0);
-      setSubjects(data.academic_subjects || []);
+      const subjectsList = data.academic_subjects || [];
+      setSubjects(subjectsList);
+
+      // Compute dynamic stats if subjects exist
+      if (subjectsList.length > 0) {
+        let totalCgpaCredits = 0;
+        let totalCgpaPoints = 0;
+        let backlogCount = 0;
+
+        subjectsList.forEach((sub: any) => {
+          const gp = convertGradeToGP(sub.gpa);
+          const credits = parseFloat(sub.credits) || 0;
+          if (gp !== null && credits > 0) {
+            totalCgpaCredits += credits;
+            totalCgpaPoints += gp * credits;
+          }
+          const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
+          if (isF) backlogCount++;
+        });
+
+        const calculatedCgpa = totalCgpaCredits > 0 ? Number((totalCgpaPoints / totalCgpaCredits).toFixed(2)) : 0;
+
+        const semesters = subjectsList.map((s: any) => parseInt(s.semester)).filter((s: any) => !isNaN(s));
+        const latestSem = semesters.length > 0 ? Math.max(...semesters) : 1;
+
+        let totalSgpaCredits = 0;
+        let totalSgpaPoints = 0;
+
+        subjectsList.forEach((sub: any) => {
+          if (parseInt(sub.semester) === latestSem) {
+            const gp = convertGradeToGP(sub.gpa);
+            const credits = parseFloat(sub.credits) || 0;
+            if (gp !== null && credits > 0) {
+              totalSgpaCredits += credits;
+              totalSgpaPoints += gp * credits;
+            }
+          }
+        });
+
+        const calculatedSgpa = totalSgpaCredits > 0 ? Number((totalSgpaPoints / totalSgpaCredits).toFixed(2)) : 0;
+
+        setSgpa(calculatedSgpa);
+        setCgpa(calculatedCgpa);
+        setBacklogs(backlogCount);
+      } else {
+        setSgpa(0);
+        setCgpa(0);
+        setBacklogs(0);
+      }
+
+      // Fetch dynamic class average
+      const { data: allProfiles } = await supabase
+        .from('student_profiles')
+        .select('sgpa');
+      if (allProfiles && allProfiles.length > 0) {
+        const validSgpas = allProfiles
+          .map(p => Number(p.sgpa))
+          .filter(s => s > 0 && s <= 10);
+        if (validSgpas.length > 0) {
+          const avg = validSgpas.reduce((a, b) => a + b, 0) / validSgpas.length;
+          setClassAverage(Number(avg.toFixed(2)));
+        }
+      }
     } catch (err: any) {
       console.error('Error loading academic details:', err);
       setFeedback({ type: 'error', message: 'Failed to load academic profile.' });
@@ -86,6 +146,21 @@ export default function AcademicPage() {
   useEffect(() => {
     loadAcademicProfile();
   }, []);
+
+  const getSemesterMetadata = (sem: string) => {
+    const sub = subjects.find((s: any) => s.semester?.toString() === sem);
+    return {
+      memo_no: sub?.memo_no || '',
+      serial_no: sub?.serial_no || '',
+      exam_date: sub?.exam_date || '',
+      issue_date: sub?.issue_date || '',
+      total_credits: sub?.total_credits || '',
+      pass_status: sub?.pass_status || 'PASS',
+      father_name: sub?.father_name || '',
+      hall_ticket_no: sub?.hall_ticket_no || '',
+      branch: sub?.branch || ''
+    };
+  };
 
   // Filter subjects by semester
   const filteredSubjects = subjects.filter((sub) => {
@@ -221,7 +296,7 @@ export default function AcademicPage() {
   const backlogData = getBacklogData();
 
   // Dynamic Class Rank Calculation (based on CGPA out of a class of 65)
-  const classRank = Math.max(1, Math.round(1 + (10 - cgpa) * 6));
+  const classRank = cgpa > 0 ? Math.max(1, Math.round(1 + (10 - cgpa) * 6)) : null;
   const totalClassStudents = 65;
 
   // Automated Strengths, Weaknesses, and Progress Momentum Analysis
@@ -319,7 +394,7 @@ export default function AcademicPage() {
               <div className="rounded-[24px] border border-slate-150 bg-white p-5 shadow-sm flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cumulative CGPA</p>
-                  <h3 className="mt-1 text-3xl font-extrabold text-slate-900 tracking-tight">{cgpa.toFixed(2)}</h3>
+                  <h3 className="mt-1 text-3xl font-extrabold text-slate-900 tracking-tight">{cgpa > 0 ? cgpa.toFixed(2) : 'N/A'}</h3>
                 </div>
                 <div className="rounded-2xl bg-emerald-50 p-3">
                   <GraduationCap className="h-6 w-6 text-[#1c5644]" />
@@ -344,7 +419,7 @@ export default function AcademicPage() {
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class Rank</p>
                   <h3 className="mt-1 text-3xl font-extrabold text-slate-900 tracking-tight">
-                    {classRank} <span className="text-sm font-semibold text-slate-400">/ {totalClassStudents}</span>
+                    {classRank !== null ? `${classRank} / ${totalClassStudents}` : 'N/A'}
                   </h3>
                 </div>
                 <div className="rounded-2xl bg-indigo-50 p-3">
@@ -406,36 +481,79 @@ export default function AcademicPage() {
                       <p className="text-xs text-slate-400 mt-1">Upload a marksheet PDF or image to populate this semester.</p>
                     </div>
                   ) : (
-                    <div className="overflow-hidden rounded-2xl border border-slate-150">
-                      <div className="overflow-x-auto">
-                        <table className="w-full border-collapse text-left text-sm">
-                          <thead>
-                            <tr className="border-b border-slate-150 bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-500">
-                              <th className="p-3">Subject Name</th>
-                              <th className="p-3 text-center">Semester</th>
-                              <th className="p-3 text-center">Mid-1</th>
-                              <th className="p-3 text-center">Mid-2</th>
-                              <th className="p-3 text-center">Semester Marks</th>
-                              <th className="p-3 text-center">Subject GPA</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
-                            {filteredSubjects.map((sub, index) => (
-                              <tr key={index} className="hover:bg-slate-50/40 transition">
-                                <td className="p-3 font-semibold text-slate-800">{sub.name}</td>
-                                <td className="p-3 text-slate-600 text-center font-bold">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
-                                <td className="p-3 text-slate-650 text-center font-semibold">{sub.mid1 || '-'}</td>
-                                <td className="p-3 text-slate-650 text-center font-semibold">{sub.mid2 || '-'}</td>
-                                <td className="p-3 text-slate-650 text-center font-semibold">{sub.semester_marks || '-'}</td>
-                                <td className="p-3 text-center">
-                                  <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-800 border border-emerald-100">
-                                    {sub.gpa}
-                                  </span>
-                                </td>
+                    <div className="space-y-4">
+                      {selectedSemester !== 'All' && (() => {
+                        const semMeta = getSemesterMetadata(selectedSemester);
+                        if (!semMeta.memo_no && !semMeta.serial_no && !semMeta.exam_date && !semMeta.issue_date) return null;
+                        return (
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-205">
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Memo Number</div>
+                              <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.memo_no || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Serial Number</div>
+                              <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.serial_no || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Exam Month/Year</div>
+                              <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.exam_date || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date of Issue</div>
+                              <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.issue_date || '-'}</div>
+                            </div>
+                            {semMeta.total_credits && (
+                              <div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Credits</div>
+                                <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.total_credits}</div>
+                              </div>
+                            )}
+                            {semMeta.pass_status && (
+                              <div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Result Status</div>
+                                <div className="text-xs font-black text-emerald-800 mt-0.5">{semMeta.pass_status}</div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      <div className="overflow-hidden rounded-2xl border border-slate-150 bg-white">
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse text-left text-sm">
+                            <thead>
+                              <tr className="border-b border-slate-150 bg-slate-50 text-[10px] uppercase font-bold tracking-wider text-slate-500">
+                                <th className="p-3">Subject Code</th>
+                                <th className="p-3">Subject Name</th>
+                                <th className="p-3 text-center">Semester</th>
+                                <th className="p-3 text-center">Credits</th>
+                                <th className="p-3 text-center">Grade Secured</th>
+                                <th className="p-3 text-center">Result</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 bg-white">
+                              {filteredSubjects.map((sub, index) => (
+                                <tr key={index} className="hover:bg-slate-50/40 transition">
+                                  <td className="p-3 font-mono font-bold text-slate-600">{sub.code || '-'}</td>
+                                  <td className="p-3 font-semibold text-slate-800">{sub.name}</td>
+                                  <td className="p-3 text-slate-600 text-center font-bold">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
+                                  <td className="p-3 text-slate-650 text-center font-semibold">{sub.credits ?? '-'}</td>
+                                  <td className="p-3 text-center font-bold text-slate-900">{sub.gpa ?? '-'}</td>
+                                  <td className="p-3 text-center">
+                                    <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold border ${
+                                      sub.result === 'P' || sub.result === 'PASS'
+                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                                        : 'bg-rose-50 border-rose-100 text-rose-800'
+                                    }`}>
+                                      {sub.result || 'P'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -543,25 +661,25 @@ export default function AcademicPage() {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div className="rounded-2xl bg-emerald-50/50 border border-emerald-100 p-3">
                       <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">SGPA</p>
-                      <p className="mt-1 text-xl font-black text-emerald-950">{sgpa.toFixed(2)}</p>
+                      <p className="mt-1 text-xl font-black text-emerald-950">{sgpa > 0 ? sgpa.toFixed(2) : 'N/A'}</p>
                     </div>
                     <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-3">
                       <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">CGPA</p>
-                      <p className="mt-1 text-xl font-black text-blue-950">{cgpa.toFixed(2)}</p>
+                      <p className="mt-1 text-xl font-black text-blue-950">{cgpa > 0 ? cgpa.toFixed(2) : 'N/A'}</p>
                     </div>
                     <div className={`rounded-2xl border p-3 ${
                       backlogs > 0 
                         ? 'bg-rose-50/50 border-rose-100 text-rose-900' 
-                        : 'bg-amber-50/50 border-amber-100 text-amber-900'
+                        : 'bg-emerald-50/50 border-emerald-100 text-emerald-900'
                     }`}>
                       <p className="text-[10px] font-bold uppercase tracking-wider">Backlogs</p>
-                      <p className="mt-1 text-xl font-black">{backlogs > 0 ? backlogs : '✓'}</p>
+                      <p className="mt-1 text-xl font-black">{backlogs > 0 ? backlogs : '0'}</p>
                     </div>
                   </div>
 
                   <div className="mt-5 flex items-center justify-between text-xs text-slate-650 bg-slate-50 p-3.5 rounded-2xl border border-slate-150">
                     <span className="font-semibold text-slate-600">Class Average SGPA:</span>
-                    <span className="font-extrabold text-slate-800">7.80</span>
+                    <span className="font-extrabold text-slate-800">{classAverage.toFixed(2)}</span>
                   </div>
                 </div>
 

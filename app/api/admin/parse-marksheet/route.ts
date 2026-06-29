@@ -83,14 +83,26 @@ export async function POST(request: NextRequest) {
           "sgpa": 8.12, 
           "cgpa": 8.12, 
           "backlogs": 0, 
+          "memo_no": "S375090",
+          "serial_no": "2501094146006",
+          "exam_date": "JANUARY 2024",
+          "issue_date": "18.05.2024",
+          "father_name": "MANSUR",
+          "hall_ticket_no": "23311A04X2",
+          "branch": "ELECTRONICS & COMMUNICATION ENGINEERING",
+          "total_credits": 18,
+          "pass_status": "PASS",
           "subjects": [
             {
-              "name": "C Programming", 
+              "code": "8BC01",
+              "name": "ENGINEERING GRAPHICS", 
               "semester": 1, 
-              "mid1": "18", 
-              "mid2": "19", 
-              "semester_marks": "84", 
-              "gpa": "9.0"
+              "mid1": "-", 
+              "mid2": "-", 
+              "semester_marks": "-", 
+              "gpa": "A",
+              "credits": 3,
+              "result": "P"
             }
           ]
         }
@@ -105,10 +117,11 @@ export async function POST(request: NextRequest) {
            - III Year II Semester / Year 3 Sem 2 / 3-2 / III B.Tech II Semester -> 6
            - IV Year I Semester / Year 4 Sem 1 / 4-1 / IV B.Tech I Semester -> 7
            - IV Year II Semester / Year 4 Sem 2 / 4-2 / IV B.Tech II Semester -> 8
-        2. mid1, mid2, semester_marks, and gpa must be strings. If a mark is missing, use "-".
-        3. For "sgpa" and "cgpa" at the root level, return the values corresponding to the LATEST semester found in the marksheet (e.g. if the marksheet contains semesters 1, 2, and 3, return the Semester 3 SGPA and CGPA).
-        4. For "backlogs" at the root level, return the total number of active backlogs across all semesters.
-        5. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
+        2. Extract "memo_no", "serial_no", "exam_date" (month and year of exam), "issue_date" (date of issue), "father_name" (or FATHER'S / MOTHER'S NAME), "hall_ticket_no" (or roll number), "branch" (e.g. ELECTRONICS & COMMUNICATION ENGINEERING), "total_credits" (number of passed credits or total credits for the semester) and "pass_status" (PASS or FAIL result status).
+        3. For each subject, extract the "code" (e.g. 8BC01), "name" (e.g. ENGINEERING GRAPHICS), "gpa" (grade secured like A, O, S, A+, B+, B, C, D, F, or a number like 9.0), "credits" (credits for that subject like 3, 1.5, etc.) and "result" (P for pass or F for fail). If mid1, mid2 or semester_marks are not found on the certificate, use "-".
+        4. For "sgpa" and "cgpa" at the root level, return the values corresponding to the LATEST semester found in the marksheet (e.g. if the marksheet contains semesters 1, 2, and 3, return the Semester 3 SGPA and CGPA).
+        5. For "backlogs" at the root level, return the total number of active backlogs across all semesters.
+        6. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
       `;
 
       let messages = [];
@@ -217,14 +230,26 @@ export async function POST(request: NextRequest) {
         "sgpa": 8.12, 
         "cgpa": 8.12, 
         "backlogs": 0, 
+        "memo_no": "S375090",
+        "serial_no": "2501094146006",
+        "exam_date": "JANUARY 2024",
+        "issue_date": "18.05.2024",
+        "father_name": "MANSUR",
+        "hall_ticket_no": "23311A04X2",
+        "branch": "ELECTRONICS & COMMUNICATION ENGINEERING",
+        "total_credits": 18,
+        "pass_status": "PASS",
         "subjects": [
           {
-            "name": "C Programming", 
+            "code": "8BC01",
+            "name": "ENGINEERING GRAPHICS", 
             "semester": 1, 
-            "mid1": "18", 
-            "mid2": "19", 
-            "semester_marks": "84", 
-            "gpa": "9.0"
+            "mid1": "-", 
+            "mid2": "-", 
+            "semester_marks": "-", 
+            "gpa": "A",
+            "credits": 3,
+            "result": "P"
           }
         ]
       }
@@ -239,10 +264,11 @@ export async function POST(request: NextRequest) {
          - III Year II Semester / Year 3 Sem 2 / 3-2 / III B.Tech II Semester -> 6
          - IV Year I Semester / Year 4 Sem 1 / 4-1 / IV B.Tech I Semester -> 7
          - IV Year II Semester / Year 4 Sem 2 / 4-2 / IV B.Tech II Semester -> 8
-      2. mid1, mid2, semester_marks, and gpa must be strings. If a mark is missing, use "-".
-      3. For "sgpa" and "cgpa" at the root level, return the values corresponding to the LATEST semester found in the marksheet (e.g. if the marksheet contains semesters 1, 2, and 3, return the Semester 3 SGPA and CGPA).
-      4. For "backlogs" at the root level, return the total number of active backlogs across all semesters.
-      5. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
+      2. Extract "memo_no", "serial_no", "exam_date" (month and year of exam), "issue_date" (date of issue), "father_name" (or FATHER'S / MOTHER'S NAME), "hall_ticket_no" (or roll number), "branch" (e.g. ELECTRONICS & COMMUNICATION ENGINEERING), "total_credits" (number of passed credits or total credits for the semester) and "pass_status" (PASS or FAIL result status).
+      3. For each subject, extract the "code" (e.g. 8BC01), "name" (e.g. ENGINEERING GRAPHICS), "gpa" (grade secured like A, O, S, A+, B+, B, C, D, F, or a number like 9.0), "credits" (credits for that subject like 3, 1.5, etc.) and "result" (P for pass or F for fail). If mid1, mid2 or semester_marks are not found on the certificate, use "-".
+      4. For "sgpa" and "cgpa" at the root level, return the values corresponding to the LATEST semester found in the marksheet (e.g. if the marksheet contains semesters 1, 2, and 3, return the Semester 3 SGPA and CGPA).
+      5. For "backlogs" at the root level, return the total number of active backlogs across all semesters.
+      6. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
     `;
 
     const parts: any[] = [];

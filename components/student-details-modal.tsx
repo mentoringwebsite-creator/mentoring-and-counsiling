@@ -88,16 +88,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   if (!isOpen) return null;
 
   const profile = student?.student_profiles?.[0] || {};
-  const cgpaVal = profile.cgpa !== undefined && profile.cgpa !== null ? Number(profile.cgpa) : 8.0;
-  const sgpaVal = profile.sgpa !== undefined && profile.sgpa !== null ? Number(profile.sgpa) : 8.0;
-  const backlogsVal = profile.backlogs !== undefined && profile.backlogs !== null ? Number(profile.backlogs) : 0;
-  const risk = getRiskLevel(cgpaVal, backlogsVal);
-
   const subjects = profile.academic_subjects || [];
-  const filteredSubjects = subjects.filter((sub: any) => {
-    if (selectedSemester === 'All') return true;
-    return sub.semester?.toString() === selectedSemester;
-  });
 
   // Helper to convert letter grades to GPA numbers
   const convertGradeToGP = (gpaStr: string | number | undefined | null): number | null => {
@@ -118,6 +109,80 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
       default: return null; // Ignore non-grade strings like '-'
     }
   };
+
+  // Compute dynamic stats if subjects exist
+  const dynamicStats = (() => {
+    if (subjects.length === 0) {
+      return { sgpa: 0, cgpa: 0, backlogs: 0 };
+    }
+
+    let totalCgpaCredits = 0;
+    let totalCgpaPoints = 0;
+    let backlogCount = 0;
+
+    subjects.forEach((sub: any) => {
+      const gp = convertGradeToGP(sub.gpa);
+      const credits = parseFloat(sub.credits) || 0;
+      if (gp !== null && credits > 0) {
+        totalCgpaCredits += credits;
+        totalCgpaPoints += gp * credits;
+      }
+      const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
+      if (isF) backlogCount++;
+    });
+
+    const calculatedCgpa = totalCgpaCredits > 0 ? Number((totalCgpaPoints / totalCgpaCredits).toFixed(2)) : 0;
+
+    const semesters = subjects.map((s: any) => parseInt(s.semester)).filter((s: any) => !isNaN(s));
+    const latestSem = semesters.length > 0 ? Math.max(...semesters) : 1;
+
+    let totalSgpaCredits = 0;
+    let totalSgpaPoints = 0;
+
+    subjects.forEach((sub: any) => {
+      if (parseInt(sub.semester) === latestSem) {
+        const gp = convertGradeToGP(sub.gpa);
+        const credits = parseFloat(sub.credits) || 0;
+        if (gp !== null && credits > 0) {
+          totalSgpaCredits += credits;
+          totalSgpaPoints += gp * credits;
+        }
+      }
+    });
+
+    const calculatedSgpa = totalSgpaCredits > 0 ? Number((totalSgpaPoints / totalSgpaCredits).toFixed(2)) : 0;
+
+    return {
+      sgpa: calculatedSgpa,
+      cgpa: calculatedCgpa,
+      backlogs: backlogCount
+    };
+  })();
+
+  const cgpaVal = dynamicStats.cgpa;
+  const sgpaVal = dynamicStats.sgpa;
+  const backlogsVal = dynamicStats.backlogs;
+  const risk = getRiskLevel(cgpaVal, backlogsVal);
+
+  const getSemesterMetadata = (sem: string) => {
+    const sub = subjects.find((s: any) => s.semester?.toString() === sem);
+    return {
+      memo_no: sub?.memo_no || '',
+      serial_no: sub?.serial_no || '',
+      exam_date: sub?.exam_date || '',
+      issue_date: sub?.issue_date || '',
+      total_credits: sub?.total_credits || '',
+      pass_status: sub?.pass_status || 'PASS',
+      father_name: sub?.father_name || '',
+      hall_ticket_no: sub?.hall_ticket_no || '',
+      branch: sub?.branch || ''
+    };
+  };
+
+  const filteredSubjects = subjects.filter((sub: any) => {
+    if (selectedSemester === 'All') return true;
+    return sub.semester?.toString() === selectedSemester;
+  });
 
   const selectedSemesterSGPA = (() => {
     if (selectedSemester === 'All') return null;
@@ -450,16 +515,16 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-5 shadow-sm">
                       <div className="text-xs font-bold text-emerald-800 uppercase tracking-wider opacity-85">Latest SGPA</div>
-                      <div className="mt-2 text-3xl font-black text-emerald-950">{sgpaVal.toFixed(2)}</div>
+                      <div className="mt-2 text-3xl font-black text-emerald-950">{sgpaVal > 0 ? sgpaVal.toFixed(2) : 'N/A'}</div>
                     </div>
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                       <div className="text-xs font-bold text-slate-500 uppercase tracking-wider opacity-85">Cumulative CGPA</div>
-                      <div className="mt-2 text-3xl font-black text-slate-900">{cgpaVal.toFixed(2)}</div>
+                      <div className="mt-2 text-3xl font-black text-slate-900">{cgpaVal > 0 ? cgpaVal.toFixed(2) : 'N/A'}</div>
                     </div>
                     <div className={`rounded-2xl border p-5 shadow-sm ${
                       backlogsVal > 0 
                         ? 'border-rose-100 bg-rose-50/40 text-rose-955' 
-                        : 'border-orange-100 bg-orange-50/40 text-orange-955'
+                        : 'border-emerald-100 bg-emerald-50/40 text-emerald-955'
                     }`}>
                       <div className="text-xs font-bold uppercase tracking-wider opacity-85">Active Backlogs</div>
                       <div className="mt-2 text-3xl font-black">{backlogsVal}</div>
@@ -500,6 +565,43 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                       </div>
                     </div>
 
+                    {selectedSemester !== 'All' && (() => {
+                      const semMeta = getSemesterMetadata(selectedSemester);
+                      if (!semMeta.memo_no && !semMeta.serial_no && !semMeta.exam_date && !semMeta.issue_date) return null;
+                      return (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 mb-4 rounded-2xl bg-slate-50 border border-slate-205">
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Memo Number</div>
+                            <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.memo_no || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Serial Number</div>
+                            <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.serial_no || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Exam Month/Year</div>
+                            <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.exam_date || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date of Issue</div>
+                            <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.issue_date || '-'}</div>
+                          </div>
+                          {semMeta.total_credits && (
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Credits</div>
+                              <div className="text-xs font-bold text-slate-800 mt-0.5">{semMeta.total_credits}</div>
+                            </div>
+                          )}
+                          {semMeta.pass_status && (
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Result Status</div>
+                              <div className="text-xs font-black text-emerald-800 mt-0.5">{semMeta.pass_status}</div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     {filteredSubjects.length === 0 ? (
                       <p className="text-xs text-slate-400 italic text-center py-8">
                         No subject marks entered for this filter.
@@ -509,23 +611,31 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                         <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
                           <thead className="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider">
                             <tr>
+                              <th className="px-4 py-3">Subject Code</th>
                               <th className="px-4 py-3">Subject Name</th>
-                              <th className="px-4 py-3">Sem</th>
-                              <th className="px-4 py-3">Mid 1</th>
-                              <th className="px-4 py-3">Mid 2</th>
-                              <th className="px-4 py-3">Sem Exam</th>
-                              <th className="px-4 py-3">Grade GPA</th>
+                              <th className="px-4 py-3 text-center">Semester</th>
+                              <th className="px-4 py-3 text-center">Credits</th>
+                              <th className="px-4 py-3 text-center">Grade Secured</th>
+                              <th className="px-4 py-3 text-center">Result</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
                             {filteredSubjects.map((sub: any, idx: number) => (
                               <tr key={idx} className="hover:bg-slate-55/30 transition">
+                                <td className="px-4 py-3 font-mono font-bold text-slate-600">{sub.code || '-'}</td>
                                 <td className="px-4 py-3 font-semibold text-slate-900">{sub.name}</td>
-                                <td className="px-4 py-3 text-slate-600">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
-                                <td className="px-4 py-3 text-slate-650 font-mono">{sub.mid1 ?? '-'}</td>
-                                <td className="px-4 py-3 text-slate-650 font-mono">{sub.mid2 ?? '-'}</td>
-                                <td className="px-4 py-3 text-slate-650 font-mono">{sub.semester_marks ?? '-'}</td>
-                                <td className="px-4 py-3 font-bold text-slate-900 font-mono">{sub.gpa ?? '-'}</td>
+                                <td className="px-4 py-3 text-center text-slate-600">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
+                                <td className="px-4 py-3 text-center font-semibold text-slate-650">{sub.credits ?? '-'}</td>
+                                <td className="px-4 py-3 text-center font-bold text-slate-900">{sub.gpa ?? '-'}</td>
+                                <td className="px-4 py-3 text-center">
+                                  <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold border ${
+                                    sub.result === 'P' || sub.result === 'PASS'
+                                      ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                                      : 'bg-rose-50 border-rose-100 text-rose-800'
+                                  }`}>
+                                    {sub.result || 'P'}
+                                  </span>
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -613,7 +723,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                               />
                             </div>
                             <p className="text-[10px] text-slate-450 leading-relaxed">
-                              Estimated placement readiness based on CGPA of {cgpaVal.toFixed(2)} and {backlogsVal} active backlogs.
+                              Estimated placement readiness based on CGPA of {cgpaVal > 0 ? cgpaVal.toFixed(2) : 'N/A'} and {backlogsVal} active backlogs.
                             </p>
                           </div>
 
