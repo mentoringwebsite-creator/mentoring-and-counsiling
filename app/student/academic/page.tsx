@@ -36,6 +36,17 @@ import {
   Legend 
 } from 'recharts';
 
+const semesterLabels: Record<string | number, { full: string; short: string }> = {
+  1: { full: 'I Year I Semester (1-1)', short: '1-1' },
+  2: { full: 'I Year II Semester (1-2)', short: '1-2' },
+  3: { full: 'II Year I Semester (2-1)', short: '2-1' },
+  4: { full: 'II Year II Semester (2-2)', short: '2-2' },
+  5: { full: 'III Year I Semester (3-1)', short: '3-1' },
+  6: { full: 'III Year II Semester (3-2)', short: '3-2' },
+  7: { full: 'IV Year I Semester (4-1)', short: '4-1' },
+  8: { full: 'IV Year II Semester (4-2)', short: '4-2' }
+};
+
 export default function AcademicPage() {
   const [loading, setLoading] = useState(true);
   const [sgpa, setSgpa] = useState<number>(8.0);
@@ -347,14 +358,14 @@ export default function AcademicPage() {
                       className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-[#1c5644] focus:outline-none"
                     >
                       <option value="All">All Semesters</option>
-                      <option value="1">Semester 1</option>
-                      <option value="2">Semester 2</option>
-                      <option value="3">Semester 3</option>
-                      <option value="4">Semester 4</option>
-                      <option value="5">Semester 5</option>
-                      <option value="6">Semester 6</option>
-                      <option value="7">Semester 7</option>
-                      <option value="8">Semester 8</option>
+                      <option value="1">I Year I Semester (1-1)</option>
+                      <option value="2">I Year II Semester (1-2)</option>
+                      <option value="3">II Year I Semester (2-1)</option>
+                      <option value="4">II Year II Semester (2-2)</option>
+                      <option value="5">III Year I Semester (3-1)</option>
+                      <option value="6">III Year II Semester (3-2)</option>
+                      <option value="7">IV Year I Semester (4-1)</option>
+                      <option value="8">IV Year II Semester (4-2)</option>
                     </select>
                   </div>
 
@@ -386,7 +397,7 @@ export default function AcademicPage() {
                             {filteredSubjects.map((sub, index) => (
                               <tr key={index} className="hover:bg-slate-50/40 transition">
                                 <td className="p-3 font-semibold text-slate-800">{sub.name}</td>
-                                <td className="p-3 text-slate-600 text-center font-bold">Sem {sub.semester}</td>
+                                <td className="p-3 text-slate-600 text-center font-bold">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
                                 <td className="p-3 text-slate-650 text-center font-semibold">{sub.mid1 || '-'}</td>
                                 <td className="p-3 text-slate-650 text-center font-semibold">{sub.mid2 || '-'}</td>
                                 <td className="p-3 text-slate-650 text-center font-semibold">{sub.semester_marks || '-'}</td>

@@ -15,6 +15,17 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar 
 } from 'recharts';
 
+const semesterLabels: Record<string | number, { full: string; short: string }> = {
+  1: { full: 'I Year I Semester (1-1)', short: '1-1' },
+  2: { full: 'I Year II Semester (1-2)', short: '1-2' },
+  3: { full: 'II Year I Semester (2-1)', short: '2-1' },
+  4: { full: 'II Year II Semester (2-2)', short: '2-2' },
+  5: { full: 'III Year I Semester (3-1)', short: '3-1' },
+  6: { full: 'III Year II Semester (3-2)', short: '3-2' },
+  7: { full: 'IV Year I Semester (4-1)', short: '4-1' },
+  8: { full: 'IV Year II Semester (4-2)', short: '4-2' }
+};
+
 interface StudentDetailsModalProps {
   studentUserId: string | null;
   isOpen: boolean;
@@ -452,14 +463,14 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                         className="rounded-2xl border border-slate-350 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 focus:border-emerald-600 focus:outline-none"
                       >
                         <option value="All">All Semesters</option>
-                        <option value="1">Semester 1</option>
-                        <option value="2">Semester 2</option>
-                        <option value="3">Semester 3</option>
-                        <option value="4">Semester 4</option>
-                        <option value="5">Semester 5</option>
-                        <option value="6">Semester 6</option>
-                        <option value="7">Semester 7</option>
-                        <option value="8">Semester 8</option>
+                        <option value="1">I Year I Semester (1-1)</option>
+                        <option value="2">I Year II Semester (1-2)</option>
+                        <option value="3">II Year I Semester (2-1)</option>
+                        <option value="4">II Year II Semester (2-2)</option>
+                        <option value="5">III Year I Semester (3-1)</option>
+                        <option value="6">III Year II Semester (3-2)</option>
+                        <option value="7">IV Year I Semester (4-1)</option>
+                        <option value="8">IV Year II Semester (4-2)</option>
                       </select>
                     </div>
 
@@ -484,7 +495,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                             {filteredSubjects.map((sub: any, idx: number) => (
                               <tr key={idx} className="hover:bg-slate-55/30 transition">
                                 <td className="px-4 py-3 font-semibold text-slate-900">{sub.name}</td>
-                                <td className="px-4 py-3 text-slate-600">Sem {sub.semester}</td>
+                                <td className="px-4 py-3 text-slate-600">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
                                 <td className="px-4 py-3 text-slate-650 font-mono">{sub.mid1 ?? '-'}</td>
                                 <td className="px-4 py-3 text-slate-650 font-mono">{sub.mid2 ?? '-'}</td>
                                 <td className="px-4 py-3 text-slate-650 font-mono">{sub.semester_marks ?? '-'}</td>
