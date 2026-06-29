@@ -78,6 +78,35 @@ export default function AdminStudentsPage() {
   const [subCredits, setSubCredits] = useState('3');
   const [subResult, setSubResult] = useState('P');
 
+  // Student filtering states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterYear, setFilterYear] = useState('All');
+  const [filterBranch, setFilterBranch] = useState('All');
+  const [filterSection, setFilterSection] = useState('All');
+
+  const getStudentBTechYear = (profile: any) => {
+    const acYearStr = String(profile.academic_year || '').toLowerCase();
+    if (acYearStr.includes('1') || acYearStr.includes('i year') || acYearStr.includes('first')) return 'I Year';
+    if (acYearStr.includes('2') || acYearStr.includes('ii year') || acYearStr.includes('second')) return 'II Year';
+    if (acYearStr.includes('3') || acYearStr.includes('iii year') || acYearStr.includes('third')) return 'III Year';
+    if (acYearStr.includes('4') || acYearStr.includes('iv year') || acYearStr.includes('fourth')) return 'IV Year';
+
+    const roll = String(profile.roll_number || '').trim();
+    if (roll.length >= 2) {
+      const joinYearDigits = parseInt(roll.substring(0, 2));
+      if (!isNaN(joinYearDigits)) {
+        const currentYear = 2026;
+        const currentYearDigits = currentYear % 100; // 26
+        const diff = currentYearDigits - joinYearDigits;
+        if (diff === 0 || diff === 1) return 'I Year';
+        if (diff === 2) return 'II Year';
+        if (diff === 3) return 'III Year';
+        if (diff >= 4) return 'IV Year';
+      }
+    }
+    return 'I Year';
+  };
+
   const fetchStudents = async () => {
     try {
       setLoading(true);
@@ -860,6 +889,56 @@ export default function AdminStudentsPage() {
 
   const analysis = getAcademicAnalysis();
 
+  // Dynamic student list filtering
+  const filteredStudents = students.filter((student) => {
+    const profile = student.student_profiles?.[0] || {};
+    
+    // 1. Search Query filter (matches name, email, roll number)
+    const query = searchQuery.trim().toLowerCase();
+    const matchesQuery = 
+      !query || 
+      student.name.toLowerCase().includes(query) || 
+      student.email.toLowerCase().includes(query) || 
+      (profile.roll_number && profile.roll_number.toLowerCase().includes(query));
+
+    if (!matchesQuery) return false;
+
+    // 2. Year filter
+    const studentYear = getStudentBTechYear(profile);
+    if (filterYear !== 'All' && studentYear !== filterYear) return false;
+
+    // 3. Branch filter
+    const studentBranch = String(profile.branch || '').trim().toUpperCase();
+    if (filterBranch !== 'All' && studentBranch !== filterBranch) return false;
+
+    // 4. Section filter
+    const studentSection = String(profile.section || '').trim().toUpperCase();
+    if (filterSection !== 'All' && studentSection !== filterSection) return false;
+
+    return true;
+  });
+
+  // Calculate year counts for filter tabs
+  const getYearCount = (year: string) => {
+    return students.filter(s => {
+      const p = s.student_profiles?.[0] || {};
+      return getStudentBTechYear(p) === year;
+    }).length;
+  };
+
+  // Collect unique branches and sections dynamically
+  const uniqueBranches = Array.from(new Set(
+    students
+      .map(s => String(s.student_profiles?.[0]?.branch || '').trim().toUpperCase())
+      .filter(b => b.length > 0)
+  )).sort();
+
+  const uniqueSections = Array.from(new Set(
+    students
+      .map(s => String(s.student_profiles?.[0]?.section || '').trim().toUpperCase())
+      .filter(sec => sec.length > 0)
+  )).sort();
+
   return (
     <ProtectedRoute role="admin">
       <PageShell title="Manage Students" subtitle="View and manage approved student accounts">
@@ -881,6 +960,137 @@ export default function AdminStudentsPage() {
                 {feedback.message}
               </div>
             )}
+
+            {/* B.Tech Academic Year Tabs */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {[
+                { id: 'All', label: 'All Students', count: students.length, color: 'from-emerald-800/10 to-teal-800/10' },
+                { id: 'I Year', label: 'I Year (1st)', count: getYearCount('I Year'), color: 'from-blue-500/10 to-indigo-500/10' },
+                { id: 'II Year', label: 'II Year (2nd)', count: getYearCount('II Year'), color: 'from-cyan-500/10 to-teal-500/10' },
+                { id: 'III Year', label: 'III Year (3rd)', count: getYearCount('III Year'), color: 'from-amber-500/10 to-orange-500/10' },
+                { id: 'IV Year', label: 'IV Year (4th)', count: getYearCount('IV Year'), color: 'from-rose-500/10 to-pink-500/10' }
+              ].map((tab) => {
+                const isActive = filterYear === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setFilterYear(tab.id)}
+                    className={`text-left rounded-3xl border p-4 transition-all duration-300 relative overflow-hidden group shadow-sm flex flex-col justify-between ${
+                      isActive 
+                        ? 'border-emerald-600 bg-gradient-to-br from-emerald-50 to-emerald-100/50 shadow-md ring-2 ring-emerald-500/20' 
+                        : 'border-slate-200 bg-white hover:border-slate-350 hover:shadow'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${isActive ? 'text-emerald-800' : 'text-slate-400'}`}>
+                        {tab.label}
+                      </span>
+                      <span className={`inline-flex items-center rounded-xl px-2 py-0.5 text-xs font-black transition-colors ${
+                        isActive ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'
+                      }`}>
+                        {tab.count}
+                      </span>
+                    </div>
+                    <div className="mt-2.5">
+                      <div className={`text-sm font-extrabold tracking-tight ${isActive ? 'text-emerald-950' : 'text-slate-800'}`}>
+                        {tab.id === 'All' ? 'Full Roster' : `${tab.id}`}
+                      </div>
+                      <div className="text-[9px] font-bold text-slate-400 mt-0.5 uppercase tracking-wide">
+                        {tab.id === 'All' ? 'SNIST Portal' : 'B.Tech Stream'}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search and Filters Toolbar */}
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+              <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                
+                {/* Search query box */}
+                <div className="relative w-full md:max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-450">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search by name, email, or roll number..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-xs font-semibold rounded-2xl border border-slate-200 bg-slate-50/50 text-slate-800 focus:bg-white focus:border-emerald-600 focus:outline-none placeholder-slate-400 transition"
+                  />
+                </div>
+
+                {/* Dropdowns */}
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                  {/* Branch select */}
+                  <div className="flex items-center gap-1.5 bg-slate-50/50 border border-slate-200 px-3 py-1.5 rounded-2xl">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Branch</span>
+                    <select
+                      value={filterBranch}
+                      onChange={(e) => setFilterBranch(e.target.value)}
+                      className="bg-transparent text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                    >
+                      <option value="All">All Branches</option>
+                      {uniqueBranches.map(b => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Section select */}
+                  <div className="flex items-center gap-1.5 bg-slate-50/50 border border-slate-200 px-3 py-1.5 rounded-2xl">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Section</span>
+                    <select
+                      value={filterSection}
+                      onChange={(e) => setFilterSection(e.target.value)}
+                      className="bg-transparent text-xs font-bold text-slate-700 focus:outline-none cursor-pointer"
+                    >
+                      <option value="All">All Sections</option>
+                      {uniqueSections.map(sec => (
+                        <option key={sec} value={sec}>{sec}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Reset Filters button */}
+                  {(filterYear !== 'All' || filterBranch !== 'All' || filterSection !== 'All' || searchQuery !== '') && (
+                    <button
+                      onClick={() => {
+                        setFilterYear('All');
+                        setFilterBranch('All');
+                        setFilterSection('All');
+                        setSearchQuery('');
+                      }}
+                      className="text-xs font-bold text-emerald-800 hover:text-emerald-950 hover:underline pl-1 transition"
+                    >
+                      Reset Filters
+                    </button>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Filtering summary banner */}
+              {(filterYear !== 'All' || filterBranch !== 'All' || filterSection !== 'All' || searchQuery !== '') && (
+                <div className="text-xs text-slate-500 font-semibold border-t border-slate-100 pt-3.5 flex items-center justify-between">
+                  <span>
+                    Showing <strong className="text-emerald-800">{filteredStudents.length}</strong> of {students.length} students matched
+                  </span>
+                  <span className="text-[10px] text-slate-400 italic">
+                    Active filters: {[
+                      filterYear !== 'All' && `${filterYear}`,
+                      filterBranch !== 'All' && `Branch: ${filterBranch}`,
+                      filterSection !== 'All' && `Section: ${filterSection}`,
+                      searchQuery !== '' && `Search: "${searchQuery}"`
+                    ].filter(Boolean).join(' | ')}
+                  </span>
+                </div>
+              )}
+            </div>
 
             <div className="overflow-x-auto w-full rounded-[28px] border border-slate-200 bg-white shadow-sm">
               <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
@@ -904,12 +1114,12 @@ export default function AdminStudentsPage() {
                         </div>
                       </td>
                     </tr>
-                  ) : students.length === 0 ? (
+                  ) : filteredStudents.length === 0 ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={6}>No approved students found.</td>
+                      <td className="px-5 py-8 text-slate-400 italic text-center" colSpan={6}>No students matched the selected filters.</td>
                     </tr>
                   ) : null}
-                  {students.map((student) => {
+                  {filteredStudents.map((student) => {
                     const profile = student.student_profiles?.[0] || {};
                     return (
                       <tr key={student.id} className="hover:bg-slate-50/50">
