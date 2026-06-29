@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Phone, Smartphone, Edit2, Loader2, X, User, GraduationCap, Mail, Calendar } from 'lucide-react';
+import { Phone, Smartphone, Edit2, Loader2, X, User, GraduationCap, Mail, Calendar, ArrowLeft } from 'lucide-react';
 
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
@@ -13,6 +13,13 @@ const studentSidebarItems = [
   { href: '/student/extracurricular', label: 'Extracurricular Activities' },
   { href: '/student/queries', label: 'Problems / Queries' }
 ];
+const parseAcademicYear = (val: string) => {
+  const match = String(val || '').match(/^([IVXLC\d]+(?:\s*Year)?)\s*\((.*)\)$/i);
+  if (match) {
+    return { btechYear: match[1].trim(), batch: match[2].trim() };
+  }
+  return { btechYear: null, batch: val };
+};
 
 export default function StudentProfilePage() {
   const [profile, setProfile] = useState<any>(null);
@@ -27,6 +34,7 @@ export default function StudentProfilePage() {
     branch: '',
     section: '',
     academic_year: '',
+    btech_year: '',
     profile_photo: ''
   });
   const [saving, setSaving] = useState(false);
@@ -55,6 +63,9 @@ export default function StudentProfilePage() {
         .eq('user_id', userId)
         .single();
 
+      const parsed = parseAcademicYear(profileDb?.academic_year || '');
+      const inferredBTechYear = parsed.btechYear || getStudentBTechYear(profileDb?.roll_number, parsed.batch);
+
       const initialData = {
         name: userDb?.name || session.user.user_metadata?.name || '',
         rollNumber: profileDb?.roll_number || '',
@@ -63,7 +74,8 @@ export default function StudentProfilePage() {
         alternate_phone: profileDb?.alternate_phone || '',
         branch: profileDb?.branch || '',
         section: profileDb?.section || '',
-        academic_year: profileDb?.academic_year || '',
+        academic_year: parsed.batch,
+        btech_year: inferredBTechYear,
         email: email,
         profile_photo: profileDb?.profile_photo || ''
       };
@@ -174,12 +186,17 @@ export default function StudentProfilePage() {
 
       if (userError) throw userError;
 
+      // Format academic_year to combine B.Tech Year and Batch e.g., "II Year (2023 to 2024)"
+      const combinedAcademicYear = formData.btech_year
+        ? `${formData.btech_year} (${formData.academic_year})`
+        : formData.academic_year;
+
       // 2. Try to update student_profiles table including alternate_phone
       const updatePayload: any = {
         roll_number: formData.rollNumber,
         branch: formData.branch,
         section: formData.section,
-        academic_year: formData.academic_year,
+        academic_year: combinedAcademicYear,
         phone: formData.phone,
         dob: formData.dob && formData.dob.trim() !== '' ? formData.dob : null,
         profile_photo: formData.profile_photo,
@@ -524,10 +541,20 @@ export default function StudentProfilePage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">B.Tech Year (Auto-calculated)</label>
-                    <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-emerald-800 font-bold">
-                      {getStudentBTechYear(formData.rollNumber, formData.academic_year) || 'N/A'}
-                    </div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">B.Tech Year</label>
+                    <select
+                      name="btech_year"
+                      value={formData.btech_year || ''}
+                      onChange={(e) => setFormData((prev: any) => ({ ...prev, btech_year: e.target.value }))}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none bg-white font-semibold text-slate-800"
+                    >
+                      <option value="">Select Year</option>
+                      <option value="I Year">I Year</option>
+                      <option value="II Year">II Year</option>
+                      <option value="III Year">III Year</option>
+                      <option value="IV Year">IV Year</option>
+                    </select>
                   </div>
 
                   <div className="sm:col-span-2">
@@ -575,9 +602,10 @@ export default function StudentProfilePage() {
                   <button
                     type="button"
                     onClick={() => setIsEditing(false)}
-                    className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                    className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
                   >
-                    Cancel
+                    <ArrowLeft className="h-4 w-4 text-slate-550" />
+                    <span>Back</span>
                   </button>
                   <button
                     type="submit"
