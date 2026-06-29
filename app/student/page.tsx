@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Phone, Smartphone, Edit2, Loader2, X, User, GraduationCap, Mail } from 'lucide-react';
+import { Phone, Smartphone, Edit2, Loader2, X, User, GraduationCap, Mail, Calendar } from 'lucide-react';
 
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
@@ -327,6 +327,16 @@ export default function StudentProfilePage() {
 
                           <div className="flex items-center gap-3 text-slate-650">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
+                              <Calendar className="h-4 w-4 text-emerald-800" />
+                            </div>
+                            <div>
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Date of Birth</div>
+                              <span className="text-xs font-extrabold text-slate-800">{profileData.dob || '-'}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-slate-650">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
                               <Mail className="h-4 w-4 text-emerald-800" />
                             </div>
                             <div className="min-w-0">
@@ -389,46 +399,6 @@ export default function StudentProfilePage() {
                             <span className="text-xs font-black text-slate-300">BATCH</span>
                           </div>
 
-                          <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 sm:col-span-2 flex items-center justify-between">
-                            <div>
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Enrollment Roll No</div>
-                              <div className="text-sm font-mono font-extrabold text-slate-855 mt-1 uppercase">{profileData.rollNumber || '-'}</div>
-                            </div>
-                            <span className="text-xs font-black text-slate-300">UID</span>
-                          </div>
-
-                        </div>
-                      </div>
-
-                      {/* Personal Profile Details Card */}
-                      <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
-                        <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4 mb-5">
-                          <div className="rounded-xl bg-blue-50 border border-blue-100 p-2 text-blue-800">
-                            <User className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <h3 className="text-base font-extrabold text-slate-800">Personal Specifications</h3>
-                            <p className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider mt-0.5">Student General Profile Information</p>
-                          </div>
-                        </div>
-
-                        <div className="divide-y divide-slate-100 text-sm">
-                          <div className="grid grid-cols-[160px_1fr] py-3.5">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Full Name</span>
-                            <span className="font-extrabold text-slate-850">{profileData.name || '-'}</span>
-                          </div>
-                          <div className="grid grid-cols-[160px_1fr] py-3.5">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Date of Birth</span>
-                            <span className="font-extrabold text-slate-850">{profileData.dob || '-'}</span>
-                          </div>
-                          <div className="grid grid-cols-[160px_1fr] py-3.5">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Alternate Mobile</span>
-                            <span className="font-extrabold text-slate-850">{profileData.alternate_phone || '-'}</span>
-                          </div>
-                          <div className="grid grid-cols-[160px_1fr] py-3.5">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">Primary Contact</span>
-                            <span className="font-extrabold text-slate-850">{profileData.phone || '-'}</span>
-                          </div>
                         </div>
                       </div>
 
