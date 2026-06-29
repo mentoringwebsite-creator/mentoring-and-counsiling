@@ -553,6 +553,13 @@ export default function StudentProfilePage() {
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">B.Tech Year (Auto-calculated)</label>
+                    <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-emerald-800 font-bold">
+                      {getStudentBTechYear(formData.rollNumber, formData.academic_year) || 'N/A'}
+                    </div>
+                  </div>
+
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Profile Photo</label>
                     <div className="mt-1 flex flex-wrap items-center gap-4">

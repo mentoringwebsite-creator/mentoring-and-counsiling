@@ -26,6 +26,31 @@ export default function FacultyStudentsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  const getStudentBTechYear = (profile: any) => {
+    const acYear = profile?.academic_year || '';
+    const roll = profile?.roll_number || '';
+    const acYearStr = String(acYear).toLowerCase();
+    if (acYearStr.includes('1') || acYearStr.includes('i year') || acYearStr.includes('first')) return 'I Year';
+    if (acYearStr.includes('2') || acYearStr.includes('ii year') || acYearStr.includes('second')) return 'II Year';
+    if (acYearStr.includes('3') || acYearStr.includes('iii year') || acYearStr.includes('third')) return 'III Year';
+    if (acYearStr.includes('4') || acYearStr.includes('iv year') || acYearStr.includes('fourth')) return 'IV Year';
+
+    const r = String(roll).trim();
+    if (r.length >= 2) {
+      const joinYearDigits = parseInt(r.substring(0, 2));
+      if (!isNaN(joinYearDigits)) {
+        const currentYear = 2026;
+        const currentYearDigits = currentYear % 100; // 26
+        const diff = currentYearDigits - joinYearDigits;
+        if (diff === 0 || diff === 1) return 'I Year';
+        if (diff === 2) return 'II Year';
+        if (diff === 3) return 'III Year';
+        if (diff >= 4) return 'IV Year';
+      }
+    }
+    return 'I Year';
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -190,7 +215,7 @@ export default function FacultyStudentsPage() {
                   <tr>
                     <th className="px-5 py-4 font-semibold">Roll No</th>
                     <th className="px-5 py-4 font-semibold">Name</th>
-                    <th className="px-5 py-4 font-semibold">Branch</th>
+                    <th className="px-5 py-4 font-semibold">Branch & Section</th>
                     <th className="px-5 py-4 font-semibold">CGPA</th>
                     <th className="px-5 py-4 font-semibold">Risk</th>
                     <th className="px-5 py-4 font-semibold text-center">Action</th>
@@ -231,7 +256,12 @@ export default function FacultyStudentsPage() {
                             {student.name}
                           </button>
                         </td>
-                        <td className="px-5 py-4 text-slate-700">{profile.branch || '-'}</td>
+                        <td className="px-5 py-4 text-slate-700">
+                          <div className="font-semibold uppercase">{profile.branch || '-'}</div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            Sec: {profile.section || '-'} | <span className="font-bold text-emerald-800">{getStudentBTechYear(profile)}</span>
+                          </div>
+                        </td>
                         <td className="px-5 py-4 text-slate-700 font-medium">{cgpaVal.toFixed(2)}</td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wider ${

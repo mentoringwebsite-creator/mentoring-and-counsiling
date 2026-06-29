@@ -54,6 +54,29 @@ const loginFields = [
   { name: 'password', label: 'Password', type: 'password' }
 ];
 
+const getStudentBTechYear = (roll: string, acYear: string) => {
+  const acYearStr = String(acYear || '').toLowerCase();
+  if (acYearStr.includes('1') || acYearStr.includes('i year') || acYearStr.includes('first')) return 'I Year';
+  if (acYearStr.includes('2') || acYearStr.includes('ii year') || acYearStr.includes('second')) return 'II Year';
+  if (acYearStr.includes('3') || acYearStr.includes('iii year') || acYearStr.includes('third')) return 'III Year';
+  if (acYearStr.includes('4') || acYearStr.includes('iv year') || acYearStr.includes('fourth')) return 'IV Year';
+
+  const r = String(roll || '').trim();
+  if (r.length >= 2) {
+    const joinYearDigits = parseInt(r.substring(0, 2));
+    if (!isNaN(joinYearDigits)) {
+      const currentYear = 2026;
+      const currentYearDigits = currentYear % 100; // 26
+      const diff = currentYearDigits - joinYearDigits;
+      if (diff === 0 || diff === 1) return 'I Year';
+      if (diff === 2) return 'II Year';
+      if (diff === 3) return 'III Year';
+      if (diff >= 4) return 'IV Year';
+    }
+  }
+  return null;
+};
+
 function renderField(field: { name: string; label: string; type: string; placeholder?: string; required?: boolean }, value: Record<string, string>, onChange: (name: string, value: string) => void) {
   if (field.name === 'profilePhotoUrl') {
     return (
@@ -128,8 +151,12 @@ function renderField(field: { name: string; label: string; type: string; placeho
     );
   }
 
+  const inferredYear = field.name === 'academicYear' || field.name === 'rollNumber'
+    ? getStudentBTechYear(value['rollNumber'] || '', value['academicYear'] || '')
+    : null;
+
   return (
-    <label key={field.name} className="grid gap-2 text-sm font-medium text-slate-700">
+    <label key={field.name} className="grid gap-2 text-sm font-medium text-slate-700 relative">
       <span>{field.label}</span>
       <input
         name={field.name}
@@ -140,6 +167,11 @@ function renderField(field: { name: string; label: string; type: string; placeho
         className="rounded-3xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
         required={field.required !== false}
       />
+      {inferredYear && (field.name === 'academicYear' || field.name === 'rollNumber') && (
+        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-150 px-2 py-0.5 rounded-full self-start mt-0.5 shadow-sm animate-in fade-in slide-in-from-top-1 duration-200">
+          Auto-categorized B.Tech Year: {inferredYear}
+        </span>
+      )}
     </label>
   );
 }

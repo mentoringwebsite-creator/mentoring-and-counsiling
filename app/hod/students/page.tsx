@@ -26,6 +26,31 @@ export default function HodStudentsPage() {
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  const getStudentBTechYear = (profile: any) => {
+    const acYear = profile?.academic_year || '';
+    const roll = profile?.roll_number || '';
+    const acYearStr = String(acYear).toLowerCase();
+    if (acYearStr.includes('1') || acYearStr.includes('i year') || acYearStr.includes('first')) return 'I Year';
+    if (acYearStr.includes('2') || acYearStr.includes('ii year') || acYearStr.includes('second')) return 'II Year';
+    if (acYearStr.includes('3') || acYearStr.includes('iii year') || acYearStr.includes('third')) return 'III Year';
+    if (acYearStr.includes('4') || acYearStr.includes('iv year') || acYearStr.includes('fourth')) return 'IV Year';
+
+    const r = String(roll).trim();
+    if (r.length >= 2) {
+      const joinYearDigits = parseInt(r.substring(0, 2));
+      if (!isNaN(joinYearDigits)) {
+        const currentYear = 2026;
+        const currentYearDigits = currentYear % 100; // 26
+        const diff = currentYearDigits - joinYearDigits;
+        if (diff === 0 || diff === 1) return 'I Year';
+        if (diff === 2) return 'II Year';
+        if (diff === 3) return 'III Year';
+        if (diff >= 4) return 'IV Year';
+      }
+    }
+    return 'I Year';
+  };
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -237,7 +262,7 @@ export default function HodStudentsPage() {
                                       </button>
                                     </td>
                                     <td className="px-4 py-3 text-slate-700">
-                                      {profile.branch} | Sec {profile.section}
+                                      <span className="uppercase">{profile.branch || '-'}</span> | Sec {profile.section || '-'} | <span className="font-bold text-emerald-800">{getStudentBTechYear(profile)}</span>
                                     </td>
                                     <td className="px-4 py-3 font-semibold text-slate-900">{cgpaVal.toFixed(2)}</td>
                                     <td className="px-4 py-3">
@@ -329,7 +354,7 @@ export default function HodStudentsPage() {
                                       <tr>
                                         <th className="px-4 py-3.5">Roll No</th>
                                         <th className="px-4 py-3.5">Student Name</th>
-                                        <th className="px-4 py-3.5">Section</th>
+                                        <th className="px-4 py-3.5">Section & Year</th>
                                         <th className="px-4 py-3.5">Contact Number</th>
                                         <th className="px-4 py-3.5">CGPA</th>
                                         <th className="px-4 py-3.5">Risk Status</th>
@@ -353,7 +378,7 @@ export default function HodStudentsPage() {
                                                 {student.name}
                                               </button>
                                             </td>
-                                            <td className="px-4 py-3 text-slate-700">Sec {profile.section || '-'}</td>
+                                            <td className="px-4 py-3 text-slate-700">Sec {profile.section || '-'} | <span className="font-bold text-emerald-800">{getStudentBTechYear(profile)}</span></td>
                                             <td className="px-4 py-3 text-slate-600 font-mono">{profile.phone || '-'}</td>
                                             <td className="px-4 py-3 font-semibold text-slate-900">{cgpaVal.toFixed(2)}</td>
                                             <td className="px-4 py-3">

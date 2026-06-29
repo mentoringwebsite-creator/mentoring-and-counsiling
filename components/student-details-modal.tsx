@@ -15,6 +15,29 @@ import {
   Tooltip, ResponsiveContainer, BarChart, Bar 
 } from 'recharts';
 
+const getStudentBTechYear = (roll: string, acYear: string) => {
+  const acYearStr = String(acYear || '').toLowerCase();
+  if (acYearStr.includes('1') || acYearStr.includes('i year') || acYearStr.includes('first')) return 'I Year';
+  if (acYearStr.includes('2') || acYearStr.includes('ii year') || acYearStr.includes('second')) return 'II Year';
+  if (acYearStr.includes('3') || acYearStr.includes('iii year') || acYearStr.includes('third')) return 'III Year';
+  if (acYearStr.includes('4') || acYearStr.includes('iv year') || acYearStr.includes('fourth')) return 'IV Year';
+
+  const r = String(roll || '').trim();
+  if (r.length >= 2) {
+    const joinYearDigits = parseInt(r.substring(0, 2));
+    if (!isNaN(joinYearDigits)) {
+      const currentYear = 2026;
+      const currentYearDigits = currentYear % 100; // 26
+      const diff = currentYearDigits - joinYearDigits;
+      if (diff === 0 || diff === 1) return 'I Year';
+      if (diff === 2) return 'II Year';
+      if (diff === 3) return 'III Year';
+      if (diff >= 4) return 'IV Year';
+    }
+  }
+  return 'I Year';
+};
+
 const semesterLabels: Record<string | number, { full: string; short: string }> = {
   1: { full: 'I Year I Semester (1-1)', short: '1-1' },
   2: { full: 'I Year II Semester (1-2)', short: '1-2' },
@@ -387,7 +410,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                     <span>&bull;</span>
                     <span>Section {profile.section || '-'}</span>
                     <span>&bull;</span>
-                    <span>Year: {profile.academic_year || 'N/A'}</span>
+                    <span>B.Tech Year: {getStudentBTechYear(profile.roll_number, profile.academic_year)} (Batch: {profile.academic_year || 'N/A'})</span>
                   </div>
                 </div>
               </div>
@@ -458,6 +481,10 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                       <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Academic Year</div>
                         <div className="mt-1 text-sm font-semibold text-slate-800">{profile.academic_year || 'Not Specified'}</div>
+                      </div>
+                      <div className="rounded-2xl bg-emerald-50/55 p-4 border border-emerald-100">
+                        <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">B.Tech Year</div>
+                        <div className="mt-1 text-sm font-bold text-emerald-950">{getStudentBTechYear(profile.roll_number, profile.academic_year)}</div>
                       </div>
                       <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role & Status</div>

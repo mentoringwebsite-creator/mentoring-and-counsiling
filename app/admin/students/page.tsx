@@ -1147,8 +1147,11 @@ export default function AdminStudentsPage() {
                         </td>
                         <td className="px-5 py-4 font-mono font-semibold text-slate-700">{profile.roll_number || '-'}</td>
                         <td className="px-5 py-4 text-slate-700">
-                          <div>{profile.branch || '-'}</div>
-                          <div className="text-xs text-slate-500">Sec: {profile.section || '-'} | Year: {profile.academic_year || '-'}</div>
+                          <div className="font-semibold uppercase">{profile.branch || '-'}</div>
+                          <div className="text-xs text-slate-600 mt-0.5">
+                            Sec: {profile.section || '-'} | <span className="font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">{getStudentBTechYear(profile)}</span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-1">Batch: {profile.academic_year || '-'}</div>
                         </td>
                         <td className="px-5 py-4 text-slate-700">
                           <div>Primary: {profile.phone || '-'}</div>
