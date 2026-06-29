@@ -1,5 +1,3 @@
-import Image from 'next/image';
-import Link from 'next/link';
 import { BadgeCheck, BriefcaseBusiness, GraduationCap, Headphones, ShieldCheck } from 'lucide-react';
 import { Brand } from '@/components/brand';
 import { PortalButton } from '@/components/portal-button';
@@ -8,43 +6,64 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-white">
       <div className="w-full overflow-hidden bg-white">
-        <header className="flex flex-col gap-4 border-b border-black/5 bg-white px-5 py-4 md:flex-row md:items-center md:justify-between md:px-8 md:py-5">
-          <div className="flex items-center gap-4">
-            <Brand />
-            <div className="hidden border-l border-black/10 pl-4 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[#315d47] md:grid">
-              <span>Sreenidhi</span>
-              <span>Institute of</span>
-              <span>Science and Technology</span>
+        <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/95 backdrop-blur-xl px-5 py-4 shadow-sm md:px-8">
+          <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Brand />
+              <div className="hidden border-l border-slate-200 pl-4 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[#315d47] md:grid">
+                <span>Sreenidhi</span>
+                <span>Institute of</span>
+                <span>Science and Technology</span>
+              </div>
             </div>
-          </div>
 
-          <nav className="flex items-center gap-4 text-sm font-semibold text-[#1d2f29] md:gap-8">
-            <Link className="transition hover:text-[#c56b07]" href="#home">Home</Link>
-            <Link className="transition hover:text-[#c56b07]" href="#about">About</Link>
-            <Link className="transition hover:text-[#c56b07]" href="#contact">Contact</Link>
-            <PortalButton href="/login" className="px-6 py-2.5">Login</PortalButton>
-          </nav>
+            <nav className="hidden items-center gap-6 text-sm font-semibold text-[#1d2f29] md:flex">
+              <a className="transition hover:text-[#c56b07]" href="#home">Home</a>
+              <a className="transition hover:text-[#c56b07]" href="#about">About</a>
+              <a className="transition hover:text-[#c56b07]" href="#contact">Contact</a>
+              <PortalButton href="/login" className="px-6 py-2.5">Login</PortalButton>
+            </nav>
+          </div>
         </header>
 
         <section
           id="home"
-          className="relative min-h-[560px] overflow-hidden bg-[linear-gradient(180deg,rgba(18,39,31,0.20),rgba(18,39,31,0.22)),url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center bg-no-repeat"
+          className="relative overflow-hidden bg-[url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center bg-no-repeat"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_40%,rgba(255,255,255,0.12),transparent_24%),radial-gradient(circle_at_88%_18%,rgba(255,255,255,0.08),transparent_16%)]" />
-          <div className="relative z-10 mx-auto flex min-h-[560px] max-w-[1180px] items-center px-6 py-12 md:px-10 md:py-16">
-            <div className="max-w-[640px] text-white">
-              <div className="mb-5 inline-flex items-center gap-3 text-[0.72rem] font-bold uppercase tracking-[0.18em] text-white/85">
-                <span className="h-1 w-9 rounded-full bg-white" />
-                Student success platform · updated release
-              </div>
-              <h1 className="max-w-[600px] text-4xl font-extrabold leading-[0.98] tracking-[-0.04em] md:text-[5rem]">
-                Empowering Students for a Successful Future
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(17,81,64,0.68),transparent_25%),linear-gradient(180deg,rgba(4,30,20,0.76),rgba(10,39,40,0.9))]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.12),transparent_16%)]" />
+          <div className="relative z-10 mx-auto flex min-h-[680px] max-w-[1180px] items-center px-6 py-16 md:px-10">
+            <div className="max-w-[660px] text-white">
+              <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-white/85 backdrop-blur-sm">
+                <BadgeCheck className="h-4 w-4 text-emerald-200" /> Trusted mentoring for every student
+              </span>
+
+              <h1 className="text-4xl font-extrabold leading-tight tracking-[-0.04em] md:text-[4.75rem] md:leading-[1.02]">
+                Empowering students with mentoring, counseling, and career guidance.
               </h1>
-              <p className="mt-6 max-w-[560px] text-base leading-8 text-white/88 md:text-[1.05rem]">
-                A refreshed mentoring and counseling platform designed to help every student grow academically, professionally, and personally.
+
+              <p className="mt-6 max-w-[610px] text-base leading-8 text-white/85 md:text-lg">
+                A modern portal for SNIST students, faculty, and administrators to track progress, connect with mentors, and access confidential support across academics and careers.
               </p>
+
               <div className="mt-10 flex flex-wrap gap-4">
-                <PortalButton href="/login" className="px-7 py-4 text-[0.98rem]">Login to Portal</PortalButton>
+                <PortalButton href="/login" className="px-7 py-4 text-[0.98rem]">Open Portal</PortalButton>
+                <PortalButton href="#about" variant="secondary" className="px-7 py-4">See Details</PortalButton>
+              </div>
+
+              <div className="mt-10 grid gap-3 rounded-[30px] border border-white/15 bg-white/10 p-5 text-sm text-white/90 shadow-soft backdrop-blur-md sm:grid-cols-3">
+                <div>
+                  <div className="text-3xl font-bold">800+</div>
+                  <div className="mt-1 uppercase tracking-[0.18em] text-white/70">Students supported</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold">24/7</div>
+                  <div className="mt-1 uppercase tracking-[0.18em] text-white/70">Counseling access</div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold">98%</div>
+                  <div className="mt-1 uppercase tracking-[0.18em] text-white/70">Mentor satisfaction</div>
+                </div>
               </div>
             </div>
           </div>

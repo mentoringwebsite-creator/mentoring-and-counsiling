@@ -15,8 +15,8 @@ body {
   min-height: 100%;
   background:
     radial-gradient(circle at top left, rgba(184, 207, 194, 0.45), transparent 40%),
-    radial-gradient(circle at 80% 20%, rgba(243, 218, 160, 0.3), transparent 35%),
-    linear-gradient(180deg, #f0f6f2 0%, #e6ece7 100%);
+    radial-gradient(circle at 80% 20%, rgba(243, 218, 160, 0.25), transparent 35%),
+    linear-gradient(180deg, #f4faf5 0%, #e8f1ec 100%);
   color: #16362f;
   font-family: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -88,8 +88,16 @@ h4 {
   @apply rounded-[28px] border border-white/60 bg-white/70 backdrop-blur-md p-4 sm:p-6 shadow-[0_12px_36px_rgba(15,44,34,0.04)] transition-all duration-300 ease-out;
 }
 
-.portal-card:hover {
+..portal-card:hover {
   @apply shadow-[0_20px_50px_rgba(15,44,34,0.08)] -translate-y-0.5 border-white/80;
+}
+
+.feature-card {
+  @apply rounded-[28px] border border-slate-200/80 bg-white p-6 shadow-soft transition duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_28px_90px_rgba(18,46,36,0.12)];
+}
+
+.cta-panel {
+  @apply rounded-[2rem] bg-[#164d41] px-8 py-8 text-white shadow-soft;
 }
 
 /* Scrollbar Customization */
