@@ -10,6 +10,39 @@ import { Loader2, Search, ChevronDown, ChevronUp, GraduationCap, Users, UserMinu
 import { StudentDetailsModal } from '@/components/student-details-modal';
 import { FacultyDetailsModal } from '@/components/faculty-details-modal';
 
+const isBranchInDepartment = (branch: string, department: string) => {
+  if (!branch || !department) return false;
+  const b = branch.toLowerCase().trim();
+  const d = department.toLowerCase().trim();
+  
+  if (b === d) return true;
+  
+  // ECE vs Electronics & Communication Engineering
+  if (b === 'ece' && (d.includes('electronics') || d.includes('ece'))) return true;
+  if (d.includes('electronics') && b.includes('ece')) return true;
+  
+  // CSE vs Computer Science & Engineering
+  if (b === 'cse' && (d.includes('computer science') || d.includes('cse'))) return true;
+  if (d.includes('computer science') && b.includes('cse')) return true;
+
+  // IT vs Information Technology
+  if (b === 'it' && (d.includes('information technology') || d.includes('it'))) return true;
+  if (d.includes('information technology') && b.includes('it')) return true;
+
+  // EEE vs Electrical & Electronics Engineering
+  if (b === 'eee' && (d.includes('electrical') || d.includes('eee'))) return true;
+  if (d.includes('electrical') && b.includes('eee')) return true;
+
+  // Mechanical vs Mech
+  if ((b === 'me' || b === 'mech' || b.includes('mechanical')) && (d.includes('mechanical') || d.includes('mech') || d === 'me')) return true;
+
+  // Civil vs Ce
+  if ((b === 'ce' || b.includes('civil')) && (d.includes('civil') || d === 'ce')) return true;
+
+  // Fallback to substring matching
+  return d.includes(b) || b.includes(d);
+};
+
 export default function HodStudentsPage() {
   const [loading, setLoading] = useState(true);
   const [hodDept, setHodDept] = useState<string>('');
@@ -86,7 +119,7 @@ export default function HodStudentsPage() {
       const deptFaculty = (facultyDb || []).filter((f) => {
         const fDept = f.faculty_profiles?.[0]?.department;
         if (!dept || !fDept) return true;
-        return fDept.toLowerCase().trim() === dept.toLowerCase().trim();
+        return isBranchInDepartment(fDept, dept);
       });
 
       setFaculty(deptFaculty);
@@ -111,7 +144,7 @@ export default function HodStudentsPage() {
         const sBranch = profile.branch;
         const mentorId = profile.mentor_id;
 
-        const branchMatches = sBranch && dept && sBranch.toLowerCase().trim() === dept.toLowerCase().trim();
+        const branchMatches = sBranch && dept && isBranchInDepartment(sBranch, dept);
         const mentorInDept = mentorId && deptFaculty.some((f) => f.id === mentorId);
 
         if (!dept) return true;

@@ -7,6 +7,39 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
 
+const isBranchInDepartment = (branch: string, department: string) => {
+  if (!branch || !department) return false;
+  const b = branch.toLowerCase().trim();
+  const d = department.toLowerCase().trim();
+  
+  if (b === d) return true;
+  
+  // ECE vs Electronics & Communication Engineering
+  if (b === 'ece' && (d.includes('electronics') || d.includes('ece'))) return true;
+  if (d.includes('electronics') && b.includes('ece')) return true;
+  
+  // CSE vs Computer Science & Engineering
+  if (b === 'cse' && (d.includes('computer science') || d.includes('cse'))) return true;
+  if (d.includes('computer science') && b.includes('cse')) return true;
+
+  // IT vs Information Technology
+  if (b === 'it' && (d.includes('information technology') || d.includes('it'))) return true;
+  if (d.includes('information technology') && b.includes('it')) return true;
+
+  // EEE vs Electrical & Electronics Engineering
+  if (b === 'eee' && (d.includes('electrical') || d.includes('eee'))) return true;
+  if (d.includes('electrical') && b.includes('eee')) return true;
+
+  // Mechanical vs Mech
+  if ((b === 'me' || b === 'mech' || b.includes('mechanical')) && (d.includes('mechanical') || d.includes('mech') || d === 'me')) return true;
+
+  // Civil vs Ce
+  if ((b === 'ce' || b.includes('civil')) && (d.includes('civil') || d === 'ce')) return true;
+
+  // Fallback to substring matching
+  return d.includes(b) || b.includes(d);
+};
+
 export default function HodQueriesPage() {
   const [queries, setQueries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,11 +77,12 @@ export default function HodQueriesPage() {
       // 2. Fetch student user IDs in this department (branch)
       const { data: studentsData, error: studentsError } = await supabase
         .from('student_profiles')
-        .select('user_id')
-        .eq('branch', dept);
+        .select('user_id, branch');
 
       if (studentsError) throw studentsError;
-      const studentIds = (studentsData || []).map((s: any) => s.user_id);
+      const studentIds = (studentsData || [])
+        .filter((s: any) => isBranchInDepartment(s.branch, dept))
+        .map((s: any) => s.user_id);
 
       if (studentIds.length === 0) {
         setQueries([]);
