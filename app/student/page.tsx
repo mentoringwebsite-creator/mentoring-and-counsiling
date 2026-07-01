@@ -466,8 +466,8 @@ export default function StudentProfilePage() {
                       name="rollNumber"
                       value={formData.rollNumber}
                       onChange={handleChange}
-                      disabled
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-500 focus:outline-none"
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
                     />
                   </div>
 
