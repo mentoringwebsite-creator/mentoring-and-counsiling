@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { PageShell } from '@/components/page-shell';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
@@ -61,6 +62,7 @@ export default function AdminStudentsPage() {
   const [subMid2, setSubMid2] = useState('');
   const [subSemesterMarks, setSubSemesterMarks] = useState('');
   const [subGpa, setSubGpa] = useState('');
+  const [mounted, setMounted] = useState(false);
 
   // Certificate Specific States
   const [memoNo, setMemoNo] = useState('');
@@ -226,6 +228,7 @@ export default function AdminStudentsPage() {
       const storedModel = localStorage.getItem('admin_groq_model');
       if (storedModel) setGroqModel(storedModel);
     }
+    setMounted(true);
   }, []);
 
   const handleMentorChange = async (studentUserId: string, newMentorId: string) => {
@@ -1207,8 +1210,8 @@ export default function AdminStudentsPage() {
             </div>
           </div>
         </div>        {/* ==================== ACADEMIC MANAGER WORKSPACE (FULLSCREEN) ==================== */}
-        {academicModalOpen && selectedStudentForAcademic && (
-          <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col h-screen overflow-hidden animate-fadeIn">
+        {mounted && academicModalOpen && selectedStudentForAcademic && createPortal((
+          <div className="fixed inset-0 z-50 bg-slate-50 flex flex-col h-screen w-screen overflow-hidden animate-fadeIn">
             {/* Header section with fixed positioning */}
             <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
               <div className="flex items-center gap-2.5">
@@ -1830,10 +1833,10 @@ export default function AdminStudentsPage() {
 
             </div>
           </div>
-        )}
+        ), document.body)}
 
         {/* ==================== ADD/EDIT SUBJECT SUB-MODAL ==================== */}
-        {subModalOpen && (
+        {mounted && subModalOpen && createPortal((
           <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fadeIn">
             <div className="relative w-full max-w-md overflow-hidden rounded-[28px] bg-white p-6 shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
               <button 
@@ -1989,7 +1992,7 @@ export default function AdminStudentsPage() {
               </form>
             </div>
           </div>
-        )}
+        ), document.body)}
       </PageShell>
     </ProtectedRoute>
   );
