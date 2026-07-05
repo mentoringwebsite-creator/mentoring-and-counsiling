@@ -64,6 +64,8 @@ export default function AdminStudentsPage() {
   const [subGpa, setSubGpa] = useState('');
   const [mounted, setMounted] = useState(false);
   const [targetUploadSemester, setTargetUploadSemester] = useState<string | null>(null);
+  const [subInternalMarks, setSubInternalMarks] = useState('');
+  const [subTotalMarks, setSubTotalMarks] = useState('');
 
   // Certificate Specific States
   const [memoNo, setMemoNo] = useState('');
@@ -622,6 +624,8 @@ export default function AdminStudentsPage() {
     setSubCode('');
     setSubCredits('3');
     setSubResult('P');
+    setSubInternalMarks('');
+    setSubTotalMarks('');
     setSubModalOpen(true);
   };
 
@@ -637,6 +641,8 @@ export default function AdminStudentsPage() {
     setSubCode(sub.code || '');
     setSubCredits((sub.credits || '3').toString());
     setSubResult(sub.result || 'P');
+    setSubInternalMarks(sub.internal_marks?.toString() || '');
+    setSubTotalMarks(sub.total_marks?.toString() || '');
     setSubModalOpen(true);
   };
 
@@ -652,7 +658,9 @@ export default function AdminStudentsPage() {
       semester: parseInt(subSemester) || 1,
       mid1: subMid1.trim() || '-',
       mid2: subMid2.trim() || '-',
+      internal_marks: subInternalMarks.trim() || '-',
       semester_marks: subSemesterMarks.trim() || '-',
+      total_marks: subTotalMarks.trim() || '-',
       gpa: subGpa.trim() || '-',
       code: subCode.trim() || '-',
       credits: parseFloat(subCredits) || 0,
@@ -1666,7 +1674,13 @@ export default function AdminStudentsPage() {
                               <th className="p-3">Subject Name</th>
                               <th className="p-3 text-center">Semester</th>
                               <th className="p-3 text-center">Credits</th>
-                              <th className="p-3 text-center">Grade Secured</th>
+                              <th className="p-3 text-center">Mid-1</th>
+                              <th className="p-3 text-center">Mid-2</th>
+                              <th className="p-3 text-center">Mid Avg</th>
+                              <th className="p-3 text-center font-bold text-slate-700">INT (40)</th>
+                              <th className="p-3 text-center font-bold text-slate-700">EXT (60)</th>
+                              <th className="p-3 text-center font-bold text-slate-800">TOTAL</th>
+                              <th className="p-3 text-center">Grade</th>
                               <th className="p-3 text-center">Result</th>
                               <th className="p-3 text-center">Actions</th>
                             </tr>
@@ -1674,12 +1688,30 @@ export default function AdminStudentsPage() {
                           <tbody className="divide-y divide-slate-100">
                             {filteredAcademicSubjects.map((sub, index) => {
                               const originalIndex = academicSubjects.findIndex(s => s === sub);
+                              
+                              const m1 = parseFloat(sub.mid1);
+                              const m2 = parseFloat(sub.mid2);
+                              const midAvg = (!isNaN(m1) && !isNaN(m2)) ? Math.round((m1 + m2) / 2) : '-';
+
+                              const intMarks = sub.internal_marks ?? sub.mid1 ?? '-';
+                              const extMarks = sub.semester_marks ?? '-';
+                              
+                              const iM = parseFloat(intMarks);
+                              const eM = parseFloat(extMarks);
+                              const totalMarks = (!isNaN(iM) && !isNaN(eM)) ? (iM + eM) : (sub.total_marks ?? '-');
+
                               return (
                                 <tr key={index} className="hover:bg-slate-50/30">
                                   <td className="p-3 font-mono font-bold text-slate-600">{sub.code || '-'}</td>
                                   <td className="p-3 font-semibold text-slate-900">{sub.name}</td>
                                   <td className="p-3 text-center text-slate-700">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
                                   <td className="p-3 text-center font-semibold text-slate-650">{sub.credits ?? '-'}</td>
+                                  <td className="p-3 text-center font-mono text-slate-500">{sub.mid1 || '-'}</td>
+                                  <td className="p-3 text-center font-mono text-slate-500">{sub.mid2 || '-'}</td>
+                                  <td className="p-3 text-center font-mono font-semibold text-slate-600">{midAvg}</td>
+                                  <td className="p-3 text-center font-mono font-semibold text-slate-700">{intMarks}</td>
+                                  <td className="p-3 text-center font-mono font-semibold text-slate-700">{extMarks}</td>
+                                  <td className="p-3 text-center font-mono font-bold text-[#1c5644] bg-emerald-50/30">{totalMarks}</td>
                                   <td className="p-3 text-center font-bold text-slate-900">{sub.gpa}</td>
                                   <td className="p-3 text-center">
                                     <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold border ${
@@ -1988,10 +2020,12 @@ export default function AdminStudentsPage() {
                 </div>
 
                 <div className="border-t border-slate-100 pt-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Optional Internal Marks</span>
-                  <div className="grid grid-cols-3 gap-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Subject Marks Detail</span>
+                  
+                  {/* Row 1: Mid 1, Mid 2 */}
+                  <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mid-1</label>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mid-1 (Internal Test)</label>
                       <input
                         type="text"
                         value={subMid1}
@@ -2001,7 +2035,7 @@ export default function AdminStudentsPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mid-2</label>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Mid-2 (Internal Test)</label>
                       <input
                         type="text"
                         value={subMid2}
@@ -2010,14 +2044,38 @@ export default function AdminStudentsPage() {
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none"
                       />
                     </div>
+                  </div>
+
+                  {/* Row 2: JNTUH Final Marks */}
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Semester Marks</label>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Internal (INT 40)</label>
+                      <input
+                        type="text"
+                        value={subInternalMarks}
+                        onChange={(e) => setSubInternalMarks(e.target.value)}
+                        placeholder="e.g. 27"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs focus:border-[#1c5644] focus:bg-white focus:outline-none font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">External (EXT 60)</label>
                       <input
                         type="text"
                         value={subSemesterMarks}
                         onChange={(e) => setSubSemesterMarks(e.target.value)}
-                        placeholder="e.g. 84"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none"
+                        placeholder="e.g. 33"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs focus:border-[#1c5644] focus:bg-white focus:outline-none font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total (INT+EXT)</label>
+                      <input
+                        type="text"
+                        value={subTotalMarks}
+                        onChange={(e) => setSubTotalMarks(e.target.value)}
+                        placeholder="e.g. 60"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs focus:border-[#1c5644] focus:bg-white focus:outline-none font-bold text-[#1c5644]"
                       />
                     </div>
                   </div>
