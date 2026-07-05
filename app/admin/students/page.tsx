@@ -921,6 +921,36 @@ export default function AdminStudentsPage() {
     return Number(avg.toFixed(2));
   })();
 
+  const cumulativeCalculatedCGPA = (() => {
+    let totalCredits = 0;
+    let weightedGPsum = 0;
+    let validGPsCount = 0;
+
+    academicSubjects.forEach((sub) => {
+      const gp = convertGradeToGP(sub.gpa);
+      const credits = parseFloat(sub.credits);
+      if (gp !== null) {
+        validGPsCount++;
+        if (!isNaN(credits) && credits >= 0) {
+          weightedGPsum += gp * credits;
+          totalCredits += credits;
+        }
+      }
+    });
+
+    if (validGPsCount === 0) return null;
+    if (totalCredits === 0) {
+      const validGPs = academicSubjects
+        .map((sub) => convertGradeToGP(sub.gpa))
+        .filter((gp): gp is number => gp !== null);
+      const avg = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
+      return Number(avg.toFixed(2));
+    }
+
+    const avg = weightedGPsum / totalCredits;
+    return Number(avg.toFixed(2));
+  })();
+
   const getSubjectGPADistribution = () => {
     return filteredAcademicSubjects
       .map((sub) => {
@@ -1857,11 +1887,11 @@ export default function AdminStudentsPage() {
                               );
                             })}
 
-                            {/* Semester Summary Footer Row */}
-                            {academicSelectedSem !== 'All' && filteredAcademicSubjects.length > 0 && (
+                            {/* Semester/Cumulative Summary Footer Row */}
+                            {filteredAcademicSubjects.length > 0 && (
                               <tr className="bg-slate-50 font-bold text-slate-800 text-xs border-t border-slate-200">
                                 <td colSpan={3} className="p-3 text-right font-bold text-slate-500 uppercase tracking-wider">
-                                  Semester Summary
+                                  {academicSelectedSem === 'All' ? 'Cumulative Summary' : 'Semester Summary'}
                                 </td>
                                 <td className="p-3 text-center text-sky-850 font-extrabold bg-sky-50/20">
                                   {filteredAcademicSubjects.reduce((acc, s) => {
@@ -1875,7 +1905,11 @@ export default function AdminStudentsPage() {
                                   Backlogs: {filteredAcademicSubjects.filter(s => s.result === 'F' || s.result === 'FAIL').length}
                                 </td>
                                 <td colSpan={3} className="p-3 text-center text-emerald-805 bg-emerald-50/20 font-extrabold text-sm">
-                                  SGPA: {semSgpa || (selectedSemesterSGPA !== null ? selectedSemesterSGPA.toFixed(2) : '-')}
+                                  {academicSelectedSem === 'All' ? (
+                                    `CGPA: ${academicCgpa || (cumulativeCalculatedCGPA !== null ? cumulativeCalculatedCGPA.toFixed(2) : '-')}`
+                                  ) : (
+                                    `SGPA: ${semSgpa || (selectedSemesterSGPA !== null ? selectedSemesterSGPA.toFixed(2) : '-')}`
+                                  )}
                                 </td>
                               </tr>
                             )}
