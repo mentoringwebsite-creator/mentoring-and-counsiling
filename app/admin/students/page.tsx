@@ -1558,7 +1558,7 @@ export default function AdminStudentsPage() {
                             <label className="block text-[10px] font-bold text-[#1c5644] uppercase mb-1 font-bold">Semester SGPA</label>
                             <input
                               type="text"
-                              value={semSgpa}
+                              value={semSgpa || (selectedSemesterSGPA !== null ? selectedSemesterSGPA.toString() : '')}
                               onChange={(e) => {
                                 setSemSgpa(e.target.value);
                                 handleMetadataChange({ sgpa: e.target.value });
@@ -1720,7 +1720,7 @@ export default function AdminStudentsPage() {
                             <span className="font-bold text-emerald-800 text-[10px] uppercase tracking-wider">SGPA:</span>
                             <input
                               type="text"
-                              value={semSgpa}
+                              value={semSgpa || (selectedSemesterSGPA !== null ? selectedSemesterSGPA.toString() : '')}
                               onChange={(e) => {
                                 setSemSgpa(e.target.value);
                                 handleMetadataChange({ sgpa: e.target.value });
@@ -1849,7 +1849,7 @@ export default function AdminStudentsPage() {
                                   Backlogs: {filteredAcademicSubjects.filter(s => s.result === 'F' || s.result === 'FAIL').length}
                                 </td>
                                 <td colSpan={3} className="p-3 text-center text-emerald-805 bg-emerald-50/20 font-extrabold text-sm">
-                                  SGPA: {semSgpa || '-'}
+                                  SGPA: {semSgpa || (selectedSemesterSGPA !== null ? selectedSemesterSGPA.toFixed(2) : '-')}
                                 </td>
                               </tr>
                             )}
