@@ -142,6 +142,12 @@ function parseLedgerText(text: string, targetRoll: string, targetSemester?: stri
     backlogs = parseInt(backlogToken);
   }
 
+  // Add sgpa and cgpa to every parsed subject
+  subjects.forEach(sub => {
+    sub.sgpa = sgpa.toString();
+    sub.cgpa = sgpa.toString();
+  });
+
   return {
     sgpa,
     cgpa: sgpa,

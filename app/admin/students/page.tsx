@@ -776,14 +776,43 @@ export default function AdminStudentsPage() {
       });
 
       calculatedSgpa = totalSgpaCredits > 0 ? Number((totalSgpaPoints / totalSgpaCredits).toFixed(2)) : 0;
+
+      // Prioritize saved/parsed SGPA and CGPA if present in subject metadata
+      const latestSemSubWithSgpa = academicSubjects.find(
+        (sub: any) => parseInt(sub.semester) === latestSem && sub.sgpa && !isNaN(parseFloat(sub.sgpa))
+      );
+      if (latestSemSubWithSgpa) {
+        calculatedSgpa = parseFloat(latestSemSubWithSgpa.sgpa);
+      }
+      
+      const anySubWithCgpa = academicSubjects.find(
+        (sub: any) => sub.cgpa && !isNaN(parseFloat(sub.cgpa))
+      );
+      if (anySubWithCgpa) {
+        calculatedCgpa = parseFloat(anySubWithCgpa.cgpa);
+      }
     }
 
-    setAcademicSgpa(calculatedSgpa);
-    setAcademicCgpa(calculatedCgpa);
-    setAcademicBacklogs(backlogCount);
+    // Only overwrite local state SGPA/CGPA if they are currently 0 or if parsed metadata exists
+    const latestSemSubWithSgpa = academicSubjects.find(
+      (sub: any) => sub.sgpa && !isNaN(parseFloat(sub.sgpa))
+    );
+    if (academicSgpa === 0 || latestSemSubWithSgpa) {
+      const targetSgpa = latestSemSubWithSgpa ? parseFloat(latestSemSubWithSgpa.sgpa) : calculatedSgpa;
+      setAcademicSgpa(targetSgpa);
+      setInputSgpa(targetSgpa.toString());
+    }
 
-    setInputSgpa(calculatedSgpa.toString());
-    setInputCgpa(calculatedCgpa.toString());
+    const anySubWithCgpa = academicSubjects.find(
+      (sub: any) => sub.cgpa && !isNaN(parseFloat(sub.cgpa))
+    );
+    if (academicCgpa === 0 || anySubWithCgpa) {
+      const targetCgpa = anySubWithCgpa ? parseFloat(anySubWithCgpa.cgpa) : calculatedCgpa;
+      setAcademicCgpa(targetCgpa);
+      setInputCgpa(targetCgpa.toString());
+    }
+
+    setAcademicBacklogs(backlogCount);
     setInputBacklogs(backlogCount.toString());
   }, [academicSubjects]);
 
@@ -821,6 +850,12 @@ export default function AdminStudentsPage() {
     const subjectsInSem = academicSubjects.filter(
       (sub) => parseInt(sub.semester) === semNum
     );
+
+    // If the subjects have a parsed SGPA value associated with them, prioritize it!
+    const firstSubWithSgpa = subjectsInSem.find(sub => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
+    if (firstSubWithSgpa) {
+      return Number(parseFloat(firstSubWithSgpa.sgpa).toFixed(2));
+    }
 
     let totalCredits = 0;
     let weightedGPsum = 0;
