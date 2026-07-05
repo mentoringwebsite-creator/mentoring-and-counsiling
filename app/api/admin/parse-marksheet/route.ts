@@ -1,5 +1,155 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const nameMapping: Record<string, string> = {
+  'MAC': 'MATRIX ALGEBRA AND CALCULUS',
+  'M-I': 'MATRIX ALGEBRA AND CALCULUS',
+  'EELS': 'ESSENTIAL ENGLISH LANGUAGE SKILLS',
+  'AP': 'APPLIED PHYSICS',
+  'PSC': 'PROBLEM SOLVING USING C',
+  'EG': 'ENGINEERING GRAPHICS',
+  'OC LAB': 'ORAL COMMUNICATION LAB - I',
+  'AP LAB': 'APPLIED PHYSICS LAB',
+  'PSC LAB': 'PROBLEM SOLVING USING C LAB',
+  'EP': 'ENGINEERING PHYSICS',
+  'EP LAB': 'ENGINEERING PHYSICS LAB',
+  'IP': 'INDUCTION PROGRAM'
+};
+
+function parseLedgerText(text: string, targetRoll: string, targetSemester?: string) {
+  const lines = text.split('\n');
+  
+  // Find subject headers
+  const subjectHeaders: Array<{ code: string; abbrev: string; name: string }> = [];
+  const headerLine = lines.find(line => line.includes('9HC11') || line.includes('9HC01'));
+  
+  if (headerLine) {
+    const matches = headerLine.matchAll(/(\b\d[A-Z0-9]{4}\b)\s+([A-Z0-9\s\-]+?)(?=\s+\b\d[A-Z0-9]{4}\b|\s+Back|\s+SGPA|$)/gi);
+    for (const match of matches) {
+      const code = match[1].trim();
+      const abbrev = match[2].trim();
+      let name = nameMapping[abbrev] || abbrev;
+      
+      if (code === '9HC18' || code === '9HC12' || abbrev.toLowerCase().includes('back') || name.toLowerCase().includes('back')) {
+        name = 'INDUCTION PROGRAM';
+      }
+      subjectHeaders.push({ code, abbrev, name });
+    }
+  }
+
+  const targetSemNum = targetSemester && !isNaN(parseInt(targetSemester)) ? parseInt(targetSemester) : 1;
+
+  if (subjectHeaders.length === 0) {
+    subjectHeaders.push(
+      { code: '9HC11', name: 'MATRIX ALGEBRA AND CALCULUS', abbrev: 'MAC' },
+      { code: '9HC01', name: 'ESSENTIAL ENGLISH LANGUAGE SKILLS', abbrev: 'EELS' },
+      { code: '9HC06', name: 'APPLIED PHYSICS', abbrev: 'AP' },
+      { code: '9FC01', name: 'PROBLEM SOLVING USING C', abbrev: 'PSC' },
+      { code: '9BC01', name: 'ENGINEERING GRAPHICS', abbrev: 'EG' },
+      { code: '9HC61', name: 'ORAL COMMUNICATION LAB - I', abbrev: 'OC LAB' },
+      { code: '9HC65', name: 'APPLIED PHYSICS LAB', abbrev: 'AP LAB' },
+      { code: '9FC61', name: 'PROBLEM SOLVING USING C LAB', abbrev: 'PSC LAB' },
+      { code: '9HC18', name: 'INDUCTION PROGRAM', abbrev: 'IP' }
+    );
+  }
+
+  // Find target student row
+  const studentLine = lines.find(line => line.toLowerCase().includes(targetRoll.toLowerCase()));
+  if (!studentLine) {
+    return null;
+  }
+
+  // Tokenize the student line
+  const tokens = studentLine.trim().split(/\s+/);
+  
+  // Find where the marks/grades start (the first token after student name which is numeric)
+  const rollIndex = tokens.findIndex(t => t.toLowerCase() === targetRoll.toLowerCase());
+  if (rollIndex === -1) return null;
+
+  let marksStartIndex = rollIndex + 2; 
+  while (marksStartIndex < tokens.length && isNaN(parseInt(tokens[marksStartIndex]))) {
+    marksStartIndex++;
+  }
+
+  if (marksStartIndex >= tokens.length) return null;
+
+  const subjects: any[] = [];
+  let tokenIdx = marksStartIndex;
+
+  for (let h = 0; h < subjectHeaders.length; h++) {
+    const header = subjectHeaders[h];
+    
+    const nextToken = tokens[tokenIdx];
+    const nextNextToken = tokens[tokenIdx + 1];
+    const gradeToken = tokens[tokenIdx + 2];
+    
+    if (gradeToken && gradeToken.includes('(')) {
+      const match = gradeToken.match(/^(\d+)\(([^)]+)\)$/);
+      if (match) {
+        const grade = match[2];
+        const mid1 = nextToken || '-';
+        const semester_marks = nextNextToken || '-';
+        
+        let subCredits = 3;
+        if (header.name.toLowerCase().includes('lab') || header.name.toLowerCase().includes('communication')) {
+          subCredits = header.name.toLowerCase().includes('physics') || header.name.toLowerCase().includes('c lab') ? 1.5 : 1;
+        } else if (header.name.toLowerCase().includes('english') || header.name.toLowerCase().includes('eels')) {
+          subCredits = 2;
+        }
+
+        subjects.push({
+          code: header.code,
+          name: header.name,
+          semester: targetSemNum,
+          mid1,
+          mid2: '-',
+          semester_marks,
+          gpa: grade,
+          credits: subCredits,
+          result: grade === 'F' ? 'F' : 'P'
+        });
+        
+        tokenIdx += 3;
+        continue;
+      }
+    }
+
+    // Single-column subject (takes 1 token)
+    const grade = nextToken || 'P';
+    subjects.push({
+      code: header.code,
+      name: header.name,
+      semester: targetSemNum,
+      mid1: '-',
+      mid2: '-',
+      semester_marks: '-',
+      gpa: grade,
+      credits: 0,
+      result: grade === 'F' ? 'F' : 'P'
+    });
+    tokenIdx += 1;
+  }
+
+  let backlogs = 0;
+  let sgpa = 0;
+  
+  const sgpaToken = tokens[tokens.length - 1];
+  if (!isNaN(parseFloat(sgpaToken))) {
+    sgpa = parseFloat(sgpaToken);
+  }
+  
+  const backlogToken = tokens[tokens.length - 3];
+  if (!isNaN(parseInt(backlogToken))) {
+    backlogs = parseInt(backlogToken);
+  }
+
+  return {
+    sgpa,
+    cgpa: sgpa,
+    backlogs,
+    subjects
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -21,6 +171,18 @@ export async function POST(request: NextRequest) {
         { success: false, message: 'Missing file data (fileBase64, fileBase64s or pdfText).' },
         { status: 400 }
       );
+    }
+
+    if (pdfText && rollNumber) {
+      const offlineResult = parseLedgerText(pdfText, rollNumber, targetSemester);
+      if (offlineResult && offlineResult.subjects && offlineResult.subjects.length > 0) {
+        console.log('Successfully extracted results offline via ledger text parser.');
+        return NextResponse.json({
+          success: true,
+          source: 'Local Roster PDF Text Extractor',
+          data: offlineResult
+        });
+      }
     }
 
     const serverGeminiKey = process.env.GEMINI_API_KEY;
