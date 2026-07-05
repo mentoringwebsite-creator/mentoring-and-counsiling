@@ -345,6 +345,32 @@ export default function AdminStudentsPage() {
 
       if (error) throw error;
 
+      // Update local scorecard and input states
+      setAcademicSgpa(updatedSgpa);
+      setAcademicCgpa(updatedCgpa);
+      setAcademicBacklogs(updatedBacklogs);
+      setInputSgpa(updatedSgpa.toString());
+      setInputCgpa(updatedCgpa.toString());
+      setInputBacklogs(updatedBacklogs.toString());
+
+      // Update selectedStudentForAcademic state
+      setSelectedStudentForAcademic((prev: any) => {
+        if (!prev) return null;
+        const updatedProfile = {
+          ...prev.student_profiles[0],
+          sgpa: updatedSgpa,
+          cgpa: updatedCgpa,
+          backlogs: updatedBacklogs,
+          academic_subjects: updatedSubjects,
+          roll_number: hallTicketNo,
+          branch: branch
+        };
+        return {
+          ...prev,
+          student_profiles: [updatedProfile]
+        };
+      });
+
       // Update local state of the students list so it reflects dynamically without full page reload
       setStudents((prev) => 
         prev.map((s) => {
