@@ -63,6 +63,7 @@ export default function AdminStudentsPage() {
   const [subSemesterMarks, setSubSemesterMarks] = useState('');
   const [subGpa, setSubGpa] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [targetUploadSemester, setTargetUploadSemester] = useState<string | null>(null);
 
   // Certificate Specific States
   const [memoNo, setMemoNo] = useState('');
@@ -422,6 +423,15 @@ export default function AdminStudentsPage() {
     return { fileBase64s: base64s, mimeType: 'image/jpeg' };
   };
 
+  const triggerSemesterUpload = (semVal: string) => {
+    setTargetUploadSemester(semVal);
+    const inputEl = document.getElementById('marksheet-upload-input') as HTMLInputElement | null;
+    if (inputEl) {
+      inputEl.value = '';
+      inputEl.click();
+    }
+  };
+
   const handleMarksheetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -496,7 +506,8 @@ export default function AdminStudentsPage() {
           engine: 'groq',
           groqModel: groqModel,
           studentName: selectedStudentForAcademic?.name,
-          rollNumber: hallTicketNo || selectedStudentForAcademic?.student_profiles?.[0]?.roll_number
+          rollNumber: hallTicketNo || selectedStudentForAcademic?.student_profiles?.[0]?.roll_number,
+          targetSemester: targetUploadSemester
         })
       });
 
@@ -1534,6 +1545,7 @@ export default function AdminStudentsPage() {
                         />
                         <label 
                           htmlFor="marksheet-upload-input"
+                          onClick={() => setTargetUploadSemester(null)}
                           className={`cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl bg-[#1c5644] hover:bg-[#154335] px-5 py-3 text-xs font-bold text-white transition shadow-sm w-full md:w-auto ${parsingMarksheet ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                           {parsingMarksheet ? (
@@ -1548,6 +1560,41 @@ export default function AdminStudentsPage() {
                             </>
                           )}
                         </label>
+                      </div>
+                    </div>
+
+                    {/* Semester-Specific Upload Buttons */}
+                    <div className="mt-4 border-t border-slate-100 pt-4">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2.5">
+                        Or Upload Ledger PDF/Image specifically for a Semester:
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {[
+                          { value: '1', short: '1-1', label: 'I Year I Sem' },
+                          { value: '2', short: '1-2', label: 'I Year II Sem' },
+                          { value: '3', short: '2-1', label: 'II Year I Sem' },
+                          { value: '4', short: '2-2', label: 'II Year II Sem' },
+                          { value: '5', short: '3-1', label: 'III Year I Sem' },
+                          { value: '6', short: '3-2', label: 'III Year II Sem' },
+                          { value: '7', short: '4-1', label: 'IV Year I Sem' },
+                          { value: '8', short: '4-2', label: 'IV Year II Sem' }
+                        ].map((sem) => (
+                          <button
+                            key={sem.value}
+                            type="button"
+                            disabled={parsingMarksheet}
+                            onClick={() => triggerSemesterUpload(sem.value)}
+                            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-200 transition duration-150 text-left ${
+                              parsingMarksheet ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                            }`}
+                          >
+                            <div className="flex flex-col">
+                              <span className="text-xs font-bold text-slate-800">{sem.short}</span>
+                              <span className="text-[9px] text-slate-500 font-semibold">{sem.label}</span>
+                            </div>
+                            <Upload className="h-3.5 w-3.5 text-slate-400 group-hover:text-emerald-600 transition" />
+                          </button>
+                        ))}
                       </div>
                     </div>
 

@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
       groqModel = 'meta-llama/llama-4-scout-17b-16e-instruct',
       pdfText,
       studentName,
-      rollNumber
+      rollNumber,
+      targetSemester
     } = body ?? {};
 
     if (!fileBase64 && !fileBase64s && !pdfText) {
@@ -36,7 +37,9 @@ export async function POST(request: NextRequest) {
       
       const lowerName = (fileName || '').toLowerCase();
       let semester = 1;
-      if (lowerName.includes('sem-2') || lowerName.includes('sem2') || lowerName.includes('semester2') || lowerName.includes('semester-2') || lowerName.includes('1-2') || lowerName.includes('1_2') || lowerName.includes('1 2')) {
+      if (targetSemester && !isNaN(parseInt(targetSemester))) {
+        semester = parseInt(targetSemester);
+      } else if (lowerName.includes('sem-2') || lowerName.includes('sem2') || lowerName.includes('semester2') || lowerName.includes('semester-2') || lowerName.includes('1-2') || lowerName.includes('1_2') || lowerName.includes('1 2')) {
         semester = 2;
       } else if (lowerName.includes('sem-3') || lowerName.includes('sem3') || lowerName.includes('semester3') || lowerName.includes('semester-3') || lowerName.includes('2-1') || lowerName.includes('2_1') || lowerName.includes('2 1')) {
         semester = 3;
@@ -218,6 +221,14 @@ export async function POST(request: NextRequest) {
         throw new Error('Groq AI output was not in valid JSON format.');
       }
 
+      if (parsedData && Array.isArray(parsedData.subjects) && targetSemester && !isNaN(parseInt(targetSemester))) {
+        const targetSemNum = parseInt(targetSemester);
+        parsedData.subjects = parsedData.subjects.map((sub: any) => ({
+          ...sub,
+          semester: targetSemNum
+        }));
+      }
+
       return NextResponse.json({
         success: true,
         source: `Groq ${activeModel} API`,
@@ -338,6 +349,14 @@ export async function POST(request: NextRequest) {
     } catch (e) {
       console.error('Failed to parse Gemini output as JSON:', parsedText);
       throw new Error('Gemini AI output was not in valid JSON format.');
+    }
+
+    if (parsedData && Array.isArray(parsedData.subjects) && targetSemester && !isNaN(parseInt(targetSemester))) {
+      const targetSemNum = parseInt(targetSemester);
+      parsedData.subjects = parsedData.subjects.map((sub: any) => ({
+        ...sub,
+        semester: targetSemNum
+      }));
     }
 
     return NextResponse.json({
