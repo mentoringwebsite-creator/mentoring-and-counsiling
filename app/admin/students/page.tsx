@@ -1832,7 +1832,7 @@ export default function AdminStudentsPage() {
                             })}
 
                             {/* Semester Summary Footer Row */}
-                            {filteredAcademicSubjects.length > 0 && (
+                            {academicSelectedSem !== 'All' && filteredAcademicSubjects.length > 0 && (
                               <tr className="bg-slate-50 font-bold text-slate-800 text-xs border-t border-slate-200">
                                 <td colSpan={3} className="p-3 text-right font-bold text-slate-500 uppercase tracking-wider">
                                   Semester Summary

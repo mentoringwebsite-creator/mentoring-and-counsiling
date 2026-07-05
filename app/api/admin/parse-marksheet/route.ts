@@ -146,28 +146,45 @@ function parseLedgerText(text: string, targetRoll: string, targetSemester?: stri
     tokenIdx += 1;
   }
 
-  let backlogs = 0;
   let sgpa = 0;
-  
-  const sgpaToken = tokens[tokens.length - 1];
-  if (!isNaN(parseFloat(sgpaToken))) {
-    sgpa = parseFloat(sgpaToken);
+  let cgpa = 0;
+  let backlogs = 0;
+  let total_credits_parsed = '';
+
+  const decimals: number[] = [];
+  const integers: number[] = [];
+
+  for (let i = tokens.length - 1; i >= 0; i--) {
+    const token = tokens[i];
+    if (token.includes('.') && !isNaN(parseFloat(token))) {
+      decimals.push(parseFloat(token));
+    } else if (!isNaN(parseInt(token)) && !token.includes('(')) {
+      integers.push(parseInt(token));
+    }
   }
-  
-  const backlogToken = tokens[tokens.length - 3];
-  if (!isNaN(parseInt(backlogToken))) {
-    backlogs = parseInt(backlogToken);
+
+  if (decimals.length >= 2) {
+    cgpa = decimals[0]; // last token is CGPA (in 1-2 onwards)
+    sgpa = decimals[1]; // second to last token is SGPA
+  } else if (decimals.length === 1) {
+    sgpa = decimals[0];
+    cgpa = decimals[0];
+  }
+
+  if (integers.length >= 2) {
+    total_credits_parsed = integers[0].toString();
+    backlogs = integers[1];
   }
 
   // Add sgpa and cgpa to every parsed subject
   subjects.forEach(sub => {
     sub.sgpa = sgpa.toString();
-    sub.cgpa = sgpa.toString();
+    sub.cgpa = cgpa.toString();
   });
 
   return {
     sgpa,
-    cgpa: sgpa,
+    cgpa,
     backlogs,
     subjects
   };
