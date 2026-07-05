@@ -540,6 +540,7 @@ export default function AdminStudentsPage() {
       if (parsedData.branch) setBranch(parsedData.branch);
       if (parsedData.total_credits) setTotalCredits(parsedData.total_credits.toString());
       if (parsedData.pass_status) setPassStatus(parsedData.pass_status);
+      if (parsedData.sgpa) setSemSgpa(parsedData.sgpa.toString());
 
       // Smart Merging Logic:
       // Merge newly parsed subjects with existing subjects (academicSubjects)
@@ -555,7 +556,9 @@ export default function AdminStudentsPage() {
         hall_ticket_no: parsedData.hall_ticket_no || hallTicketNo || '',
         branch: parsedData.branch || branch || '',
         total_credits: parsedData.total_credits || '',
-        pass_status: parsedData.pass_status || 'PASS'
+        pass_status: parsedData.pass_status || 'PASS',
+        sgpa: parsedData.sgpa?.toString() || sub.sgpa?.toString() || '',
+        cgpa: parsedData.cgpa?.toString() || sub.cgpa?.toString() || ''
       }));
       
       const mergedSubjects = [...existingSubjects];
