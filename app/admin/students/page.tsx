@@ -821,12 +821,36 @@ export default function AdminStudentsPage() {
     const subjectsInSem = academicSubjects.filter(
       (sub) => parseInt(sub.semester) === semNum
     );
-    const validGPs = subjectsInSem
-      .map((sub) => convertGradeToGP(sub.gpa))
-      .filter((gp): gp is number => gp !== null);
 
-    if (validGPs.length === 0) return null;
-    const avg = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
+    let totalCredits = 0;
+    let weightedGPsum = 0;
+    let validGPsCount = 0;
+
+    subjectsInSem.forEach((sub) => {
+      const gp = convertGradeToGP(sub.gpa);
+      const credits = parseFloat(sub.credits);
+      if (gp !== null) {
+        validGPsCount++;
+        if (!isNaN(credits) && credits >= 0) {
+          // Keep credits of 0 for non-credit courses like Induction Program, they won't affect SGPA
+          weightedGPsum += gp * credits;
+          totalCredits += credits;
+        }
+      }
+    });
+
+    if (validGPsCount === 0) return null;
+    
+    // If all subjects have 0 credits (or no credits were set), fall back to simple average
+    if (totalCredits === 0) {
+      const validGPs = subjectsInSem
+        .map((sub) => convertGradeToGP(sub.gpa))
+        .filter((gp): gp is number => gp !== null);
+      const avg = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
+      return Number(avg.toFixed(2));
+    }
+
+    const avg = weightedGPsum / totalCredits;
     return Number(avg.toFixed(2));
   })();
 
