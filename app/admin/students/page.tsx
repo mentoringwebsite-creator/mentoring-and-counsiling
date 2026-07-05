@@ -1188,6 +1188,9 @@ export default function AdminStudentsPage() {
                     <th className="px-5 py-4 font-semibold">Student Name / Email</th>
                     <th className="px-5 py-4 font-semibold">Roll Number</th>
                     <th className="px-5 py-4 font-semibold">Branch & Section</th>
+                    <th className="px-4 py-4 font-semibold text-center text-rose-800 bg-rose-50/20">Backlogs</th>
+                    <th className="px-4 py-4 font-semibold text-center text-sky-850 bg-sky-50/20">Credits</th>
+                    <th className="px-4 py-4 font-semibold text-center text-emerald-850 bg-emerald-50/20">SGPA</th>
                     <th className="px-5 py-4 font-semibold">Contact Info</th>
                     <th className="px-5 py-4 font-semibold">Assigned Mentor</th>
                     <th className="px-5 py-4 font-semibold text-center">Actions</th>
@@ -1196,7 +1199,7 @@ export default function AdminStudentsPage() {
                 <tbody className="divide-y divide-slate-200">
                   {loading ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={6}>
+                      <td className="px-5 py-8 text-slate-500" colSpan={9}>
                         <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
                           <span>Loading students…</span>
@@ -1205,7 +1208,7 @@ export default function AdminStudentsPage() {
                     </tr>
                   ) : filteredStudents.length === 0 ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-400 italic text-center" colSpan={6}>No students matched the selected filters.</td>
+                      <td className="px-5 py-8 text-slate-400 italic text-center" colSpan={9}>No students matched the selected filters.</td>
                     </tr>
                   ) : null}
                   {filteredStudents.map((student) => {
@@ -1242,6 +1245,29 @@ export default function AdminStudentsPage() {
                           </div>
                           <div className="text-[10px] text-slate-400 mt-1">Batch: {profile.academic_year || '-'}</div>
                         </td>
+                        
+                        {/* Dynamic Backlogs, Credits, SGPA Roster Cells */}
+                        <td className="px-4 py-4 text-center font-mono font-bold text-rose-800 bg-rose-50/10">
+                          {profile.backlogs ?? 0}
+                        </td>
+                        <td className="px-4 py-4 text-center font-mono font-semibold text-sky-850 bg-sky-50/10">
+                          {(() => {
+                            const subjects = profile.academic_subjects || [];
+                            return subjects.reduce((acc: number, sub: any) => {
+                              if (sub.result === 'P' || sub.result === 'PASS') {
+                                return acc + (parseFloat(sub.credits) || 0);
+                              }
+                              return acc;
+                            }, 0);
+                          })()}
+                        </td>
+                        <td className="px-4 py-4 text-center font-mono bg-emerald-50/10">
+                          <div className="font-bold text-emerald-800">{profile.sgpa ? Number(profile.sgpa).toFixed(2) : '-'}</div>
+                          {profile.cgpa && Number(profile.cgpa) > 0 && (
+                            <div className="text-[10px] text-slate-500 font-semibold mt-0.5">CGPA: {Number(profile.cgpa).toFixed(2)}</div>
+                          )}
+                        </td>
+                        
                         <td className="px-5 py-4 text-slate-700">
                           <div>Primary: {profile.phone || '-'}</div>
                           <div className="text-xs text-slate-500">Alt: {profile.alternate_phone || '-'}</div>
