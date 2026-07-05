@@ -1714,6 +1714,22 @@ export default function AdminStudentsPage() {
                           <option value="7">IV Year I Semester (4-1)</option>
                           <option value="8">IV Year II Semester (4-2)</option>
                         </select>
+
+                        {academicSelectedSem !== 'All' && (
+                          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-250 rounded-xl px-2.5 py-1 text-xs shadow-sm">
+                            <span className="font-bold text-emerald-800 text-[10px] uppercase tracking-wider">SGPA:</span>
+                            <input
+                              type="text"
+                              value={semSgpa}
+                              onChange={(e) => {
+                                setSemSgpa(e.target.value);
+                                handleMetadataChange({ sgpa: e.target.value });
+                              }}
+                              placeholder="e.g. 8.36"
+                              className="w-14 bg-transparent text-emerald-900 font-bold border-none p-0 focus:outline-none focus:ring-0 text-xs font-mono text-center"
+                            />
+                          </div>
+                        )}
                       </div>
 
                       <button
