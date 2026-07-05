@@ -15,6 +15,22 @@ const nameMapping: Record<string, string> = {
   'IP': 'INDUCTION PROGRAM'
 };
 
+function finalizeParsedData(parsedData: any, targetSemester?: string) {
+  if (!parsedData) return parsedData;
+  if (Array.isArray(parsedData.subjects)) {
+    const targetSemNum = (targetSemester && !isNaN(parseInt(targetSemester))) ? parseInt(targetSemester) : undefined;
+    const semSgpa = parsedData.sgpa?.toString() || '';
+    const semCgpa = parsedData.cgpa?.toString() || '';
+    parsedData.subjects = parsedData.subjects.map((sub: any) => ({
+      ...sub,
+      ...(targetSemNum !== undefined ? { semester: targetSemNum } : {}),
+      sgpa: semSgpa,
+      cgpa: semCgpa
+    }));
+  }
+  return parsedData;
+}
+
 function parseLedgerText(text: string, targetRoll: string, targetSemester?: string) {
   const lines = text.split('\n');
   
@@ -58,8 +74,9 @@ function parseLedgerText(text: string, targetRoll: string, targetSemester?: stri
     return null;
   }
 
-  // Tokenize the student line
-  const tokens = studentLine.trim().split(/\s+/);
+  // Tokenize the student line (clean pipe separators first)
+  const cleanLine = studentLine.replace(/\|/g, ' ');
+  const tokens = cleanLine.trim().split(/\s+/);
   
   // Find where the marks/grades start (the first token after student name which is numeric)
   const rollIndex = tokens.findIndex(t => t.toLowerCase() === targetRoll.toLowerCase());
@@ -422,13 +439,7 @@ export async function POST(request: NextRequest) {
         throw new Error('Groq AI output was not in valid JSON format.');
       }
 
-      if (parsedData && Array.isArray(parsedData.subjects) && targetSemester && !isNaN(parseInt(targetSemester))) {
-        const targetSemNum = parseInt(targetSemester);
-        parsedData.subjects = parsedData.subjects.map((sub: any) => ({
-          ...sub,
-          semester: targetSemNum
-        }));
-      }
+      parsedData = finalizeParsedData(parsedData, targetSemester);
 
       return NextResponse.json({
         success: true,
@@ -552,13 +563,7 @@ export async function POST(request: NextRequest) {
       throw new Error('Gemini AI output was not in valid JSON format.');
     }
 
-    if (parsedData && Array.isArray(parsedData.subjects) && targetSemester && !isNaN(parseInt(targetSemester))) {
-      const targetSemNum = parseInt(targetSemester);
-      parsedData.subjects = parsedData.subjects.map((sub: any) => ({
-        ...sub,
-        semester: targetSemNum
-      }));
-    }
+    parsedData = finalizeParsedData(parsedData, targetSemester);
 
     return NextResponse.json({
       success: true,
