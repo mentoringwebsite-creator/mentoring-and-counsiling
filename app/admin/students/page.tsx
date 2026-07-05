@@ -77,6 +77,7 @@ export default function AdminStudentsPage() {
   const [branch, setBranch] = useState('');
   const [totalCredits, setTotalCredits] = useState('');
   const [passStatus, setPassStatus] = useState('PASS');
+  const [semSgpa, setSemSgpa] = useState('');
 
   // Add/Edit subject modal extra states
   const [subCode, setSubCode] = useState('');
@@ -170,6 +171,7 @@ export default function AdminStudentsPage() {
       setIssueDate('');
       setTotalCredits('');
       setPassStatus('PASS');
+      setSemSgpa('');
     } else {
       const sub = academicSubjects.find(s => s.semester?.toString() === academicSelectedSem);
       setMemoNo(sub?.memo_no || '');
@@ -178,6 +180,7 @@ export default function AdminStudentsPage() {
       setIssueDate(sub?.issue_date || '');
       setTotalCredits(sub?.total_credits || '');
       setPassStatus(sub?.pass_status || 'PASS');
+      setSemSgpa(sub?.sgpa || '');
     }
   }, [academicSelectedSem, academicSubjects]);
 
@@ -1520,7 +1523,7 @@ export default function AdminStudentsPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
                           <div>
                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total Credits</label>
                             <input
@@ -1547,6 +1550,19 @@ export default function AdminStudentsPage() {
                               <option value="PASS">PASS</option>
                               <option value="FAIL">FAIL</option>
                             </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-[#1c5644] uppercase mb-1 font-bold">Semester SGPA</label>
+                            <input
+                              type="text"
+                              value={semSgpa}
+                              onChange={(e) => {
+                                setSemSgpa(e.target.value);
+                                handleMetadataChange({ sgpa: e.target.value });
+                              }}
+                              placeholder="e.g. 8.36"
+                              className="w-full rounded-xl border border-emerald-250 bg-emerald-50/20 px-3 py-2 text-xs focus:border-[#1c5644] focus:bg-white focus:outline-none font-bold text-[#1c5644]"
+                            />
                           </div>
                         </div>
                       </div>
@@ -1695,13 +1711,6 @@ export default function AdminStudentsPage() {
                           <option value="7">IV Year I Semester (4-1)</option>
                           <option value="8">IV Year II Semester (4-2)</option>
                         </select>
-
-                        {selectedSemesterSGPA !== null && (
-                          <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-250 px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm">
-                            <Sparkles className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
-                            <span>Semester SGPA: {selectedSemesterSGPA}</span>
-                          </span>
-                        )}
                       </div>
 
                       <button
