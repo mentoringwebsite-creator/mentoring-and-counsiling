@@ -184,6 +184,39 @@ export async function POST(request: NextRequest) {
         });
       }
     }
+    if (pdfText) {
+      const rollMatches = pdfText.match(/\b\d{2}311[A-Z0-9]{5}\b/gi) || [];
+      const uniqueRolls = new Set(rollMatches.map((r: string) => r.toLowerCase()));
+      const isLedger = uniqueRolls.size >= 3;
+
+      if (isLedger && rollNumber) {
+        const hasRoll = pdfText.toLowerCase().includes(rollNumber.toLowerCase());
+        if (!hasRoll) {
+          return NextResponse.json(
+            { 
+              success: false, 
+              message: `This PDF file is a class results ledger, but your student's Roll Number (${rollNumber.toUpperCase()}) was not found in it. Please upload the correct PDF department ledger page containing this student's grades.` 
+            },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    let finalPdfText = pdfText;
+    if (pdfText && pdfText.length > 2000) {
+      const lines = pdfText.split('\n');
+      const firstLines = lines.slice(0, 10);
+      const matchingLines = lines.filter((line: string) => 
+        (rollNumber && line.toLowerCase().includes(rollNumber.toLowerCase())) || 
+        (studentName && line.toLowerCase().includes(studentName.toLowerCase()))
+      );
+      finalPdfText = [
+        ...firstLines,
+        '--- [TRUNCATED FOR BREVITY] ---',
+        ...matchingLines
+      ].join('\n');
+    }
 
     const serverGeminiKey = process.env.GEMINI_API_KEY;
     const serverGroqKey = process.env.GROQ_API_KEY;
@@ -304,7 +337,7 @@ export async function POST(request: NextRequest) {
         messages = [
           {
             role: 'user',
-            content: `${promptText}\n\nHere is the raw text extracted from the student marksheet PDF:\n${pdfText}`
+            content: `${promptText}\n\nHere is the raw text extracted from the student marksheet PDF:\n${finalPdfText}`
           }
         ];
       } else {
