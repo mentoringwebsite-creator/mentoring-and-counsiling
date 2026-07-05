@@ -10,7 +10,9 @@ export async function POST(request: NextRequest) {
       mimeType, 
       engine = 'gemini', 
       groqModel = 'meta-llama/llama-4-scout-17b-16e-instruct',
-      pdfText
+      pdfText,
+      studentName,
+      rollNumber
     } = body ?? {};
 
     if (!fileBase64 && !fileBase64s && !pdfText) {
@@ -108,6 +110,7 @@ export async function POST(request: NextRequest) {
         }
         
         Requirements:
+        ${rollNumber ? `CRITICAL LEDGER RULE: If this image/document is a tabular class ledger containing multiple students' records (where columns are subjects and rows are students), you MUST search for the row matching Roll Number: "${rollNumber}" or Name: "${studentName || ''}" and extract the academic data specifically and exclusively for this student. Do not return other students' records.` : ''}
         1. semester must be a number from 1 to 8. You MUST map the year and semester of the marksheet to a number from 1 to 8:
            - I Year I Semester / Year 1 Sem 1 / 1-1 / I B.Tech I Semester -> 1
            - I Year II Semester / Year 1 Sem 2 / 1-2 / I B.Tech II Semester -> 2
@@ -118,7 +121,8 @@ export async function POST(request: NextRequest) {
            - IV Year I Semester / Year 4 Sem 1 / 4-1 / IV B.Tech I Semester -> 7
            - IV Year II Semester / Year 4 Sem 2 / 4-2 / IV B.Tech II Semester -> 8
         2. Extract "memo_no", "serial_no", "exam_date" (month and year of exam), "issue_date" (date of issue), "father_name" (or FATHER'S / MOTHER'S NAME), "hall_ticket_no" (or roll number), "branch" (e.g. ELECTRONICS & COMMUNICATION ENGINEERING), "total_credits" (number of passed credits or total credits for the semester) and "pass_status" (PASS or FAIL result status).
-        3. For each subject, extract the "code" (e.g. 8BC01), "name" (e.g. ENGINEERING GRAPHICS), "gpa" (grade secured like A, O, S, A+, B+, B, C, D, F, or a number like 9.0), "credits" (credits for that subject like 3, 1.5, etc.) and "result" (P for pass or F for fail). If mid1, mid2 or semester_marks are not found on the certificate, use "-".
+        3. For each subject, extract the "code" (e.g. 8BC01 or 9HC11), "name" (e.g. ENGINEERING GRAPHICS or MATRIX ALGEBRA AND CALCULUS), "gpa" (grade secured like A, O, S, A+, B+, B, C, D, F, or a number like 9.0), "credits" (credits for that subject like 3, 1.5, etc.) and "result" (P for pass or F for fail). If mid1, mid2 or semester_marks are not found on the certificate, use "-".
+           NOTE FOR TABULAR LEDGERS: The subject codes and abbreviations are listed as headers (e.g. "9HC11 MAC" has code "9HC11" and name "MAC" or "MATRIX ALGEBRA AND CALCULUS"). The student's cell for that column contains their grade (e.g. "40(C)" or "68(B+)" means grade/gpa is "C" or "B+", and internal/external marks may be listed in sub-columns: "INT 40" is internal/mid1, "EXT 60" is semester_marks/external).
         4. For "sgpa" and "cgpa" at the root level, return the values corresponding to the LATEST semester found in the marksheet (e.g. if the marksheet contains semesters 1, 2, and 3, return the Semester 3 SGPA and CGPA).
         5. For "backlogs" at the root level, return the total number of active backlogs across all semesters.
         6. Return ONLY the JSON object. Do not wrap it in markdown code blocks.
@@ -255,6 +259,7 @@ export async function POST(request: NextRequest) {
       }
       
       Requirements:
+      ${rollNumber ? `CRITICAL LEDGER RULE: If this image/document is a tabular class ledger containing multiple students' records (where columns are subjects and rows are students), you MUST search for the row matching Roll Number: "${rollNumber}" or Name: "${studentName || ''}" and extract the academic data specifically and exclusively for this student. Do not return other students' records.` : ''}
       1. semester must be a number from 1 to 8. You MUST map the year and semester of the marksheet to a number from 1 to 8:
          - I Year I Semester / Year 1 Sem 1 / 1-1 / I B.Tech I Semester -> 1
          - I Year II Semester / Year 1 Sem 2 / 1-2 / I B.Tech II Semester -> 2
@@ -265,7 +270,8 @@ export async function POST(request: NextRequest) {
          - IV Year I Semester / Year 4 Sem 1 / 4-1 / IV B.Tech I Semester -> 7
          - IV Year II Semester / Year 4 Sem 2 / 4-2 / IV B.Tech II Semester -> 8
       2. Extract "memo_no", "serial_no", "exam_date" (month and year of exam), "issue_date" (date of issue), "father_name" (or FATHER'S / MOTHER'S NAME), "hall_ticket_no" (or roll number), "branch" (e.g. ELECTRONICS & COMMUNICATION ENGINEERING), "total_credits" (number of passed credits or total credits for the semester) and "pass_status" (PASS or FAIL result status).
-      3. For each subject, extract the "code" (e.g. 8BC01), "name" (e.g. ENGINEERING GRAPHICS), "gpa" (grade secured like A, O, S, A+, B+, B, C, D, F, or a number like 9.0), "credits" (credits for that subject like 3, 1.5, etc.) and "result" (P for pass or F for fail). If mid1, mid2 or semester_marks are not found on the certificate, use "-".
+      3. For each subject, extract the "code" (e.g. 8BC01 or 9HC11), "name" (e.g. ENGINEERING GRAPHICS or MATRIX ALGEBRA AND CALCULUS), "gpa" (grade secured like A, O, S, A+, B+, B, C, D, F, or a number like 9.0), "credits" (credits for that subject like 3, 1.5, etc.) and "result" (P for pass or F for fail). If mid1, mid2 or semester_marks are not found on the certificate, use "-".
+         NOTE FOR TABULAR LEDGERS: The subject codes and abbreviations are listed as headers (e.g. "9HC11 MAC" has code "9HC11" and name "MAC" or "MATRIX ALGEBRA AND CALCULUS"). The student's cell for that column contains their grade (e.g. "40(C)" or "68(B+)" means grade/gpa is "C" or "B+", and internal/external marks may be listed in sub-columns: "INT 40" is internal/mid1, "EXT 60" is semester_marks/external).
       4. For "sgpa" and "cgpa" at the root level, return the values corresponding to the LATEST semester found in the marksheet (e.g. if the marksheet contains semesters 1, 2, and 3, return the Semester 3 SGPA and CGPA).
       5. For "backlogs" at the root level, return the total number of active backlogs across all semesters.
       6. Return ONLY the JSON object. Do not wrap it in markdown code blocks.

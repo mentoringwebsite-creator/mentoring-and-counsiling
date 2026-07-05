@@ -494,7 +494,9 @@ export default function AdminStudentsPage() {
           fileName: file.name,
           mimeType: payload.mimeType,
           engine: 'groq',
-          groqModel: groqModel
+          groqModel: groqModel,
+          studentName: selectedStudentForAcademic?.name,
+          rollNumber: hallTicketNo || selectedStudentForAcademic?.student_profiles?.[0]?.roll_number
         })
       });
 
