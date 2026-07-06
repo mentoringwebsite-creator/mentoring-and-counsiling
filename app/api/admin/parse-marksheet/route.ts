@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const nameMapping: Record<string, string> = {
+  // Semester 1 & 2 Abbreviations
   'MAC': 'MATRIX ALGEBRA AND CALCULUS',
   'M-I': 'MATRIX ALGEBRA AND CALCULUS',
   'EELS': 'ESSENTIAL ENGLISH LANGUAGE SKILLS',
@@ -12,8 +13,51 @@ const nameMapping: Record<string, string> = {
   'PSC LAB': 'PROBLEM SOLVING USING C LAB',
   'EP': 'ENGINEERING PHYSICS',
   'EP LAB': 'ENGINEERING PHYSICS LAB',
-  'IP': 'INDUCTION PROGRAM'
+  'IP': 'INDUCTION PROGRAM',
+  
+  // Semester 1 & 2 Codes
+  '9HC11': 'MATRIX ALGEBRA AND CALCULUS',
+  '9HC01': 'ESSENTIAL ENGLISH LANGUAGE SKILLS',
+  '9HC06': 'APPLIED PHYSICS',
+  '9FC01': 'PROBLEM SOLVING USING C',
+  '9BC01': 'ENGINEERING GRAPHICS',
+  '9HC61': 'ORAL COMMUNICATION LAB - I',
+  '9HC65': 'APPLIED PHYSICS LAB',
+  '9FC61': 'PROBLEM SOLVING USING C LAB',
+  '9HC18': 'INDUCTION PROGRAM',
+  '9HC12': 'INDUCTION PROGRAM',
+  
+  // Semester 2-1 (ECE / CSE / IT) Codes & Abbreviations
+  '9ZC01': 'BUSINESS ECONOMICS AND FINANCIAL ANALYSIS',
+  '9HC14': 'COMPLEX VARIABLES AND TRANSFORM TECHNIQUES',
+  '9CC01': 'DEVICES AND CIRCUITS',
+  '9CC03': 'PT',
+  '9CC02': 'SS',
+  '9AC72': 'ECAN',
+  '9ACT2': 'ECAN',
+  '9CC71': 'edcb',
+  '9HC63': 'SS LAB',
+  '9HC05': 'GENDER SENSITIZATION'
 };
+
+function getCredits(code: string, name: string): number {
+  const cleanCode = code.toUpperCase();
+  const cleanName = name.toUpperCase();
+  
+  if (cleanCode === '9HC18' || cleanName.includes('INDUCTION') || cleanCode === '9HC05' || cleanName.includes('GENDER')) {
+    return 0; // Audit courses
+  }
+  
+  if (cleanName.includes('LAB') || cleanName.includes('PRACTICAL') || cleanCode.endsWith('71') || cleanCode.endsWith('72') || cleanCode.endsWith('63') || cleanCode.endsWith('61') || cleanCode.endsWith('65')) {
+    return 1.5; // Labs are usually 1.5 credits
+  }
+  
+  if (cleanCode === '9HC01' || cleanName.includes('ENGLISH') || cleanName.includes('EELS')) {
+    return 2;
+  }
+  
+  return 3; // Standard theory is 3 credits
+}
 
 function finalizeParsedData(parsedData: any, targetSemester?: string) {
   if (!parsedData) return parsedData;
@@ -36,20 +80,22 @@ function parseLedgerText(text: string, targetRoll: string, targetSemester?: stri
   
   // Find subject headers
   const subjectHeaders: Array<{ code: string; abbrev: string; name: string }> = [];
-  const headerLine = lines.find(line => line.includes('9HC11') || line.includes('9HC01'));
+  
+  // Find any line containing at least 3 subject codes (matching \b\d[A-Z0-9]{4}\b)
+  const headerLine = lines.find(line => {
+    const matches = line.match(/\b\d[A-Z0-9]{4}\b/g) || [];
+    return matches.length >= 3;
+  });
   
   if (headerLine) {
-    const matches = headerLine.matchAll(/(\b\d[A-Z0-9]{4}\b)\s+([A-Z0-9\s\-]+?)(?=\s+\b\d[A-Z0-9]{4}\b|\s+Back|\s+SGPA|$)/gi);
-    for (const match of matches) {
-      const code = match[1].trim();
-      const abbrev = match[2].trim();
-      let name = nameMapping[abbrev] || abbrev;
-      
-      if (code === '9HC18' || code === '9HC12' || abbrev.toLowerCase().includes('back') || name.toLowerCase().includes('back')) {
-        name = 'INDUCTION PROGRAM';
-      }
+    const matches = headerLine.match(/\b\d[A-Z0-9]{4}(?:_INT|_EXT|_TOT)?\b/gi) || [];
+    const uniqueCodes = Array.from(new Set(matches.map(c => c.substring(0, 5).toUpperCase())));
+    
+    uniqueCodes.forEach(code => {
+      const abbrev = code;
+      const name = nameMapping[abbrev] || abbrev;
       subjectHeaders.push({ code, abbrev, name });
-    }
+    });
   }
 
   const targetSemNum = targetSemester && !isNaN(parseInt(targetSemester)) ? parseInt(targetSemester) : 1;
@@ -105,13 +151,7 @@ function parseLedgerText(text: string, targetRoll: string, targetSemester?: stri
         const grade = match[2];
         const mid1 = nextToken || '-';
         const semester_marks = nextNextToken || '-';
-        
-        let subCredits = 3;
-        if (header.name.toLowerCase().includes('lab') || header.name.toLowerCase().includes('communication')) {
-          subCredits = header.name.toLowerCase().includes('physics') || header.name.toLowerCase().includes('c lab') ? 1.5 : 1;
-        } else if (header.name.toLowerCase().includes('english') || header.name.toLowerCase().includes('eels')) {
-          subCredits = 2;
-        }
+        const subCredits = getCredits(header.code, header.name);
 
         subjects.push({
           code: header.code,
