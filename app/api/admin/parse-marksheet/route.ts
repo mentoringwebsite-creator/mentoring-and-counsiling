@@ -154,6 +154,31 @@ function parseLedgerText(text: string, targetRoll: string, targetSemester?: stri
   const decimals: number[] = [];
   const integers: number[] = [];
 
+  // Prefer labelled SGPA/CGPA if present in the raw text
+  try {
+    const sgpaLabelMatch = text.match(/\bSGPA\b\s*[:\-]*\s*([0-9]+(?:\.[0-9]+)?)/i);
+    const cgpaLabelMatch = text.match(/\bCGPA\b\s*[:\-]*\s*([0-9]+(?:\.[0-9]+)?)/i);
+    if (sgpaLabelMatch) {
+      sgpa = parseFloat(sgpaLabelMatch[1]);
+    }
+    if (cgpaLabelMatch) {
+      cgpa = parseFloat(cgpaLabelMatch[1]);
+    }
+
+    const backlogsMatch = text.match(/\bBacklogs?\b\s*[:\-]*\s*(\d+)/i);
+    if (backlogsMatch) {
+      backlogs = parseInt(backlogsMatch[1]);
+    }
+
+    const totalCreditsMatch = text.match(/\bTotal\s+Credits\b\s*[:\-]*\s*(\d+(?:\.\d+)?)/i);
+    if (totalCreditsMatch) {
+      total_credits_parsed = totalCreditsMatch[1];
+    }
+  } catch (e) {
+    // ignore regex failures and fallback to heuristic parsing below
+  }
+
+  // If labelled values not found, fallback to scanning numeric tokens
   for (let i = tokens.length - 1; i >= 0; i--) {
     const token = tokens[i];
     if (token.includes('.') && !isNaN(parseFloat(token))) {
@@ -163,15 +188,15 @@ function parseLedgerText(text: string, targetRoll: string, targetSemester?: stri
     }
   }
 
-  if (decimals.length >= 2) {
+  if (!sgpa && decimals.length >= 2) {
     cgpa = decimals[0]; // last token is CGPA (in 1-2 onwards)
     sgpa = decimals[1]; // second to last token is SGPA
-  } else if (decimals.length === 1) {
+  } else if (!sgpa && decimals.length === 1) {
     sgpa = decimals[0];
     cgpa = decimals[0];
   }
 
-  if (integers.length >= 2) {
+  if (!total_credits_parsed && integers.length >= 2) {
     total_credits_parsed = integers[0].toString();
     backlogs = integers[1];
   }

@@ -823,6 +823,14 @@ export default function AdminStudentsPage() {
       if (anySubWithCgpa) {
         calculatedCgpa = parseFloat(anySubWithCgpa.cgpa);
       }
+    } else {
+      setAcademicSgpa(0);
+      setInputSgpa('0');
+      setAcademicCgpa(0);
+      setInputCgpa('0');
+      setAcademicBacklogs(0);
+      setInputBacklogs('0');
+      return;
     }
 
     // Only overwrite local state SGPA/CGPA if they are currently 0 or if parsed metadata exists
