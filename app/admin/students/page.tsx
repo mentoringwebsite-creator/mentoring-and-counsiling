@@ -427,7 +427,19 @@ export default function AdminStudentsPage() {
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items.map((item: any) => item.str).join(' ');
+      
+      let lastY: number | undefined;
+      let pageText = "";
+      for (const item of textContent.items) {
+        if (lastY !== undefined && Math.abs(item.transform[5] - lastY) > 5) {
+          pageText += "\n";
+        } else if (pageText.length > 0 && !pageText.endsWith('\n') && !pageText.endsWith(' ')) {
+          pageText += " ";
+        }
+        pageText += item.str;
+        lastY = item.transform[5];
+      }
+      
       fullText += `--- Page ${i} ---\n${pageText}\n\n`;
     }
 
