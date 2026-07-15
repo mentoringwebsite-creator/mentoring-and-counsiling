@@ -200,7 +200,7 @@ export default function QueriesPage() {
     <ProtectedRoute role="student">
       <PageShell title="Problems & Queries" subtitle="Raise and track support requests">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
-          <Sidebar active="/student/queries" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
+          <Sidebar active="/student/queries" items={[{ href: '/student', label: 'Profile Dashboard' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
           
           <div className="grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0">
             {/* Left side: Query List */}
