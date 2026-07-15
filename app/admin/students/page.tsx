@@ -1435,50 +1435,41 @@ export default function AdminStudentsPage() {
             {/* Scrollable body content */}
             <div className="flex-1 overflow-y-auto p-6 md:p-8 w-full">
               
-              <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              <div className="max-w-7xl mx-auto space-y-6">
                 
-                {/* ==================== LEFT COLUMN: 1/3 width ==================== */}
-                <div className="lg:col-span-1 space-y-6">
-                  
-                  {/* Cumulative stats section */}
-                  <div className="p-5 rounded-[24px] border border-slate-200 bg-white shadow-sm">
-                    <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-2">
-                      <div className="flex items-center gap-1.5 text-slate-850 font-bold text-sm">
-                        <Award className="h-4.5 w-4.5 text-emerald-800" />
-                        <span>Cumulative Scorecard</span>
-                      </div>
-                      {!statsEditMode ? (
-                        <button
-                          onClick={() => setStatsEditMode(true)}
-                          className="text-xs font-bold text-emerald-800 hover:underline"
-                        >
-                          Edit Scores
-                        </button>
-                      ) : (
-                        <span className="text-xs text-slate-400 font-medium">Editing...</span>
-                      )}
+                {/* Cumulative stats section - redesigned as a premium horizontal bar */}
+                <div className="p-6 rounded-[28px] border border-slate-200 bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-[#1c5644]/10 p-2 text-[#1c5644]">
+                      <Award className="h-5 w-5" />
                     </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Cumulative Scorecard</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">Overall student performance metrics</p>
+                    </div>
+                  </div>
 
+                  <div className="flex-1 max-w-2xl">
                     {!statsEditMode ? (
-                      <div className="grid gap-3 grid-cols-3 text-center">
-                        <div className="bg-slate-50/50 border border-slate-150 rounded-2xl p-3">
-                          <div className="text-[10px] font-bold text-slate-405 uppercase tracking-wider">Latest CGPA</div>
-                          <div className="text-lg font-black text-slate-900 mt-1">{academicCgpa > 0 ? academicCgpa.toFixed(2) : 'N/A'}</div>
+                      <div className="grid gap-4 grid-cols-3 text-center">
+                        <div className="bg-slate-50/50 border border-slate-150 rounded-2xl p-3.5 flex flex-col items-center justify-center">
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Latest CGPA</div>
+                          <div className="text-xl font-black text-slate-900 mt-1">{academicCgpa > 0 ? academicCgpa.toFixed(2) : 'N/A'}</div>
                         </div>
-                        <div className={`border rounded-2xl p-3 bg-slate-50/50 ${academicBacklogs > 0 ? 'border-rose-250 text-rose-800' : 'border-slate-150 text-slate-700'}`}>
-                          <div className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Backlogs</div>
-                          <div className="text-lg font-black mt-1">{academicBacklogs}</div>
+                        <div className={`border rounded-2xl p-3.5 flex flex-col items-center justify-center bg-slate-50/50 ${academicBacklogs > 0 ? 'border-rose-250 text-rose-800' : 'border-slate-150 text-slate-700'}`}>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Backlogs</div>
+                          <div className="text-xl font-black mt-1">{academicBacklogs}</div>
                         </div>
-                        <div className={`border rounded-2xl p-3 bg-slate-50/50 ${academicBacklogs > 0 ? 'border-rose-250 bg-rose-50/10 text-rose-800 font-bold' : 'border-emerald-250 bg-emerald-50/10 text-emerald-800 font-bold'}`}>
-                          <div className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Result</div>
-                          <div className="text-lg font-black mt-1">{academicBacklogs > 0 ? 'FAIL' : 'PASS'}</div>
+                        <div className={`border rounded-2xl p-3.5 flex flex-col items-center justify-center bg-slate-50/50 ${academicBacklogs > 0 ? 'border-rose-250 bg-rose-50/10 text-rose-800 font-bold' : 'border-emerald-250 bg-emerald-50/10 text-emerald-800 font-bold'}`}>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Result</div>
+                          <div className="text-xl font-black mt-1">{academicBacklogs > 0 ? 'FAIL' : 'PASS'}</div>
                         </div>
                       </div>
                     ) : (
-                      <form onSubmit={handleStatsSubmit} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
+                      <form onSubmit={handleStatsSubmit} className="flex flex-wrap md:flex-nowrap items-end justify-between gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-200">
+                        <div className="flex-1 grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-550 uppercase tracking-wider mb-1">CGPA</label>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">CGPA</label>
                             <input
                               type="number"
                               step="0.01"
@@ -1487,22 +1478,22 @@ export default function AdminStudentsPage() {
                               value={inputCgpa}
                               onChange={(e) => setInputCgpa(e.target.value)}
                               required
-                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-slate-50/50 focus:border-emerald-600 focus:outline-none font-semibold text-slate-800"
+                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-white focus:border-emerald-600 focus:outline-none font-semibold text-slate-800"
                             />
                           </div>
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-550 uppercase tracking-wider mb-1">Backlogs</label>
+                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Backlogs</label>
                             <input
                               type="number"
                               min="0"
                               value={inputBacklogs}
                               onChange={(e) => setInputBacklogs(e.target.value)}
                               required
-                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-slate-50/50 focus:border-emerald-600 focus:outline-none font-semibold text-slate-800"
+                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-white focus:border-emerald-600 focus:outline-none font-semibold text-slate-800"
                             />
                           </div>
                         </div>
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-2 shrink-0">
                           <button
                             type="button"
                             onClick={() => setStatsEditMode(false)}
@@ -1521,10 +1512,15 @@ export default function AdminStudentsPage() {
                     )}
                   </div>
 
+                  {!statsEditMode && (
+                    <button
+                      onClick={() => setStatsEditMode(true)}
+                      className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-3.5 py-2 text-xs font-bold text-emerald-800 transition shadow-sm cursor-pointer shrink-0"
+                    >
+                      Edit Scores
+                    </button>
+                  )}
                 </div>
-
-                {/* ==================== RIGHT COLUMN: 2/3 width ==================== */}
-                <div className="lg:col-span-2 space-y-6">
                   
                   {/* AI Marksheet Scanner (OCR & Parsing) */}
                   <div className="p-5 rounded-[24px] border border-emerald-100 bg-emerald-50/20 shadow-sm">
@@ -2005,8 +2001,6 @@ export default function AdminStudentsPage() {
                       </div>
                     </div>
                   )}
-
-                </div>
 
               </div>
 
