@@ -1,54 +1,112 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const nameMapping: Record<string, string> = {
-  // Semester 1 & 2 Abbreviations
+  // Abbreviations & Mappings
   'MAC': 'MATRIX ALGEBRA AND CALCULUS',
   'M-I': 'MATRIX ALGEBRA AND CALCULUS',
   'EELS': 'ESSENTIAL ENGLISH LANGUAGE SKILLS',
-  'AP': 'APPLIED PHYSICS',
   'PSC': 'PROBLEM SOLVING USING C',
   'EG': 'ENGINEERING GRAPHICS',
   'OC LAB': 'ORAL COMMUNICATION LAB - I',
-  'AP LAB': 'APPLIED PHYSICS LAB',
   'PSC LAB': 'PROBLEM SOLVING USING C LAB',
   'EP': 'ENGINEERING PHYSICS',
   'EP LAB': 'ENGINEERING PHYSICS LAB',
   'IP': 'INDUCTION PROGRAM',
   
-  // Semester 1 & 2 Codes
+  // Semester 1 & 2
+  '9HC07': 'ENGINEERING PHYSICS',
+  '9FC01': 'PROBLEM SOLVING USING C',
   '9HC11': 'MATRIX ALGEBRA AND CALCULUS',
   '9HC01': 'ESSENTIAL ENGLISH LANGUAGE SKILLS',
-  '9HC06': 'APPLIED PHYSICS',
-  '9FC01': 'PROBLEM SOLVING USING C',
   '9BC01': 'ENGINEERING GRAPHICS',
   '9HC61': 'ORAL COMMUNICATION LAB - I',
-  '9HC65': 'APPLIED PHYSICS LAB',
+  '9HC66': 'ENGINEERING PHYSICS LAB',
   '9FC61': 'PROBLEM SOLVING USING C LAB',
-  '9HC18': 'INDUCTION PROGRAM',
-  '9HC12': 'INDUCTION PROGRAM',
   
-  // Semester 2-1 (ECE / CSE / IT) Codes & Abbreviations
+  '9HC04': 'ENGINEERING CHEMISTRY',
+  '9EC01': 'DATA STRUCTURES',
+  '9HC12': 'ADVANCED CALCULUS',
+  '9AC42': 'ELECTRICAL CIRCUITS & NETWORKS ANALYSIS',
+  '9HC62': 'ORAL COMMUNICATION LAB - II',
+  '9HC64': 'ENGINEERING CHEMISTRY LAB',
+  '9EC61': 'DATA STRUCTURES USING LAB',
+  '9BC61': 'WORKSHOP/MANUFACTURING PROCESSES LAB',
+  
+  // Semester 3 & 4
+  '9CC01': 'ELECTRONIC DEVICES AND CIRCUITS',
+  '9CC02': 'SIGNALS AND SYSTEMS',
+  '9CC03': 'PROBABILITY THEORY AND STOCHASTIC PROCESS',
+  '9HC14': 'COMPLEX VARIABLE AND TRANSFORM TECHNIQUES',
   '9ZC01': 'BUSINESS ECONOMICS AND FINANCIAL ANALYSIS',
-  '9HC14': 'COMPLEX VARIABLES AND TRANSFORM TECHNIQUES',
-  '9CC01': 'DEVICES AND CIRCUITS',
-  '9CC03': 'PT',
-  '9CC02': 'SS',
-  '9AC72': 'ECAN',
-  '9ACT2': 'ECAN',
-  '9CC71': 'edcb',
-  '9HC63': 'SS LAB',
-  '9HC05': 'GENDER SENSITIZATION'
+  '9HC03': 'UNIVERSAL HUMAN VALUES',
+  '9HC63': 'SOFT SKILLS LAB',
+  '9CC71': 'ELECTRONIC DEVICES AND CIRCUITS LAB',
+  '9AC72': 'ELECTRICAL CIRCUITS & NETWORKS ANALYSISLAB',
+  
+  '9CC04': 'ANALOG CIRCUITS',
+  '9CC05': 'DIGITAL LOGIC DESIGN',
+  '9CC06': 'ANALOG& DIGITAL COMMUNICATIONS',
+  '9C407': 'ELECTROMAGNETIC WAVES AND TRANSMISSION LINES',
+  '9HC16': 'QUANTITATIVE APARTITUDE AND LOGICAL REASONING',
+  '9HC05': 'ENVIRONMENTAL SCIENCE',
+  '9CC72': 'ANALOG CIRCUITS LAB',
+  '9C473': 'BASIC SIMULATION AND DIGITAL LOGIC DESIGN LAB',
+  '9CC74': 'ANALOG& DIGITAL COMMUNICATION LAB',
+  '9C461': 'TECHNICAL SEMINAR',
+
+  // Semester 5 & 6
+  '9CC08': 'DIGITAL SIGNAL PROCESSING',
+  '9CC09': 'IC APPLICATIONS',
+  '9C510': 'ANTENNAS AND WAVE PROPAGATIONS',
+  '9PE51': 'PROFESSIONAL ELECTIVE- I',
+  '9AC07': 'LINEAR CONTROL SYSTEMS',
+  '9EC41': 'ARTIFICIAL INTELLIGENCE',
+  '9CC75': 'DIGITAL SIGNAL PROCESSING LAB',
+  '9CC76': 'IC APPLICATIONS LAB',
+  '9C578': 'ANTENNA SIMULATION LAB',
+  '9C591': 'SUMMER INDUSTRY INTERNSHIP-I',
+
+  '9C611': 'MICROWAVE AND OPTICAL COMMUNICATIONS',
+  '9C612': 'VLSI TECHNOLOGY AND DESIGN',
+  '9CC15': 'MICROPROCESSORS AND MICROCONTROLLERS',
+  '9PE61': 'PROFESSIONAL ELECTIVE- II',
+  '9OE61': 'OPEN ELECTIVE- I',
+  '9FC78': 'CYBER SECURITY',
+  '9C679': 'MICROWAVE AND OPTICAL COMMUNICATIONS LAB',
+  '9C677': 'VLSI TECHNOLOGY AND DESIGN LAB',
+  '9CC85': 'MICROPROCESSORS AND MICROCONTROLLERS LAB',
+  '9C662': 'COMPREHENSIVE VIVA VOCE',
+
+  // Semester 7 & 8
+  '9C713': 'INTERNET OF THINGS AND APPLICATIONS',
+  '9C714': 'ADVANCED COMMUNICATIONS AND NETWORKS',
+  '9EC05': 'COMPUTER NETWORKS',
+  '9PE71': 'PROFESSIONAL ELECTIVE- III',
+  '9PE72': 'PROFESSIONAL ELECTIVE -IV',
+  '9OE71': 'OPEN ELECTIVE - II',
+  '9C780': 'INTERNET OF THINGS AND APPLICATIONS LAB',
+  '9C781': 'ADVANCED COMMUNICATIONS AND NETWORKS LAB',
+  '9C792': 'SUMMER INDUSTRY INTERNSHIP - II',
+
+  '9PE81': 'PROFESSIONAL ELECTIVE -V',
+  '9OE81': 'OPEN ELECTIVE -III',
+  '9C893': 'PROJECT'
 };
 
 function getCredits(code: string, name: string): number {
-  const cleanCode = code.toUpperCase();
-  const cleanName = name.toUpperCase();
+  const cleanCode = code.toUpperCase().trim();
+  const cleanName = name.toUpperCase().trim();
   
-  if (cleanCode === '9HC18' || cleanName.includes('INDUCTION') || cleanCode === '9HC05' || cleanName.includes('GENDER')) {
+  if (cleanCode === '9HC18' || cleanName.includes('INDUCTION') || cleanCode === '9HC05' || cleanName.includes('GENDER') || cleanCode === '9EC41' || cleanName.includes('ARTIFICIAL') || cleanCode === '9FC78' || cleanName.includes('CYBER') || cleanName.includes('ENVIRONMENT')) {
     return 0; // Audit courses
   }
   
-  if (cleanName.includes('LAB') || cleanName.includes('PRACTICAL') || cleanCode.endsWith('71') || cleanCode.endsWith('72') || cleanCode.endsWith('63') || cleanCode.endsWith('61') || cleanCode.endsWith('65')) {
+  if (cleanCode === '9C893') return 10;
+  if (cleanCode === '9BC61') return 2.5;
+  if (cleanCode === '9HC63' || cleanCode === '9CC75' || cleanCode === '9C679' || cleanCode === '9C473') return 2;
+  if (cleanCode === '9HC61' || cleanCode === '9C591' || cleanCode === '9C662' || cleanCode === '9C780' || cleanCode === '9C781' || cleanCode === '9C792' || cleanCode === '9C461') return 1;
+
+  if (cleanName.includes('LAB') || cleanName.includes('PRACTICAL') || cleanCode.endsWith('71') || cleanCode.endsWith('72') || cleanCode.endsWith('63') || cleanCode.endsWith('61') || cleanCode.endsWith('65') || cleanCode.endsWith('66') || cleanCode.endsWith('64') || cleanCode.endsWith('74') || cleanCode.endsWith('75') || cleanCode.endsWith('76') || cleanCode.endsWith('77') || cleanCode.endsWith('78') || cleanCode.endsWith('79') || cleanCode.endsWith('80') || cleanCode.endsWith('81') || cleanCode.endsWith('85')) {
     return 1.5; // Labs are usually 1.5 credits
   }
   
