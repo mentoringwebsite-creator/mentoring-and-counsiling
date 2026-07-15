@@ -13,7 +13,6 @@ const getIcon = (label: string) => {
     case 'dashboard':
       return <Home className="h-5 w-5 mr-3 shrink-0" />;
     case 'profile':
-    case 'profile dashboard':
       return <User className="h-5 w-5 mr-3 shrink-0" />;
     case 'academic profile':
       return <GraduationCap className="h-5 w-5 mr-3 shrink-0" />;
