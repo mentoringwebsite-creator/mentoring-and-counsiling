@@ -502,53 +502,34 @@ export default function AcademicPage() {
             )}
 
             {/* Scorecard Header Stats */}
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[24px] border border-slate-150 bg-white p-5 shadow-sm flex items-center justify-between">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-[24px] border border-slate-150 bg-white p-6 shadow-sm flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cumulative CGPA</p>
-                  <h3 className="mt-1 text-3xl font-extrabold text-slate-900 tracking-tight">{cgpa > 0 ? cgpa.toFixed(2) : 'N/A'}</h3>
+                  <h3 className="mt-1.5 text-3xl font-extrabold text-[#1c5644] tracking-tight">{cgpa > 0 ? cgpa.toFixed(2) : 'N/A'}</h3>
                 </div>
                 <div className="rounded-2xl bg-emerald-50 p-3">
                   <GraduationCap className="h-6 w-6 text-[#1c5644]" />
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-slate-155 bg-white p-5 shadow-sm flex items-center justify-between">
+              <div className="rounded-[24px] border border-slate-155 bg-white p-6 shadow-sm flex items-center justify-between">
                 <div>
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Backlogs</p>
-                  <h3 className="mt-1 text-3xl font-extrabold text-slate-900 tracking-tight">{backlogs}</h3>
+                  <h3 className="mt-1.5 text-3xl font-extrabold text-slate-900 tracking-tight">{backlogs}</h3>
                 </div>
-                <div className={`rounded-2xl p-3 ${backlogs > 0 ? 'bg-amber-50' : 'bg-blue-50'}`}>
+                <div className={`rounded-2xl p-3 ${backlogs > 0 ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'}`}>
                   {backlogs > 0 ? (
-                    <AlertTriangle className="h-6 w-6 text-amber-600 animate-pulse" />
+                    <AlertTriangle className="h-6 w-6 text-amber-650 animate-pulse" />
                   ) : (
                     <CheckCircle2 className="h-6 w-6 text-blue-600" />
                   )}
                 </div>
               </div>
-
-              <div className="rounded-[24px] border border-slate-150 bg-white p-5 shadow-sm flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Result Status</p>
-                  <h3 className={`mt-1 text-3xl font-extrabold tracking-tight ${backlogs > 0 ? 'text-rose-750' : 'text-emerald-750'}`}>
-                    {backlogs > 0 ? 'FAIL' : 'PASS'}
-                  </h3>
-                </div>
-                <div className={`rounded-2xl p-3 ${backlogs > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                  {backlogs > 0 ? (
-                    <AlertTriangle className="h-6 w-6" />
-                  ) : (
-                    <CheckCircle2 className="h-6 w-6" />
-                  )}
-                </div>
-              </div>
             </div>
 
-            {/* Main Content Layout Grid */}
-            <div className="grid gap-6 lg:grid-cols-3">
-              
-              {/* Left Main Ledger Area */}
-              <div className="lg:col-span-2 space-y-6">
+            {/* Main Content Layout Stack */}
+            <div className="space-y-6 w-full min-w-0">
                 
                 {/* Subject Overview Card */}
                 <div className="rounded-[28px] border border-slate-100 bg-white p-6 shadow-sm">
@@ -576,8 +557,6 @@ export default function AcademicPage() {
                         <option value="7">IV Year I Semester (4-1)</option>
                         <option value="8">IV Year II Semester (4-2)</option>
                       </select>
-
-                      {/* SGPA Badge Removed */}
                     </div>
                   </div>
 
@@ -682,209 +661,172 @@ export default function AcademicPage() {
 
                 {/* Analytical Charts Block */}
                 {!loading && subjects.length > 0 && (
-                  <div className="space-y-6">
+                  <div className="grid gap-6 md:grid-cols-2">
                     
-                    {/* Double Chart Grid */}
-                    <div className="grid gap-6 md:grid-cols-2">
-                      
-                      {/* Area Chart: CGPA Progress */}
-                      <div className="rounded-[28px] border border-slate-150 bg-white p-5 shadow-sm">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Award className="h-5 w-5 text-[#1c5644]" />
-                          <h3 className="text-sm font-extrabold text-slate-800">CGPA Progression</h3>
-                        </div>
-                        <div className="h-56 w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={cgpaProgressData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                              <defs>
-                                <linearGradient id="cgpaGrad" x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="5%" stopColor="#1c5644" stopOpacity={0.25}/>
-                                  <stop offset="95%" stopColor="#1c5644" stopOpacity={0.01}/>
-                                </linearGradient>
-                              </defs>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                              <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
-                              <YAxis stroke="#94a3b8" domain={[4, 10]} fontSize={10} fontWeight={600} />
-                              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px' }} />
-                              <Area type="monotone" name="CGPA" dataKey="CGPA" stroke="#1c5644" strokeWidth={3.5} fillOpacity={1} fill="url(#cgpaGrad)" dot={{ r: 4 }} activeDot={{ r: 6 }} connectNulls />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        </div>
+                    {/* Area Chart: CGPA Progress */}
+                    <div className="rounded-[28px] border border-slate-150 bg-white p-5 shadow-sm">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Award className="h-5 w-5 text-[#1c5644]" />
+                        <h3 className="text-sm font-extrabold text-slate-800">CGPA Progression</h3>
                       </div>
-
-                      {/* Bar Chart: Backlogs Comparison */}
-                      <div className="rounded-[28px] border border-slate-150 bg-white p-5 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <BarChart3 className="h-5 w-5 text-amber-600" />
-                            <h3 className="text-sm font-extrabold text-slate-800">Backlog Statistics</h3>
-                          </div>
-                          <span className="text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
-                            Student vs Class Avg
-                          </span>
-                        </div>
-                        <div className="h-56 w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={backlogData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                              <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
-                              <YAxis stroke="#94a3b8" fontSize={10} fontWeight={600} allowDecimals={false} />
-                              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px' }} />
-                              <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                              <Bar name="Student" dataKey="Student" fill="#e88913" radius={[4, 4, 0, 0]} barSize={15} />
-                              <Bar name="Class Avg" dataKey="ClassAvg" fill="#94a3b8" radius={[4, 4, 0, 0]} barSize={15} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
+                      <div className="h-56 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={cgpaProgressData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                            <defs>
+                              <linearGradient id="cgpaGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#1c5644" stopOpacity={0.25}/>
+                                <stop offset="95%" stopColor="#1c5644" stopOpacity={0.01}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
+                            <YAxis stroke="#94a3b8" domain={[4, 10]} fontSize={10} fontWeight={600} />
+                            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px' }} />
+                            <Area type="monotone" name="CGPA" dataKey="CGPA" stroke="#1c5644" strokeWidth={3.5} fillOpacity={1} fill="url(#cgpaGrad)" dot={{ r: 4 }} activeDot={{ r: 6 }} connectNulls />
+                          </AreaChart>
+                        </ResponsiveContainer>
                       </div>
+                    </div>
 
+                    {/* Bar Chart: Backlogs Comparison */}
+                    <div className="rounded-[28px] border border-slate-150 bg-white p-5 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <BarChart3 className="h-5 w-5 text-amber-600" />
+                          <h3 className="text-sm font-extrabold text-slate-800">Backlog Statistics</h3>
+                        </div>
+                        <span className="text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+                          Student vs Class Avg
+                        </span>
+                      </div>
+                      <div className="h-56 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={backlogData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
+                            <YAxis stroke="#94a3b8" fontSize={10} fontWeight={600} allowDecimals={false} />
+                            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px' }} />
+                            <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                            <Bar name="Student" dataKey="Student" fill="#e88913" radius={[4, 4, 0, 0]} barSize={15} />
+                            <Bar name="Class Avg" dataKey="ClassAvg" fill="#94a3b8" radius={[4, 4, 0, 0]} barSize={15} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Right Side Column (Summaries & AI Insights) */}
-              <div className="space-y-6">
-                
-                {/* Semester Summary */}
-                <div className="rounded-[28px] border border-slate-150 bg-white p-6 shadow-sm">
-                  <h3 className="text-base font-extrabold text-slate-900 border-b border-slate-100 pb-3 mb-4">
-                    Semester Summary
-                  </h3>
-
-                  <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-3">
-                      <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">CGPA</p>
-                      <p className="mt-1 text-xl font-black text-blue-955">{cgpa > 0 ? cgpa.toFixed(2) : 'N/A'}</p>
-                    </div>
-                    <div className={`rounded-2xl border p-3 ${
-                      backlogs > 0 
-                        ? 'bg-rose-50/50 border-rose-100 text-rose-900' 
-                        : 'bg-emerald-50/50 border-emerald-100 text-emerald-900'
-                    }`}>
-                      <p className="text-[10px] font-bold uppercase tracking-wider">Backlogs</p>
-                      <p className="mt-1 text-xl font-black">{backlogs > 0 ? backlogs : '0'}</p>
-                    </div>
-                    <div className={`rounded-2xl border p-3 ${
-                      backlogs > 0 
-                        ? 'bg-rose-50/50 border-rose-100 text-rose-900' 
-                        : 'bg-emerald-50/50 border-emerald-100 text-emerald-900'
-                    }`}>
-                      <p className="text-[10px] font-bold uppercase tracking-wider">Result</p>
-                      <p className="mt-1 text-xl font-black">{backlogs > 0 ? 'FAIL' : 'PASS'}</p>
-                    </div>
-                  </div>
-                </div>
 
                 {/* AI Professional Analysis Card */}
                 {analysis && (
-                  <div className="rounded-[28px] border border-slate-150 bg-[linear-gradient(180deg,#ffffff,#fafcfb)] p-6 shadow-sm relative overflow-hidden">
+                  <div className="rounded-[28px] border border-slate-150 bg-[linear-gradient(180deg,#ffffff,#fafcfb)] p-6 shadow-sm relative overflow-hidden animate-fadeIn">
                     <div className="absolute top-0 right-0 p-3">
                       <Sparkles className="h-5 w-5 text-emerald-800 opacity-20" />
                     </div>
 
                     <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3 mb-4">
                       <Sparkles className="h-4.5 w-4.5 text-emerald-800" />
-                      <span>AI Academic Profiler</span>
+                      <span>AI Academic Profiler (Academic Insights)</span>
                     </h3>
 
-                    {/* Progress Gauge */}
-                    <div className="mb-5">
-                      <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-1.5">
-                        <span className="flex items-center gap-1.5">
-                          <Target className="h-4 w-4 text-emerald-700" />
-                          Placement Readiness
-                        </span>
-                        <span className="font-extrabold text-slate-900">{analysis.placementScore}%</span>
-                      </div>
-                      <div className="w-full bg-slate-150 rounded-full h-2">
-                        <div 
-                          className="bg-[linear-gradient(90deg,#1c5644,#34d399)] h-2 rounded-full transition-all duration-500" 
-                          style={{ width: `${analysis.placementScore}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Strengths Section */}
-                    {analysis.strengths.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-xs font-bold text-emerald-950 uppercase tracking-wide flex items-center gap-1 mb-2">
-                          <Zap className="h-3.5 w-3.5 text-emerald-700 fill-emerald-100" />
-                          Key Strengths
-                        </h4>
-                        <div className="flex flex-col gap-1.5">
-                          {analysis.strengths.map((str, idx) => (
-                            <div key={idx} className="text-xs font-semibold text-slate-800 bg-emerald-50/50 border border-emerald-100/60 rounded-xl px-3 py-1.5">
-                              {str}
-                            </div>
-                          ))}
+                    <div className="grid gap-6 md:grid-cols-3">
+                      {/* Left: Placement Readiness Gauge */}
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-center">
+                        <div className="flex items-center justify-between text-xs font-semibold text-slate-600 mb-1.5">
+                          <span className="flex items-center gap-1.5">
+                            <Target className="h-4 w-4 text-emerald-700" />
+                            Placement Readiness
+                          </span>
+                          <span className="font-extrabold text-slate-900">{analysis.placementScore}%</span>
                         </div>
-                      </div>
-                    )}
-
-                    {/* Weaknesses / Focus Areas Section */}
-                    {analysis.weaknesses.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1 mb-2">
-                          <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                          Focus Subject Areas
-                        </h4>
-                        <div className="flex flex-col gap-1.5">
-                          {analysis.weaknesses.map((weak, idx) => (
-                            <div key={idx} className="text-xs font-semibold text-slate-800 bg-amber-50/50 border border-amber-100/60 rounded-xl px-3 py-1.5">
-                              {weak}
-                            </div>
-                          ))}
+                        <div className="w-full bg-slate-150 rounded-full h-2 mb-3">
+                          <div 
+                            className="bg-[linear-gradient(90deg,#1c5644,#34d399)] h-2 rounded-full transition-all duration-500" 
+                            style={{ width: `${analysis.placementScore}%` }}
+                          />
                         </div>
+                        <p className="text-[10px] text-slate-500 leading-relaxed">
+                          Estimated placement readiness based on cumulative CGPA of {cgpa > 0 ? cgpa.toFixed(2) : 'N/A'} and {backlogs} active backlogs.
+                        </p>
                       </div>
-                    )}
 
-                    {/* Momentum / Trend indicator */}
-                    <div className="border-t border-slate-100 pt-4 mt-4">
-                      <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2.5">
-                        Performance Momentum
-                      </h4>
-                      <div className="flex items-center gap-2">
-                        {analysis.momentum === 'up' ? (
-                          <>
-                            <div className="rounded-xl bg-emerald-100/70 p-1.5 text-emerald-800">
-                              <ArrowUpRight className="h-5 w-5" />
+                      {/* Middle: Key Strengths & Weaknesses */}
+                      <div className="space-y-4">
+                        {analysis.strengths.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-bold text-emerald-955 uppercase tracking-wide flex items-center gap-1 mb-2">
+                              <Zap className="h-3.5 w-3.5 text-emerald-700 fill-emerald-100" />
+                              Key Strengths
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5">
+                              {analysis.strengths.map((str, idx) => (
+                                <span key={idx} className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1">
+                                  {str}
+                                </span>
+                              ))}
                             </div>
-                            <div>
-                              <p className="text-xs font-bold text-slate-800">Upward Trajectory</p>
-                              <p className="text-[10px] text-slate-500 font-semibold">+{analysis.momentumVal} GPA increase since last term</p>
+                          </div>
+                        )}
+                        {analysis.weaknesses.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-bold text-amber-900 uppercase tracking-wide flex items-center gap-1 mb-2">
+                              <AlertTriangle className="h-3.5 w-3.5 text-amber-605" />
+                              Focus Subject Areas
+                            </h4>
+                            <div className="flex flex-wrap gap-1.5">
+                              {analysis.weaknesses.map((weak, idx) => (
+                                <span key={idx} className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1">
+                                  {weak}
+                                </span>
+                              ))}
                             </div>
-                          </>
-                        ) : analysis.momentum === 'down' ? (
-                          <>
-                            <div className="rounded-xl bg-rose-100/70 p-1.5 text-rose-800">
-                              <ArrowDownRight className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-slate-800">Downward Momentum</p>
-                              <p className="text-[10px] text-slate-500 font-semibold">{analysis.momentumVal} GPA drop. Needs attention.</p>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="rounded-xl bg-slate-100 p-1.5 text-slate-700">
-                              <TrendingUp className="h-5 w-5 opacity-50" />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-slate-800">Consistent Performance</p>
-                              <p className="text-[10px] text-slate-500 font-semibold">Grades remain stable and aligned with class average.</p>
-                            </div>
-                          </>
+                          </div>
                         )}
                       </div>
-                    </div>
 
+                      {/* Right: Performance Momentum */}
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 flex flex-col justify-center">
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
+                          Performance Momentum
+                        </h4>
+                        <div className="flex items-center gap-2">
+                          {analysis.momentum === 'up' ? (
+                            <>
+                              <div className="rounded-xl bg-emerald-100/70 p-2 text-emerald-800 shrink-0">
+                                <ArrowUpRight className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-800">Upward Trajectory</p>
+                                <p className="text-[10px] text-slate-500 font-semibold mt-1">+{analysis.momentumVal} GPA increase since last term</p>
+                              </div>
+                            </>
+                          ) : analysis.momentum === 'down' ? (
+                            <>
+                              <div className="rounded-xl bg-rose-100/70 p-2 text-rose-800 shrink-0">
+                                <ArrowDownRight className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-800">Downward Trajectory</p>
+                                <p className="text-[10px] text-slate-500 font-semibold mt-1">{analysis.momentumVal} GPA drop. Needs attention.</p>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="rounded-xl bg-slate-100 p-2 text-slate-700 shrink-0">
+                                <TrendingUp className="h-5 w-5 opacity-50" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-800">Consistent Performance</p>
+                                <p className="text-[10px] text-slate-500 font-semibold mt-1 font-semibold">Grades remain stable and aligned with class average.</p>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
               </div>
-
-            </div>
 
           </div>
         </div>
