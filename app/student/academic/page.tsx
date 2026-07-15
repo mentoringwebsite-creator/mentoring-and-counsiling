@@ -557,6 +557,13 @@ export default function AcademicPage() {
                         <option value="7">IV Year I Semester (4-1)</option>
                         <option value="8">IV Year II Semester (4-2)</option>
                       </select>
+
+                      {selectedSemesterSGPA !== null && (
+                        <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-250 px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm animate-fadeIn">
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
+                          <span>Semester SGPA: {selectedSemesterSGPA}</span>
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -603,6 +610,12 @@ export default function AcademicPage() {
                               <div>
                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Result Status</div>
                                 <div className="text-xs font-black text-emerald-800 mt-0.5">{semMeta.pass_status}</div>
+                              </div>
+                            )}
+                            {selectedSemesterSGPA !== null && (
+                              <div>
+                                <div className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Semester SGPA</div>
+                                <div className="text-xs font-black text-emerald-850 mt-0.5">{selectedSemesterSGPA}</div>
                               </div>
                             )}
                           </div>
