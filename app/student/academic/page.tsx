@@ -113,13 +113,18 @@ export default function AcademicPage() {
 
         const calculatedSgpa = totalSgpaCredits > 0 ? Number((totalSgpaPoints / totalSgpaCredits).toFixed(2)) : 0;
 
-        setSgpa(calculatedSgpa);
-        setCgpa(calculatedCgpa);
-        setBacklogs(backlogCount);
+        // Check if latest semester has a saved SGPA in subjects
+        const latestSemSubjects = subjectsList.filter((s: any) => parseInt(s.semester) === latestSem);
+        const latestSemSgpaSub = latestSemSubjects.find((s: any) => s.sgpa && !isNaN(parseFloat(s.sgpa)));
+        const finalSgpa = latestSemSgpaSub ? parseFloat(latestSemSgpaSub.sgpa) : calculatedSgpa;
+
+        setSgpa(data.sgpa ? parseFloat(data.sgpa) : finalSgpa);
+        setCgpa(data.cgpa ? parseFloat(data.cgpa) : calculatedCgpa);
+        setBacklogs(data.backlogs !== null && data.backlogs !== undefined ? Number(data.backlogs) : backlogCount);
       } else {
-        setSgpa(0);
-        setCgpa(0);
-        setBacklogs(0);
+        setSgpa(data.sgpa ? parseFloat(data.sgpa) : 0);
+        setCgpa(data.cgpa ? parseFloat(data.cgpa) : 0);
+        setBacklogs(data.backlogs !== null && data.backlogs !== undefined ? Number(data.backlogs) : 0);
       }
 
       // Fetch dynamic class average
@@ -196,24 +201,49 @@ export default function AcademicPage() {
     const subjectsInSem = subjects.filter(
       (sub) => parseInt(sub.semester) === semNum
     );
-    const validGPs = subjectsInSem
-      .map((sub) => convertGradeToGP(sub.gpa))
-      .filter((gp): gp is number => gp !== null);
 
-    if (validGPs.length === 0) return null;
-    const avg = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
-    return Number(avg.toFixed(2));
+    // Prioritize explicit SGPA value if present
+    const firstSubWithSgpa = subjectsInSem.find(sub => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
+    if (firstSubWithSgpa) {
+      return Number(parseFloat(firstSubWithSgpa.sgpa).toFixed(2));
+    }
+
+    let totalCredits = 0;
+    let weightedGPsum = 0;
+    let validGPsCount = 0;
+
+    subjectsInSem.forEach((sub) => {
+      const gp = convertGradeToGP(sub.gpa);
+      const credits = parseFloat(sub.credits);
+      if (gp !== null) {
+        validGPsCount++;
+        if (!isNaN(credits) && credits >= 0) {
+          weightedGPsum += gp * credits;
+          totalCredits += credits;
+        }
+      }
+    });
+
+    if (validGPsCount === 0) return null;
+    
+    if (totalCredits === 0) {
+      const validGPs = subjectsInSem
+        .map((sub) => convertGradeToGP(sub.gpa))
+        .filter((gp): gp is number => gp !== null);
+      return Number((validGPs.reduce((a, b) => a + b, 0) / validGPs.length).toFixed(2));
+    }
+
+    return Number((weightedGPsum / totalCredits).toFixed(2));
   })();
 
   // Calculate SGPA chart data dynamically (Student vs Class Average)
   const getSgpaTrendData = () => {
-    const semMap: { [key: number]: number[] } = {};
+    const semMap: { [key: number]: any[] } = {};
     subjects.forEach((sub) => {
       const sem = parseInt(sub.semester);
-      const gp = convertGradeToGP(sub.gpa);
-      if (!isNaN(sem) && gp !== null) {
+      if (!isNaN(sem)) {
         if (!semMap[sem]) semMap[sem] = [];
-        semMap[sem].push(gp);
+        semMap[sem].push(sub);
       }
     });
 
@@ -222,10 +252,42 @@ export default function AcademicPage() {
     
     return Array.from({ length }, (_, i) => {
       const semNum = i + 1;
-      const gpas = semMap[semNum];
+      const subjectsInSem = semMap[semNum] || [];
+      
       let studentSGPA = null;
-      if (gpas && gpas.length > 0) {
-        studentSGPA = Number((gpas.reduce((a, b) => a + b, 0) / gpas.length).toFixed(2));
+      
+      // Prioritize explicit SGPA value if present
+      const firstSubWithSgpa = subjectsInSem.find(sub => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
+      if (firstSubWithSgpa) {
+        studentSGPA = parseFloat(firstSubWithSgpa.sgpa);
+      } else if (subjectsInSem.length > 0) {
+        let totalCredits = 0;
+        let weightedGPsum = 0;
+        let validGPsCount = 0;
+
+        subjectsInSem.forEach((sub) => {
+          const gp = convertGradeToGP(sub.gpa);
+          const credits = parseFloat(sub.credits);
+          if (gp !== null) {
+            validGPsCount++;
+            if (!isNaN(credits) && credits >= 0) {
+              weightedGPsum += gp * credits;
+              totalCredits += credits;
+            }
+          }
+        });
+
+        if (validGPsCount > 0) {
+          if (totalCredits === 0) {
+            const validGPs = subjectsInSem
+              .map((sub) => convertGradeToGP(sub.gpa))
+              .filter((gp): gp is number => gp !== null);
+            studentSGPA = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
+          } else {
+            studentSGPA = weightedGPsum / totalCredits;
+          }
+          studentSGPA = Number(studentSGPA.toFixed(2));
+        }
       }
       
       // Dynamic class average curve
@@ -245,16 +307,66 @@ export default function AcademicPage() {
     const maxSem = Math.max(...subjects.map(s => parseInt(s.semester)), 2);
     const length = Math.max(maxSem, 4);
 
-    return Array.from({ length }, (_, i) => {
-      const semNum = i + 1;
-      const cumulativeSubjects = subjects.filter(sub => Number(sub.semester) <= semNum);
-      let cumulativeGPA = null;
-      if (cumulativeSubjects.length > 0) {
-        const gpas = cumulativeSubjects.map(s => convertGradeToGP(s.gpa)).filter((g): g is number => g !== null);
-        if (gpas.length > 0) {
-          cumulativeGPA = Number((gpas.reduce((a, b) => a + b, 0) / gpas.length).toFixed(2));
+    const semStats: Record<number, { sgpa: number; credits: number }> = {};
+    for (let sem = 1; sem <= length; sem++) {
+      const subjectsInSem = subjects.filter(s => parseInt(s.semester) === sem);
+      if (subjectsInSem.length === 0) continue;
+      
+      const firstSubWithSgpa = subjectsInSem.find(s => s.sgpa && !isNaN(parseFloat(s.sgpa)));
+      let semSgpaVal = 0;
+      let semCreditsVal = 0;
+      
+      subjectsInSem.forEach(s => {
+        const cr = parseFloat(s.credits) || 0;
+        if (s.result === 'P' || s.result === 'PASS') {
+          semCreditsVal += cr;
+        }
+      });
+      if (semCreditsVal === 0) {
+        semCreditsVal = subjectsInSem.reduce((acc, s) => acc + (parseFloat(s.credits) || 0), 0);
+      }
+
+      if (firstSubWithSgpa) {
+        semSgpaVal = parseFloat(firstSubWithSgpa.sgpa);
+      } else {
+        let totalCredits = 0;
+        let weightedGPsum = 0;
+        let validGPsCount = 0;
+
+        subjectsInSem.forEach((sub) => {
+          const gp = convertGradeToGP(sub.gpa);
+          const credits = parseFloat(sub.credits);
+          if (gp !== null) {
+            validGPsCount++;
+            if (!isNaN(credits) && credits >= 0) {
+              weightedGPsum += gp * credits;
+              totalCredits += credits;
+            }
+          }
+        });
+
+        if (validGPsCount > 0) {
+          semSgpaVal = totalCredits === 0 ? (subjectsInSem.map(s => convertGradeToGP(s.gpa)).filter((gp): gp is number => gp !== null).reduce((a, b) => a + b, 0) / validGPsCount) : (weightedGPsum / totalCredits);
         }
       }
+      
+      semStats[sem] = { sgpa: semSgpaVal, credits: semCreditsVal };
+    }
+
+    return Array.from({ length }, (_, i) => {
+      const semNum = i + 1;
+      let totalWeightedSgpa = 0;
+      let totalCreditsSoFar = 0;
+      
+      for (let s = 1; s <= semNum; s++) {
+        if (semStats[s]) {
+          totalWeightedSgpa += semStats[s].sgpa * semStats[s].credits;
+          totalCreditsSoFar += semStats[s].credits;
+        }
+      }
+      
+      const cumulativeGPA = totalCreditsSoFar > 0 ? Number((totalWeightedSgpa / totalCreditsSoFar).toFixed(2)) : null;
+
       return {
         name: `Sem ${semNum}`,
         CGPA: cumulativeGPA

@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Loader2, Trash2, ShieldAlert, GraduationCap, Plus, X, Edit2, Award, 
   BookOpen, Sparkles, Upload, TrendingUp, BarChart3, Target, Zap, 
-  AlertTriangle, ArrowUpRight, ArrowDownRight 
+  AlertTriangle, ArrowUpRight, ArrowDownRight, Check
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
@@ -78,6 +78,7 @@ export default function AdminStudentsPage() {
   const [totalCredits, setTotalCredits] = useState('');
   const [passStatus, setPassStatus] = useState('PASS');
   const [semSgpa, setSemSgpa] = useState('');
+  const [isMetadataDirty, setIsMetadataDirty] = useState(false);
 
   // Add/Edit subject modal extra states
   const [subCode, setSubCode] = useState('');
@@ -161,6 +162,7 @@ export default function AdminStudentsPage() {
       return s;
     });
     setAcademicSubjects(updated);
+    setIsMetadataDirty(true);
   };
 
   useEffect(() => {
@@ -182,7 +184,8 @@ export default function AdminStudentsPage() {
       setPassStatus(sub?.pass_status || 'PASS');
       setSemSgpa(sub?.sgpa || '');
     }
-  }, [academicSelectedSem, academicSubjects]);
+    setIsMetadataDirty(false);
+  }, [academicSelectedSem, selectedStudentForAcademic]);
 
   useEffect(() => {
     if (selectedStudentForAcademic) {
@@ -869,24 +872,60 @@ export default function AdminStudentsPage() {
   }, [academicSubjects]);
 
   const getSemesterGPAData = () => {
-    const semMap: { [key: number]: number[] } = {};
+    const semMap: { [key: number]: any[] } = {};
     academicSubjects.forEach((sub) => {
       const sem = parseInt(sub.semester);
-      const gp = convertGradeToGP(sub.gpa);
-      if (!isNaN(sem) && gp !== null) {
+      if (!isNaN(sem)) {
         if (!semMap[sem]) semMap[sem] = [];
-        semMap[sem].push(gp);
+        semMap[sem].push(sub);
       }
     });
 
     return Object.keys(semMap)
       .map((semStr) => {
         const sem = parseInt(semStr);
-        const gpas = semMap[sem];
-        const avg = gpas.reduce((a, b) => a + b, 0) / gpas.length;
+        const subjectsInSem = semMap[sem];
+        
+        // Prioritize explicit SGPA value if present
+        const firstSubWithSgpa = subjectsInSem.find(sub => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
+        if (firstSubWithSgpa) {
+          return {
+            name: `Sem ${sem}`,
+            GPA: Number(parseFloat(firstSubWithSgpa.sgpa).toFixed(2)),
+          };
+        }
+
+        let totalCredits = 0;
+        let weightedGPsum = 0;
+        let validGPsCount = 0;
+
+        subjectsInSem.forEach((sub) => {
+          const gp = convertGradeToGP(sub.gpa);
+          const credits = parseFloat(sub.credits);
+          if (gp !== null) {
+            validGPsCount++;
+            if (!isNaN(credits) && credits >= 0) {
+              weightedGPsum += gp * credits;
+              totalCredits += credits;
+            }
+          }
+        });
+
+        let finalGpa = 0;
+        if (validGPsCount > 0) {
+          if (totalCredits === 0) {
+            const validGPs = subjectsInSem
+              .map((sub) => convertGradeToGP(sub.gpa))
+              .filter((gp): gp is number => gp !== null);
+            finalGpa = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
+          } else {
+            finalGpa = weightedGPsum / totalCredits;
+          }
+        }
+
         return {
           name: `Sem ${sem}`,
-          GPA: Number(avg.toFixed(2)),
+          GPA: Number(finalGpa.toFixed(2)),
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -1644,6 +1683,38 @@ export default function AdminStudentsPage() {
                             />
                           </div>
                         </div>
+
+                        {/* Save Button inside the Card */}
+                        <div className="pt-2 border-t border-slate-100 flex justify-end">
+                          <button
+                            onClick={async () => {
+                              try {
+                                setAcademicSaving(true);
+                                
+                                // Update student's overall SGPA if they edited the current/latest semester's SGPA
+                                let newOverallSgpa = academicSgpa;
+                                const semNum = parseInt(academicSelectedSem);
+                                const semesters = academicSubjects.map((s: any) => parseInt(s.semester)).filter((s: any) => !isNaN(s));
+                                const latestSem = semesters.length > 0 ? Math.max(...semesters) : 1;
+                                
+                                if (semNum === latestSem && semSgpa && !isNaN(parseFloat(semSgpa))) {
+                                  newOverallSgpa = parseFloat(semSgpa);
+                                }
+                                
+                                await handleAcademicSave(newOverallSgpa, academicCgpa, academicBacklogs, academicSubjects);
+                                setIsMetadataDirty(false);
+                              } catch (err) {
+                                console.error("Error saving metadata:", err);
+                              } finally {
+                                setAcademicSaving(false);
+                              }
+                            }}
+                            className="w-full rounded-xl bg-[#1c5644] hover:bg-[#154335] text-white py-2.5 text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            <span>Save Grade Sheet Info</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1790,10 +1861,9 @@ export default function AdminStudentsPage() {
                           <option value="7">IV Year I Semester (4-1)</option>
                           <option value="8">IV Year II Semester (4-2)</option>
                         </select>
-
                         {academicSelectedSem !== 'All' && (
-                          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-250 rounded-xl px-2.5 py-1 text-xs shadow-sm">
-                            <span className="font-bold text-emerald-800 text-[10px] uppercase tracking-wider">SGPA:</span>
+                          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-250 rounded-xl px-2 py-0.5 text-xs shadow-sm hover:border-emerald-500 transition-all">
+                            <span className="font-bold text-emerald-800 text-[9px] uppercase tracking-wider pl-1.5">SGPA:</span>
                             <input
                               type="text"
                               value={semSgpa || (selectedSemesterSGPA !== null ? selectedSemesterSGPA.toString() : '')}
@@ -1802,8 +1872,9 @@ export default function AdminStudentsPage() {
                                 handleMetadataChange({ sgpa: e.target.value });
                               }}
                               placeholder="e.g. 8.36"
-                              className="w-14 bg-transparent text-emerald-900 font-bold border-none p-0 focus:outline-none focus:ring-0 text-xs font-mono text-center"
+                              className="w-10 bg-transparent text-emerald-900 font-bold border-b border-dashed border-emerald-300 focus:border-emerald-600 focus:outline-none p-0 text-xs font-mono text-center"
                             />
+                            <Edit2 className="h-3 w-3 text-emerald-600 mr-1.5 cursor-pointer opacity-70 hover:opacity-100" />
                           </div>
                         )}
                       </div>
@@ -1821,6 +1892,41 @@ export default function AdminStudentsPage() {
                       <div className="text-xs text-emerald-800 font-bold bg-emerald-50 px-3 py-2 rounded-xl mb-3 flex items-center gap-1.5 border border-emerald-100 animate-pulse">
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         <span>Saving changes to Supabase...</span>
+                      </div>
+                    )}
+
+                    {isMetadataDirty && !academicSaving && (
+                      <div className="text-xs text-amber-800 font-bold bg-amber-50 px-3.5 py-2 rounded-xl mb-3 flex items-center justify-between border border-amber-250 animate-pulse">
+                        <div className="flex items-center gap-1.5">
+                          <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                          <span>You have unsaved changes in Grade Sheet Info!</span>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              setAcademicSaving(true);
+                              
+                              let newOverallSgpa = academicSgpa;
+                              const semNum = parseInt(academicSelectedSem);
+                              const semesters = academicSubjects.map((s: any) => parseInt(s.semester)).filter((s: any) => !isNaN(s));
+                              const latestSem = semesters.length > 0 ? Math.max(...semesters) : 1;
+                              
+                              if (semNum === latestSem && semSgpa && !isNaN(parseFloat(semSgpa))) {
+                                newOverallSgpa = parseFloat(semSgpa);
+                              }
+                              
+                              await handleAcademicSave(newOverallSgpa, academicCgpa, academicBacklogs, academicSubjects);
+                              setIsMetadataDirty(false);
+                            } catch (err) {
+                              console.error(err);
+                            } finally {
+                              setAcademicSaving(false);
+                            }
+                          }}
+                          className="bg-[#1c5644] hover:bg-[#154335] text-white px-3 py-1 rounded-lg text-[10px] font-bold transition shadow-sm cursor-pointer"
+                        >
+                          Save Now
+                        </button>
                       </div>
                     )}
 
