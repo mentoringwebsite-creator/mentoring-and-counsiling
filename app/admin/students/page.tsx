@@ -647,11 +647,10 @@ export default function AdminStudentsPage() {
 
   const handleStatsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newSgpa = Number(inputSgpa) || 0;
+    const newSgpa = academicSgpa;
     const newCgpa = Number(inputCgpa) || 0;
     const newBacklogs = parseInt(inputBacklogs) || 0;
 
-    setAcademicSgpa(newSgpa);
     setAcademicCgpa(newCgpa);
     setAcademicBacklogs(newBacklogs);
     setStatsEditMode(false);
@@ -1463,34 +1462,21 @@ export default function AdminStudentsPage() {
                     {!statsEditMode ? (
                       <div className="grid gap-3 grid-cols-3 text-center">
                         <div className="bg-slate-50/50 border border-slate-150 rounded-2xl p-3">
-                          <div className="text-[10px] font-bold text-slate-405 uppercase tracking-wider">Latest SGPA</div>
-                          <div className="text-lg font-black text-[#1c5644] mt-1">{academicSgpa > 0 ? academicSgpa.toFixed(2) : 'N/A'}</div>
-                        </div>
-                        <div className="bg-slate-50/50 border border-slate-150 rounded-2xl p-3">
-                          <div className="text-[10px] font-bold text-slate-405 uppercase tracking-wider">Cumulative CGPA</div>
+                          <div className="text-[10px] font-bold text-slate-405 uppercase tracking-wider">Latest CGPA</div>
                           <div className="text-lg font-black text-slate-900 mt-1">{academicCgpa > 0 ? academicCgpa.toFixed(2) : 'N/A'}</div>
                         </div>
                         <div className={`border rounded-2xl p-3 bg-slate-50/50 ${academicBacklogs > 0 ? 'border-rose-250 text-rose-800' : 'border-slate-150 text-slate-700'}`}>
                           <div className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Backlogs</div>
                           <div className="text-lg font-black mt-1">{academicBacklogs}</div>
                         </div>
+                        <div className={`border rounded-2xl p-3 bg-slate-50/50 ${academicBacklogs > 0 ? 'border-rose-250 bg-rose-50/10 text-rose-800 font-bold' : 'border-emerald-250 bg-emerald-50/10 text-emerald-800 font-bold'}`}>
+                          <div className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Result</div>
+                          <div className="text-lg font-black mt-1">{academicBacklogs > 0 ? 'FAIL' : 'PASS'}</div>
+                        </div>
                       </div>
                     ) : (
                       <form onSubmit={handleStatsSubmit} className="space-y-4">
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-550 uppercase tracking-wider mb-1">SGPA</label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              max="10"
-                              value={inputSgpa}
-                              onChange={(e) => setInputSgpa(e.target.value)}
-                              required
-                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-slate-50/50 focus:border-emerald-600 focus:outline-none"
-                            />
-                          </div>
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="block text-[10px] font-bold text-slate-550 uppercase tracking-wider mb-1">CGPA</label>
                             <input
@@ -1501,7 +1487,7 @@ export default function AdminStudentsPage() {
                               value={inputCgpa}
                               onChange={(e) => setInputCgpa(e.target.value)}
                               required
-                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-slate-50/50 focus:border-emerald-600 focus:outline-none"
+                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-slate-50/50 focus:border-emerald-600 focus:outline-none font-semibold text-slate-800"
                             />
                           </div>
                           <div>
@@ -1512,7 +1498,7 @@ export default function AdminStudentsPage() {
                               value={inputBacklogs}
                               onChange={(e) => setInputBacklogs(e.target.value)}
                               required
-                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-slate-50/50 focus:border-emerald-600 focus:outline-none"
+                              className="w-full rounded-xl border border-slate-205 px-3 py-1.5 text-xs bg-slate-50/50 focus:border-emerald-600 focus:outline-none font-semibold text-slate-800"
                             />
                           </div>
                         </div>
@@ -1520,13 +1506,13 @@ export default function AdminStudentsPage() {
                           <button
                             type="button"
                             onClick={() => setStatsEditMode(false)}
-                            className="rounded-xl border border-slate-250 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                            className="rounded-xl border border-slate-250 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                           >
                             Cancel
                           </button>
                           <button
                             type="submit"
-                            className="rounded-xl bg-[#1c5644] hover:bg-[#154335] px-3.5 py-1.5 text-xs font-semibold text-white transition shadow-sm"
+                            className="rounded-xl bg-[#1c5644] hover:bg-[#154335] px-3.5 py-1.5 text-xs font-semibold text-white transition shadow-sm cursor-pointer"
                           >
                             Save
                           </button>
@@ -1534,190 +1520,6 @@ export default function AdminStudentsPage() {
                       </form>
                     )}
                   </div>
-
-                  {/* Student & Exam Details Card */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-                    <h4 className="text-sm font-bold text-slate-805 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Student & Exam Info</h4>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Father's Name</label>
-                        <input
-                          type="text"
-                          value={fatherName}
-                          onChange={(e) => {
-                            setFatherName(e.target.value);
-                            handleMetadataChange({ father_name: e.target.value });
-                          }}
-                          placeholder="e.g. MANSUR"
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Branch</label>
-                        <input
-                          type="text"
-                          value={branch}
-                          onChange={(e) => setBranch(e.target.value)}
-                          placeholder="e.g. ELECTRONICS & COMMUNICATION ENGINEERING"
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Hall Ticket / Roll Number</label>
-                        <input
-                          type="text"
-                          value={hallTicketNo}
-                          onChange={(e) => setHallTicketNo(e.target.value)}
-                          placeholder="e.g. 23311A04X2"
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Selected Semester Metadata Card */}
-                  {academicSelectedSem !== 'All' && (
-                    <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm animate-fadeIn">
-                      <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2 flex items-center gap-1.5">
-                        <BookOpen className="h-4 w-4 text-[#1c5644]" />
-                        <span>{semesterLabels[academicSelectedSem]?.short} Grade Sheet Info</span>
-                      </h4>
-                      <div className="space-y-4">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Memo Number</label>
-                            <input
-                              type="text"
-                              value={memoNo}
-                              onChange={(e) => {
-                                setMemoNo(e.target.value);
-                                handleMetadataChange({ memo_no: e.target.value });
-                              }}
-                              placeholder="e.g. S375090"
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Serial Number</label>
-                            <input
-                              type="text"
-                              value={serialNo}
-                              onChange={(e) => {
-                                setSerialNo(e.target.value);
-                                handleMetadataChange({ serial_no: e.target.value });
-                              }}
-                              placeholder="e.g. 250109414"
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Exam Month/Year</label>
-                            <input
-                              type="text"
-                              value={examDate}
-                              onChange={(e) => {
-                                setExamDate(e.target.value);
-                                handleMetadataChange({ exam_date: e.target.value });
-                              }}
-                              placeholder="e.g. JANUARY 2024"
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Date of Issue</label>
-                            <input
-                              type="text"
-                              value={issueDate}
-                              onChange={(e) => {
-                                setIssueDate(e.target.value);
-                                handleMetadataChange({ issue_date: e.target.value });
-                              }}
-                              placeholder="e.g. 18.05.2024"
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total Credits</label>
-                            <input
-                              type="text"
-                              value={totalCredits}
-                              onChange={(e) => {
-                                setTotalCredits(e.target.value);
-                                handleMetadataChange({ total_credits: e.target.value });
-                              }}
-                              placeholder="e.g. 18"
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Result Status</label>
-                            <select
-                              value={passStatus}
-                              onChange={(e) => {
-                                setPassStatus(e.target.value);
-                                handleMetadataChange({ pass_status: e.target.value });
-                              }}
-                              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none font-semibold text-slate-700"
-                            >
-                              <option value="PASS">PASS</option>
-                              <option value="FAIL">FAIL</option>
-                            </select>
-                          </div>
-                          <div>
-                            <label className="block text-[10px] font-bold text-[#1c5644] uppercase mb-1 font-bold">Semester SGPA</label>
-                            <input
-                              type="text"
-                              value={semSgpa || (selectedSemesterSGPA !== null ? selectedSemesterSGPA.toString() : '')}
-                              onChange={(e) => {
-                                setSemSgpa(e.target.value);
-                                handleMetadataChange({ sgpa: e.target.value });
-                              }}
-                              placeholder="e.g. 8.36"
-                              className="w-full rounded-xl border border-emerald-250 bg-emerald-50/20 px-3 py-2 text-xs focus:border-[#1c5644] focus:bg-white focus:outline-none font-bold text-[#1c5644]"
-                            />
-                          </div>
-                        </div>
-
-                        {/* Save Button inside the Card */}
-                        <div className="pt-2 border-t border-slate-100 flex justify-end">
-                          <button
-                            onClick={async () => {
-                              try {
-                                setAcademicSaving(true);
-                                
-                                // Update student's overall SGPA if they edited the current/latest semester's SGPA
-                                let newOverallSgpa = academicSgpa;
-                                const semNum = parseInt(academicSelectedSem);
-                                const semesters = academicSubjects.map((s: any) => parseInt(s.semester)).filter((s: any) => !isNaN(s));
-                                const latestSem = semesters.length > 0 ? Math.max(...semesters) : 1;
-                                
-                                if (semNum === latestSem && semSgpa && !isNaN(parseFloat(semSgpa))) {
-                                  newOverallSgpa = parseFloat(semSgpa);
-                                }
-                                
-                                await handleAcademicSave(newOverallSgpa, academicCgpa, academicBacklogs, academicSubjects);
-                                setIsMetadataDirty(false);
-                              } catch (err) {
-                                console.error("Error saving metadata:", err);
-                              } finally {
-                                setAcademicSaving(false);
-                              }
-                            }}
-                            className="w-full rounded-xl bg-[#1c5644] hover:bg-[#154335] text-white py-2.5 text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            <span>Save Grade Sheet Info</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                 </div>
 
