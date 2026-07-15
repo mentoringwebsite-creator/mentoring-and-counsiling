@@ -529,13 +529,17 @@ export default function AcademicPage() {
 
               <div className="rounded-[24px] border border-slate-150 bg-white p-5 shadow-sm flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Class Rank</p>
-                  <h3 className="mt-1 text-3xl font-extrabold text-slate-900 tracking-tight">
-                    {classRank !== null ? `${classRank} / ${totalClassStudents}` : 'N/A'}
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Result Status</p>
+                  <h3 className={`mt-1 text-3xl font-extrabold tracking-tight ${backlogs > 0 ? 'text-rose-750' : 'text-emerald-750'}`}>
+                    {backlogs > 0 ? 'FAIL' : 'PASS'}
                   </h3>
                 </div>
-                <div className="rounded-2xl bg-indigo-50 p-3">
-                  <Award className="h-6 w-6 text-indigo-600" />
+                <div className={`rounded-2xl p-3 ${backlogs > 0 ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                  {backlogs > 0 ? (
+                    <AlertTriangle className="h-6 w-6" />
+                  ) : (
+                    <CheckCircle2 className="h-6 w-6" />
+                  )}
                 </div>
               </div>
             </div>
@@ -573,12 +577,7 @@ export default function AcademicPage() {
                         <option value="8">IV Year II Semester (4-2)</option>
                       </select>
 
-                      {selectedSemesterSGPA !== null && (
-                        <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-250 px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm">
-                          <Sparkles className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
-                          <span>Semester SGPA: {selectedSemesterSGPA}</span>
-                        </span>
-                      )}
+                      {/* SGPA Badge Removed */}
                     </div>
                   </div>
 
@@ -640,6 +639,11 @@ export default function AcademicPage() {
                                 <th className="p-3">Subject Name</th>
                                 <th className="p-3 text-center">Semester</th>
                                 <th className="p-3 text-center">Credits</th>
+                                <th className="p-3 text-center">Mid-1</th>
+                                <th className="p-3 text-center">Mid-2</th>
+                                <th className="p-3 text-center">INT (40)</th>
+                                <th className="p-3 text-center">EXT (60)</th>
+                                <th className="p-3 text-center">TOTAL</th>
                                 <th className="p-3 text-center">Grade Secured</th>
                                 <th className="p-3 text-center">Result</th>
                               </tr>
@@ -650,7 +654,12 @@ export default function AcademicPage() {
                                   <td className="p-3 font-mono font-bold text-slate-600">{sub.code || '-'}</td>
                                   <td className="p-3 font-semibold text-slate-800">{sub.name}</td>
                                   <td className="p-3 text-slate-600 text-center font-bold">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
-                                  <td className="p-3 text-slate-650 text-center font-semibold">{sub.credits ?? '-'}</td>
+                                  <td className="p-3 text-slate-655 text-center font-semibold">{sub.credits ?? '-'}</td>
+                                  <td className="p-3 text-slate-550 text-center font-mono">{sub.mid1 || '-'}</td>
+                                  <td className="p-3 text-slate-550 text-center font-mono">{sub.mid2 || '-'}</td>
+                                  <td className="p-3 text-slate-700 text-center font-bold font-mono">{sub.internal_marks || '-'}</td>
+                                  <td className="p-3 text-slate-700 text-center font-bold font-mono">{sub.external_marks || '-'}</td>
+                                  <td className="p-3 text-slate-900 text-center font-black font-mono">{sub.total_marks || '-'}</td>
                                   <td className="p-3 text-center font-bold text-slate-900">{sub.gpa ?? '-'}</td>
                                   <td className="p-3 text-center">
                                     <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold border ${
@@ -678,28 +687,27 @@ export default function AcademicPage() {
                     {/* Double Chart Grid */}
                     <div className="grid gap-6 md:grid-cols-2">
                       
-                      {/* Line Chart: SGPA Trend */}
+                      {/* Area Chart: CGPA Progress */}
                       <div className="rounded-[28px] border border-slate-150 bg-white p-5 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-[#1c5644]" />
-                            <h3 className="text-sm font-extrabold text-slate-800">SGPA Trend</h3>
-                          </div>
-                          <span className="text-[10px] font-bold bg-[#1c5644]/5 text-[#1c5644] px-2 py-0.5 rounded-full">
-                            Student vs Class Avg
-                          </span>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Award className="h-5 w-5 text-[#1c5644]" />
+                          <h3 className="text-sm font-extrabold text-slate-800">CGPA Progression</h3>
                         </div>
                         <div className="h-56 w-full">
                           <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={sgpaTrendData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                            <AreaChart data={cgpaProgressData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
+                              <defs>
+                                <linearGradient id="cgpaGrad" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#1c5644" stopOpacity={0.25}/>
+                                  <stop offset="95%" stopColor="#1c5644" stopOpacity={0.01}/>
+                                </linearGradient>
+                              </defs>
                               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                               <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
-                              <YAxis stroke="#94a3b8" domain={[0, 10]} fontSize={10} fontWeight={600} />
+                              <YAxis stroke="#94a3b8" domain={[4, 10]} fontSize={10} fontWeight={600} />
                               <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px' }} />
-                              <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                              <Line type="monotone" name="Student" dataKey="Student" stroke="#1c5644" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} connectNulls />
-                              <Line type="monotone" name="Class Avg" dataKey="ClassAvg" stroke="#64748b" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 3 }} connectNulls />
-                            </LineChart>
+                              <Area type="monotone" name="CGPA" dataKey="CGPA" stroke="#1c5644" strokeWidth={3.5} fillOpacity={1} fill="url(#cgpaGrad)" dot={{ r: 4 }} activeDot={{ r: 6 }} connectNulls />
+                            </AreaChart>
                           </ResponsiveContainer>
                         </div>
                       </div>
@@ -731,32 +739,6 @@ export default function AcademicPage() {
                       </div>
 
                     </div>
-
-                    {/* Full Width Area Chart: CGPA Progress */}
-                    <div className="rounded-[28px] border border-slate-150 bg-white p-5 shadow-sm">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Award className="h-5 w-5 text-[#1c5644]" />
-                        <h3 className="text-sm font-extrabold text-slate-800">CGPA Progression Progress</h3>
-                      </div>
-                      <div className="h-60 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={cgpaProgressData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
-                            <defs>
-                              <linearGradient id="cgpaGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#1c5644" stopOpacity={0.25}/>
-                                <stop offset="95%" stopColor="#1c5644" stopOpacity={0.01}/>
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
-                            <YAxis stroke="#94a3b8" domain={[4, 10]} fontSize={10} fontWeight={600} />
-                            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px' }} />
-                            <Area type="monotone" name="CGPA" dataKey="CGPA" stroke="#1c5644" strokeWidth={3.5} fillOpacity={1} fill="url(#cgpaGrad)" dot={{ r: 4 }} activeDot={{ r: 6 }} connectNulls />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-
                   </div>
                 )}
               </div>
@@ -771,13 +753,9 @@ export default function AcademicPage() {
                   </h3>
 
                   <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="rounded-2xl bg-emerald-50/50 border border-emerald-100 p-3">
-                      <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">SGPA</p>
-                      <p className="mt-1 text-xl font-black text-emerald-950">{sgpa > 0 ? sgpa.toFixed(2) : 'N/A'}</p>
-                    </div>
                     <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-3">
                       <p className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">CGPA</p>
-                      <p className="mt-1 text-xl font-black text-blue-950">{cgpa > 0 ? cgpa.toFixed(2) : 'N/A'}</p>
+                      <p className="mt-1 text-xl font-black text-blue-955">{cgpa > 0 ? cgpa.toFixed(2) : 'N/A'}</p>
                     </div>
                     <div className={`rounded-2xl border p-3 ${
                       backlogs > 0 
@@ -787,11 +765,14 @@ export default function AcademicPage() {
                       <p className="text-[10px] font-bold uppercase tracking-wider">Backlogs</p>
                       <p className="mt-1 text-xl font-black">{backlogs > 0 ? backlogs : '0'}</p>
                     </div>
-                  </div>
-
-                  <div className="mt-5 flex items-center justify-between text-xs text-slate-650 bg-slate-50 p-3.5 rounded-2xl border border-slate-150">
-                    <span className="font-semibold text-slate-600">Class Average SGPA:</span>
-                    <span className="font-extrabold text-slate-800">{classAverage.toFixed(2)}</span>
+                    <div className={`rounded-2xl border p-3 ${
+                      backlogs > 0 
+                        ? 'bg-rose-50/50 border-rose-100 text-rose-900' 
+                        : 'bg-emerald-50/50 border-emerald-100 text-emerald-900'
+                    }`}>
+                      <p className="text-[10px] font-bold uppercase tracking-wider">Result</p>
+                      <p className="mt-1 text-xl font-black">{backlogs > 0 ? 'FAIL' : 'PASS'}</p>
+                    </div>
                   </div>
                 </div>
 
