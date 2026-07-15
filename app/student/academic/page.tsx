@@ -490,6 +490,7 @@ export default function AcademicPage() {
               { href: '/student', label: 'Profile' }, 
               { href: '/student/academic', label: 'Academic Profile' }, 
               { href: '/student/extracurricular', label: 'Extracurricular Activities' }, 
+              { href: '/student/performance', label: 'Performance' },
               { href: '/student/queries', label: 'Problems / Queries' }
             ]} 
           />
