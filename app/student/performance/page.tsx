@@ -10,7 +10,8 @@ import {
   TrendingUp, 
   Sparkles,
   Award,
-  AlertTriangle,
+  BookOpen,
+  Trophy,
   Activity
 } from 'lucide-react';
 import { 
@@ -21,8 +22,6 @@ import {
   ResponsiveContainer, 
   BarChart, 
   Bar, 
-  AreaChart, 
-  Area, 
   Legend,
   LineChart,
   Line,
@@ -41,10 +40,13 @@ export default function PerformancePage() {
   const [loading, setLoading] = useState(true);
   
   // Data states
-  const [cgpa, setCgpa] = useState<number>(0);
-  const [backlogs, setBacklogs] = useState<number>(0);
   const [subjects, setSubjects] = useState<any[]>([]);
+  const [clubs, setClubs] = useState<any[]>([]);
+  const [certifications, setCertifications] = useState<any[]>([]);
   const [classAverage, setClassAverage] = useState<number>(7.80);
+  
+  // Semester filter for Subject Marks Analysis Chart
+  const [chartSemester, setChartSemester] = useState<string>('6');
 
   async function loadPerformanceData() {
     try {
@@ -62,31 +64,15 @@ export default function PerformancePage() {
 
       if (!profileDb) return;
 
-      const subjectsList = profileDb.academic_subjects || [];
-      setSubjects(subjectsList);
+      setSubjects(profileDb.academic_subjects || []);
+      setClubs(profileDb.clubs || []);
+      setCertifications(profileDb.certifications || []);
 
-      // Compute dynamic CGPA/Backlog stats
-      let backlogCount = 0;
-      let totalCgpaCredits = 0;
-      let totalCgpaPoints = 0;
-
-      subjectsList.forEach((sub: any) => {
-        const gp = convertGradeToGP(sub.gpa);
-        const credits = parseFloat(sub.credits) || 0;
-        if (gp !== null && credits > 0) {
-          totalCgpaCredits += credits;
-          totalCgpaPoints += gp * credits;
-        }
-        const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
-        if (isF) backlogCount++;
-      });
-
-      const calculatedCgpa = totalCgpaCredits > 0 ? Number((totalCgpaPoints / totalCgpaCredits).toFixed(2)) : 0;
-      const finalCgpa = profileDb.cgpa ? parseFloat(profileDb.cgpa) : calculatedCgpa;
-      const finalBacklogs = profileDb.backlogs !== null && profileDb.backlogs !== undefined ? Number(profileDb.backlogs) : backlogCount;
-
-      setCgpa(finalCgpa);
-      setBacklogs(finalBacklogs);
+      // Set default selected semester to the highest available semester
+      const sems = (profileDb.academic_subjects || []).map((s: any) => parseInt(s.semester)).filter((s: number) => !isNaN(s));
+      if (sems.length > 0) {
+        setChartSemester(Math.max(...sems).toString());
+      }
 
       // Fetch dynamic class average
       const { data: allProfiles } = await supabase
@@ -129,27 +115,6 @@ export default function PerformancePage() {
       case 'F': return 0.0;
       default: return null;
     }
-  };
-
-  const getBacklogData = () => {
-    const maxSem = Math.max(...subjects.map(s => parseInt(s.semester)), 2);
-    const length = Math.max(maxSem, 4);
-
-    return Array.from({ length }, (_, i) => {
-      const semNum = i + 1;
-      const semSubjects = subjects.filter(sub => Number(sub.semester) === semNum);
-      let semBacklogs = semSubjects.filter(sub => {
-        const gp = convertGradeToGP(sub.gpa);
-        return sub.gpa === 'F' || (gp !== null && gp < 4.0);
-      }).length;
-
-      const classAvgBacklogs = Math.max(0, Number((1.2 - semNum * 0.2 + Math.sin(semNum) * 0.15).toFixed(2)));
-      return {
-        name: `Sem ${semNum}`,
-        Student: semBacklogs,
-        ClassAvg: classAvgBacklogs
-      };
-    }).filter(d => Number(d.name.split(' ')[1]) <= maxSem);
   };
 
   const getSgpaTrendData = () => {
@@ -212,80 +177,28 @@ export default function PerformancePage() {
     }).filter(d => d.Student !== null || Number(d.name.split(' ')[1]) <= maxSem);
   };
 
-  const getCgpaProgressData = () => {
-    const maxSem = Math.max(...subjects.map(s => parseInt(s.semester)), 2);
-    const length = Math.max(maxSem, 4);
-
-    const semStats: Record<number, { sgpa: number; credits: number }> = {};
-    for (let sem = 1; sem <= length; sem++) {
-      const subjectsInSem = subjects.filter(s => parseInt(s.semester) === sem);
-      if (subjectsInSem.length === 0) continue;
-      
-      const firstSubWithSgpa = subjectsInSem.find(s => s.sgpa && !isNaN(parseFloat(s.sgpa)));
-      let semSgpaVal = 0;
-      let semCreditsVal = 0;
-      
-      subjectsInSem.forEach(s => {
-        const cr = parseFloat(s.credits) || 0;
-        if (s.result === 'P' || s.result === 'PASS') {
-          semCreditsVal += cr;
-        }
-      });
-      if (semCreditsVal === 0) {
-        semCreditsVal = subjectsInSem.reduce((acc, s) => acc + (parseFloat(s.credits) || 0), 0);
-      }
-
-      if (firstSubWithSgpa) {
-        semSgpaVal = parseFloat(firstSubWithSgpa.sgpa);
-      } else {
-        let totalCredits = 0;
-        let weightedGPsum = 0;
-        let validGPsCount = 0;
-
-        subjectsInSem.forEach((sub) => {
-          const gp = convertGradeToGP(sub.gpa);
-          const credits = parseFloat(sub.credits);
-          if (gp !== null) {
-            validGPsCount++;
-            if (!isNaN(credits) && credits >= 0) {
-              weightedGPsum += gp * credits;
-              totalCredits += credits;
-            }
-          }
-        });
-
-        if (validGPsCount > 0) {
-          semSgpaVal = totalCredits === 0 ? (subjectsInSem.map(s => convertGradeToGP(s.gpa)).filter((gp): gp is number => gp !== null).reduce((a, b) => a + b, 0) / validGPsCount) : (weightedGPsum / totalCredits);
-        }
-      }
-      
-      semStats[sem] = { sgpa: semSgpaVal, credits: semCreditsVal };
-    }
-
-    return Array.from({ length }, (_, i) => {
-      const semNum = i + 1;
-      let totalWeightedSgpa = 0;
-      let totalCreditsSoFar = 0;
-      
-      for (let s = 1; s <= semNum; s++) {
-        if (semStats[s]) {
-          totalWeightedSgpa += semStats[s].sgpa * semStats[s].credits;
-          totalCreditsSoFar += semStats[s].credits;
-        }
-      }
-      
-      const cumulativeGPA = totalCreditsSoFar > 0 ? Number((totalWeightedSgpa / totalCreditsSoFar).toFixed(2)) : null;
-
+  const getSubjectMarksData = () => {
+    const semSubjects = subjects.filter(s => s.semester?.toString() === chartSemester);
+    return semSubjects.map(sub => {
+      const marks = parseInt(sub.total_marks) || 0;
       return {
-        name: `Sem ${semNum}`,
-        CGPA: cumulativeGPA
+        name: sub.name.length > 12 ? sub.name.substring(0, 10) + '...' : sub.name,
+        fullName: sub.name,
+        Marks: marks
       };
-    }).filter(d => d.CGPA !== null || Number(d.name.split(' ')[1]) <= maxSem);
+    }).filter(d => d.Marks > 0);
   };
 
-  const cgpaProgressData = getCgpaProgressData();
-  const backlogData = getBacklogData();
+  const getExtracurricularData = () => {
+    return [
+      { name: 'Clubs Joined', Student: clubs.length, ClassAvg: 2 },
+      { name: 'Certifications', Student: certifications.length, ClassAvg: 3 }
+    ];
+  };
+
   const sgpaTrendData = getSgpaTrendData();
+  const subjectMarksData = getSubjectMarksData();
+  const extracurricularData = getExtracurricularData();
 
   return (
     <ProtectedRoute role="student">
@@ -314,54 +227,13 @@ export default function PerformancePage() {
             ) : (
               <div className="grid gap-4 grid-cols-1 xl:grid-cols-3 h-full min-h-0 w-full overflow-hidden animate-fadeIn">
                 
-                {/* Chart 1: CGPA Progression */}
+                {/* Chart 1: SGPA Trend (Academic Progress) */}
                 <div className="rounded-[24px] border border-slate-150 bg-white p-5 shadow-sm h-full flex flex-col min-h-0">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 shrink-0">
                     <div>
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Academic Progress</h3>
                       <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
                         <TrendingUp className="h-4.5 w-4.5 text-[#1c5644]" />
-                        <span>CGPA Progression</span>
-                      </h2>
-                    </div>
-                    <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 shadow-sm">
-                      <Award className="h-3.5 w-3.5 text-emerald-600" />
-                      <span>{cgpa} CGPA</span>
-                    </span>
-                  </div>
-
-                  <div className="flex-1 min-h-0 w-full">
-                    {subjects.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={cgpaProgressData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
-                          <defs>
-                            <linearGradient id="performanceCgpaGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#1c5644" stopOpacity={0.25}/>
-                              <stop offset="95%" stopColor="#1c5644" stopOpacity={0.01}/>
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
-                          <YAxis stroke="#94a3b8" domain={[4, 10]} fontSize={10} fontWeight={600} />
-                          <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }} />
-                          <Area type="monotone" name="CGPA" dataKey="CGPA" stroke="#1c5644" strokeWidth={3.5} fillOpacity={1} fill="url(#performanceCgpaGrad)" dot={{ r: 4, stroke: '#1c5644', strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} connectNulls isAnimationActive={true} animationDuration={600}>
-                            <LabelList dataKey="CGPA" position="top" offset={10} style={{ fontSize: '9px', fill: '#1c5644', fontWeight: 'bold' }} />
-                          </Area>
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="flex h-full items-center justify-center"><p className="text-xs text-slate-400 italic">No data available.</p></div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Chart 2: SGPA Trend */}
-                <div className="rounded-[24px] border border-slate-150 bg-white p-5 shadow-sm h-full flex flex-col min-h-0">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 shrink-0">
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Semester Analytics</h3>
-                      <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
-                        <Activity className="h-4.5 w-4.5 text-[#1c5644]" />
                         <span>SGPA Semester Trend</span>
                       </h2>
                     </div>
@@ -373,7 +245,7 @@ export default function PerformancePage() {
                   <div className="flex-1 min-h-0 w-full">
                     {subjects.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={sgpaTrendData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
+                        <LineChart data={sgpaTrendData} margin={{ top: 15, right: 10, left: -25, bottom: 5 }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                           <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
                           <YAxis stroke="#94a3b8" domain={[0, 10]} fontSize={10} fontWeight={600} />
@@ -391,43 +263,81 @@ export default function PerformancePage() {
                   </div>
                 </div>
 
-                {/* Chart 3: Backlog Analysis */}
+                {/* Chart 2: Subject Marks Analysis */}
+                <div className="rounded-[24px] border border-slate-150 bg-white p-5 shadow-sm h-full flex flex-col min-h-0">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 shrink-0 border-slate-100">
+                    <div>
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Subject Breakdown</h3>
+                      <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
+                        <BookOpen className="h-4.5 w-4.5 text-[#1c5644]" />
+                        <span>Subject Marks Analysis</span>
+                      </h2>
+                    </div>
+                    <select
+                      value={chartSemester}
+                      onChange={(e) => setChartSemester(e.target.value)}
+                      className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 focus:border-[#1c5644] focus:outline-none"
+                    >
+                      <option value="1">1-1</option>
+                      <option value="2">1-2</option>
+                      <option value="3">2-1</option>
+                      <option value="4">2-2</option>
+                      <option value="5">3-1</option>
+                      <option value="6">3-2</option>
+                      <option value="7">4-1</option>
+                      <option value="8">4-2</option>
+                    </select>
+                  </div>
+
+                  <div className="flex-1 min-h-0 w-full">
+                    {subjectMarksData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={subjectMarksData} margin={{ top: 15, right: 10, left: -25, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} fontWeight={600} />
+                          <YAxis stroke="#94a3b8" domain={[0, 100]} fontSize={10} fontWeight={600} />
+                          <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }} />
+                          <Bar name="Total Marks" dataKey="Marks" fill="#1c5644" radius={[5, 5, 0, 0]} barSize={16} isAnimationActive={true} animationDuration={600}>
+                            <LabelList dataKey="Marks" position="top" style={{ fontSize: '9px', fill: '#1c5644', fontWeight: 'bold' }} />
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center"><p className="text-xs text-slate-400 italic">No marks data found for Sem {chartSemester}.</p></div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Chart 3: Extracurricular & Certification Analytics */}
                 <div className="rounded-[24px] border border-slate-150 bg-white p-5 shadow-sm h-full flex flex-col min-h-0">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4 shrink-0">
                     <div>
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Backlog Comparison</h3>
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wide">Enhancement Profile</h3>
                       <h2 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
-                        <AlertTriangle className="h-4.5 w-4.5 text-amber-500" />
-                        <span>Active Backlogs</span>
+                        <Trophy className="h-4.5 w-4.5 text-emerald-800" />
+                        <span>Activities & Certifications</span>
                       </h2>
                     </div>
-                    <span className={`inline-flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold shadow-sm ${
-                      backlogs === 0 
-                        ? 'bg-emerald-50 border border-emerald-100 text-emerald-800' 
-                        : 'bg-rose-50 border border-rose-100 text-rose-800'
-                    }`}>
-                      <span>{backlogs} Active</span>
+                    <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>Clubs & Certs</span>
                     </span>
                   </div>
 
                   <div className="flex-1 min-h-0 w-full">
-                    {subjects.length > 0 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={backlogData} margin={{ top: 10, right: 10, left: -25, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
-                          <YAxis stroke="#94a3b8" fontSize={10} fontWeight={600} allowDecimals={false} />
-                          <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }} />
-                          <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                          <Bar name="Student Backlogs" dataKey="Student" fill="#e88913" radius={[5, 5, 0, 0]} barSize={16} isAnimationActive={true} animationDuration={600}>
-                            <LabelList dataKey="Student" position="top" style={{ fontSize: '9px', fill: '#e88913', fontWeight: 'bold' }} />
-                          </Bar>
-                          <Bar name="Class Average" dataKey="ClassAvg" fill="#94a3b8" radius={[5, 5, 0, 0]} barSize={16} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="flex h-full items-center justify-center"><p className="text-xs text-slate-400 italic">No data available.</p></div>
-                    )}
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={extracurricularData} margin={{ top: 15, right: 10, left: -25, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
+                        <YAxis stroke="#94a3b8" fontSize={10} fontWeight={600} allowDecimals={false} />
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }} />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
+                        <Bar name="Student Activity" dataKey="Student" fill="#e88913" radius={[5, 5, 0, 0]} barSize={20} isAnimationActive={true} animationDuration={600}>
+                          <LabelList dataKey="Student" position="top" style={{ fontSize: '9px', fill: '#e88913', fontWeight: 'bold' }} />
+                        </Bar>
+                        <Bar name="Class Average" dataKey="ClassAvg" fill="#94a3b8" radius={[5, 5, 0, 0]} barSize={20} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
 
