@@ -342,8 +342,8 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
 
   const analysis = getAcademicAnalysis();
 
-  const clubsList = profile.clubs || [];
-  const certificationsList = profile.certifications || [];
+  const clubsList = Array.isArray(profile.clubs) ? profile.clubs : [];
+  const certificationsList = Array.isArray(profile.certifications) ? profile.certifications : [];
 
   // Semester filter state for Subject Marks Analysis Chart in Modal
   const [modalChartSemester, setModalChartSemester] = useState<string>('6');
@@ -421,10 +421,11 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   const getSubjectMarksData = () => {
     const semSubjects = subjects.filter((s: any) => s.semester?.toString() === modalChartSemester);
     return semSubjects.map((sub: any) => {
+      const subName = sub.name || 'Subject';
       const marks = parseInt(sub.total_marks) || 0;
       return {
-        name: sub.name.length > 10 ? sub.name.substring(0, 8) + '...' : sub.name,
-        fullName: sub.name,
+        name: subName.length > 10 ? subName.substring(0, 8) + '...' : subName,
+        fullName: subName,
         Marks: marks
       };
     }).filter((d: any) => d.Marks > 0);
@@ -842,25 +843,23 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                       {/* Attendance Doughnut */}
                       <div className="flex flex-col items-center gap-1 relative">
                         <div className="relative w-[85px] h-[85px] flex items-center justify-center">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={[
-                                  { name: 'Present', value: studentAttendance },
-                                  { name: 'Absent', value: Number((100 - studentAttendance).toFixed(1)) }
-                                ]}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={24}
-                                outerRadius={34}
-                                paddingAngle={2}
-                                dataKey="value"
-                              >
-                                <Cell fill="#1c5644" />
-                                <Cell fill="#f1f5f9" />
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
+                          <PieChart width={85} height={85}>
+                            <Pie
+                              data={[
+                                { name: 'Present', value: studentAttendance },
+                                { name: 'Absent', value: Number((100 - studentAttendance).toFixed(1)) }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={24}
+                              outerRadius={34}
+                              paddingAngle={2}
+                              dataKey="value"
+                            >
+                              <Cell fill="#1c5644" />
+                              <Cell fill="#f1f5f9" />
+                            </Pie>
+                          </PieChart>
                           <div className="absolute flex flex-col items-center justify-center">
                             <span className="text-[10px] font-black text-slate-800">{studentAttendance}%</span>
                           </div>
@@ -871,25 +870,23 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                       {/* Internals Doughnut */}
                       <div className="flex flex-col items-center gap-1 relative">
                         <div className="relative w-[85px] h-[85px] flex items-center justify-center">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={[
-                                  { name: 'Scored', value: studentInternalPct },
-                                  { name: 'Remaining', value: Number((100 - studentInternalPct).toFixed(1)) }
-                                ]}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={24}
-                                outerRadius={34}
-                                paddingAngle={2}
-                                dataKey="value"
-                              >
-                                <Cell fill="#e88913" />
-                                <Cell fill="#f1f5f9" />
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
+                          <PieChart width={85} height={85}>
+                            <Pie
+                              data={[
+                                { name: 'Scored', value: studentInternalPct },
+                                { name: 'Remaining', value: Number((100 - studentInternalPct).toFixed(1)) }
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={24}
+                              outerRadius={34}
+                              paddingAngle={2}
+                              dataKey="value"
+                            >
+                              <Cell fill="#e88913" />
+                              <Cell fill="#f1f5f9" />
+                            </Pie>
+                          </PieChart>
                           <div className="absolute flex flex-col items-center justify-center">
                             <span className="text-[10px] font-black text-slate-800">{studentInternalPct}%</span>
                           </div>
