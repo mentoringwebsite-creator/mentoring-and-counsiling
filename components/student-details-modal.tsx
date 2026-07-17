@@ -58,7 +58,7 @@ interface StudentDetailsModalProps {
 export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentDetailsModalProps) {
   const [loading, setLoading] = useState(false);
   const [student, setStudent] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars'>('academics');
   const [selectedSemester, setSelectedSemester] = useState<string>('All');
   const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
       try {
         setLoading(true);
         setError(null);
-        setActiveTab('profile');
+        setActiveTab('academics');
         setSelectedSemester('All');
         setSelectedCertImage(null);
 
