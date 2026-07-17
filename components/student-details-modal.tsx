@@ -64,6 +64,22 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const profile = student?.student_profiles?.[0] || {};
+  const subjects = profile.academic_subjects || [];
+
+  // Semester filter state for Subject Marks Analysis Chart in Modal
+  const [modalChartSemester, setModalChartSemester] = useState<string>('6');
+
+  // Trigger default selection to highest sem
+  useEffect(() => {
+    if (subjects.length > 0) {
+      const sems = subjects.map((s: any) => parseInt(s.semester)).filter((s: number) => !isNaN(s));
+      if (sems.length > 0) {
+        setModalChartSemester(Math.max(...sems).toString());
+      }
+    }
+  }, [subjects]);
+
   useEffect(() => {
     if (isOpen) {
       setActiveTab('academics');
@@ -116,9 +132,6 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   };
 
   if (!isOpen) return null;
-
-  const profile = student?.student_profiles?.[0] || {};
-  const subjects = profile.academic_subjects || [];
 
   // Helper to convert letter grades to GPA numbers
   const convertGradeToGP = (gpaStr: string | number | undefined | null): number | null => {
@@ -344,19 +357,6 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
 
   const clubsList = Array.isArray(profile.clubs) ? profile.clubs : [];
   const certificationsList = Array.isArray(profile.certifications) ? profile.certifications : [];
-
-  // Semester filter state for Subject Marks Analysis Chart in Modal
-  const [modalChartSemester, setModalChartSemester] = useState<string>('6');
-
-  // Trigger default selection to highest sem
-  useEffect(() => {
-    if (subjects.length > 0) {
-      const sems = subjects.map((s: any) => parseInt(s.semester)).filter((s: number) => !isNaN(s));
-      if (sems.length > 0) {
-        setModalChartSemester(Math.max(...sems).toString());
-      }
-    }
-  }, [subjects]);
 
   const getSgpaTrendData = () => {
     const semMap: { [key: number]: any[] } = {};
