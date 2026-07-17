@@ -1037,7 +1037,7 @@ export default function PerformancePage() {
                   <div className="flex-1 flex flex-col gap-4 h-full min-h-0">
                     
                     {/* Top Row: Course Ledger Table & Graph Studio */}
-                    <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-4 min-h-0 flex-1">
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4 min-h-0 flex-1">
                       
                       {/* Course Ledger Card */}
                       <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-sm h-full flex flex-col min-h-0 animate-fadeIn">
@@ -1115,28 +1115,18 @@ export default function PerformancePage() {
                                   <th className="p-2">Code</th>
                                   <th className="p-2">Subject Name</th>
                                   <th className="p-2 text-center">Sem</th>
-                                  <th className="p-2 text-center">Cr</th>
-                                  <th className="p-2 text-center">Mid1</th>
-                                  <th className="p-2 text-center">Mid2</th>
-                                  <th className="p-2 text-center">INT</th>
-                                  <th className="p-2 text-center">EXT</th>
-                                  <th className="p-2 text-center">Total</th>
+                                  <th className="p-2 text-center">Credits</th>
                                   <th className="p-2 text-center">Grade</th>
-                                  <th className="p-2 text-center">Res</th>
+                                  <th className="p-2 text-center">Result</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100 bg-white">
                                 {filteredSubjects.map((sub, index) => (
                                   <tr key={index} className="hover:bg-slate-50/40 transition">
                                     <td className="p-2 font-mono font-bold text-slate-500">{sub.code || '-'}</td>
-                                    <td className="p-2 font-semibold text-slate-800 truncate max-w-[120px]">{sub.name}</td>
+                                    <td className="p-2 font-semibold text-slate-800 truncate max-w-[150px]">{sub.name}</td>
                                     <td className="p-2 text-slate-600 text-center font-bold">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
                                     <td className="p-2 text-slate-655 text-center font-semibold">{sub.credits ?? '-'}</td>
-                                    <td className="p-2 text-slate-500 text-center font-mono">{sub.mid1 || '-'}</td>
-                                    <td className="p-2 text-slate-500 text-center font-mono">{sub.mid2 || '-'}</td>
-                                    <td className="p-2 text-slate-700 text-center font-bold font-mono">{sub.internal_marks || '-'}</td>
-                                    <td className="p-2 text-slate-700 text-center font-bold font-mono">{sub.external_marks || '-'}</td>
-                                    <td className="p-2 text-slate-900 text-center font-black font-mono">{sub.total_marks || '-'}</td>
                                     <td className="p-2 text-center font-bold text-slate-900">{sub.gpa ?? '-'}</td>
                                     <td className="p-2 text-center">
                                       <span className={`inline-flex items-center rounded px-1.5 py-0.25 text-[9px] font-bold border ${
@@ -1178,7 +1168,7 @@ export default function PerformancePage() {
                         </div>
 
                         {/* Explicitly wrap ResponsiveContainer with a height-defined div to prevent layout collapse in flex containers */}
-                        <div className="flex-1 min-h-0 w-full h-[180px] flex items-center justify-center relative">
+                        <div className="w-full h-[185px] relative shrink-0 flex items-center justify-center">
                           {subjects.length > 0 ? (
                             <ResponsiveContainer width="100%" height="100%">
                               {activeChart === 'cgpa' ? (
