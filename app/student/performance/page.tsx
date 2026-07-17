@@ -30,7 +30,10 @@ import {
   Legend,
   LineChart,
   Line,
-  LabelList
+  LabelList,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 
 const studentSidebarItems = [
@@ -375,7 +378,7 @@ export default function PerformancePage() {
                         </h2>
                       </div>
                       <span className="text-[9px] font-bold text-slate-500 bg-slate-50 border px-1.5 py-0.5 rounded-lg">
-                        Avg: {classAverage}
+                        CGPA: {cgpa}
                       </span>
                     </div>
 
@@ -390,7 +393,6 @@ export default function PerformancePage() {
                             <Line type="monotone" name="Student" dataKey="Student" stroke="#1c5644" strokeWidth={2.5} dot={{ r: 3, stroke: '#1c5644', strokeWidth: 1.5, fill: '#fff' }} activeDot={{ r: 4 }} connectNulls isAnimationActive={true} animationDuration={600}>
                               <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
                             </Line>
-                            <Line type="monotone" name="ClassAvg" dataKey="ClassAvg" stroke="#cbd5e1" strokeWidth={1.5} strokeDasharray="4 4" dot={false} connectNulls />
                           </LineChart>
                         </ResponsiveContainer>
                       ) : (
@@ -465,7 +467,6 @@ export default function PerformancePage() {
                           <Bar name="Student" dataKey="Student" fill="#e88913" radius={[3, 3, 0, 0]} barSize={12} isAnimationActive={true} animationDuration={600}>
                             <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#e88913', fontWeight: 'bold' }} />
                           </Bar>
-                          <Bar name="ClassAvg" dataKey="ClassAvg" fill="#cbd5e1" radius={[3, 3, 0, 0]} barSize={12} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -498,38 +499,65 @@ export default function PerformancePage() {
                       </span>
                     </div>
 
-                    <div className="flex-1 min-h-0 w-full flex flex-col justify-between gap-3">
-                      {/* Attendance stats */}
-                      <div className="grid grid-cols-3 gap-2 text-center p-2 rounded-xl bg-slate-50 border">
-                        <div className="border-r border-slate-200">
-                          <span className="text-[8px] font-bold text-slate-400 uppercase block">Student</span>
-                          <span className={`text-xs font-black ${studentAttendance >= 75 ? 'text-emerald-850' : 'text-rose-800'}`}>{studentAttendance}%</span>
+                    <div className="flex-1 min-h-0 w-full flex items-center justify-around">
+                      {/* Attendance Doughnut */}
+                      <div className="flex flex-col items-center gap-2 relative">
+                        <div className="relative w-[110px] h-[110px] flex items-center justify-center">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  { name: 'Present', value: studentAttendance },
+                                  { name: 'Absent', value: Number((100 - studentAttendance).toFixed(1)) }
+                                ]}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={34}
+                                outerRadius={44}
+                                paddingAngle={2}
+                                dataKey="value"
+                              >
+                                <Cell fill="#1c5644" />
+                                <Cell fill="#f1f5f9" />
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="absolute flex flex-col items-center justify-center">
+                            <span className="text-[12px] font-black text-slate-800">{studentAttendance}%</span>
+                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-wider">Present</span>
+                          </div>
                         </div>
-                        <div className="border-r border-slate-200">
-                          <span className="text-[8px] font-bold text-slate-400 uppercase block">Required</span>
-                          <span className="text-xs font-black text-slate-700">75%</span>
-                        </div>
-                        <div>
-                          <span className="text-[8px] font-bold text-slate-400 uppercase block">Class Avg</span>
-                          <span className="text-xs font-black text-slate-600">81.2%</span>
-                        </div>
+                        <span className="text-[10px] font-bold text-slate-700">Attendance Rate</span>
                       </div>
 
-                      {/* Faculty metrics bar chart */}
-                      <div className="flex-1 min-h-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={facultyReviewData} margin={{ top: 10, right: 5, left: -28, bottom: 2 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
-                            <YAxis stroke="#94a3b8" domain={[0, 100]} fontSize={8} fontWeight={600} />
-                            <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                            <Legend iconType="circle" wrapperStyle={{ fontSize: '9px' }} />
-                            <Bar name="Student" dataKey="Student" fill="#1c5644" radius={[4, 4, 0, 0]} barSize={14}>
-                              <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
-                            </Bar>
-                            <Bar name="ClassAvg" dataKey="ClassAvg" fill="#94a3b8" radius={[4, 4, 0, 0]} barSize={14} />
-                          </BarChart>
-                        </ResponsiveContainer>
+                      {/* Internals Doughnut */}
+                      <div className="flex flex-col items-center gap-2 relative">
+                        <div className="relative w-[110px] h-[110px] flex items-center justify-center">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={[
+                                  { name: 'Scored', value: studentInternalPct },
+                                  { name: 'Remaining', value: Number((100 - studentInternalPct).toFixed(1)) }
+                                ]}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={34}
+                                outerRadius={44}
+                                paddingAngle={2}
+                                dataKey="value"
+                              >
+                                <Cell fill="#e88913" />
+                                <Cell fill="#f1f5f9" />
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="absolute flex flex-col items-center justify-center">
+                            <span className="text-[12px] font-black text-slate-800">{studentInternalPct}%</span>
+                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-wider">Internals</span>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-700">Internal Marks</span>
                       </div>
                     </div>
                   </div>
@@ -573,16 +601,14 @@ export default function PerformancePage() {
                       {/* HOD compliance bar chart */}
                       <div className="flex-1 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={hodComplianceData} margin={{ top: 10, right: 5, left: -28, bottom: 2 }}>
+                          <BarChart data={hodComplianceData} margin={{ top: 15, right: 5, left: -28, bottom: 2 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                             <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
                             <YAxis stroke="#94a3b8" domain={[0, 100]} fontSize={8} fontWeight={600} />
                             <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                            <Legend iconType="circle" wrapperStyle={{ fontSize: '9px' }} />
-                            <Bar name="Student" dataKey="Student" fill="#e88913" radius={[4, 4, 0, 0]} barSize={14}>
+                            <Bar name="Student" dataKey="Student" fill="#e88913" radius={[4, 4, 0, 0]} barSize={16}>
                               <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#e88913', fontWeight: 'bold' }} />
                             </Bar>
-                            <Bar name="ClassAvg" dataKey="ClassAvg" fill="#94a3b8" radius={[4, 4, 0, 0]} barSize={14} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
