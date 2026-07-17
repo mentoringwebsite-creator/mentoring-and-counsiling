@@ -64,6 +64,12 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isOpen) {
+      setActiveTab('academics');
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!isOpen || !studentUserId) {
       setStudent(null);
       setError(null);
