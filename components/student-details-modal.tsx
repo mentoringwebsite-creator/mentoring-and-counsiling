@@ -8,7 +8,8 @@ import {
   TrendingUp, BarChart3, Sparkles, Heart, Target, 
   Award, Users, ExternalLink, Image as ImageIcon, 
   GraduationCap, AlertTriangle, ShieldCheck, Zap, 
-  ArrowUpRight, ArrowDownRight, Trophy, Activity, MessageSquare
+  ArrowUpRight, ArrowDownRight, Trophy, Activity, MessageSquare,
+  Maximize2, Minimize2
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -63,6 +64,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   const [selectedSemester, setSelectedSemester] = useState<string>('All');
   const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isMaximized, setIsMaximized] = useState(false);
 
   const profile = student?.student_profiles?.[0] || {};
   const subjects = profile.academic_subjects || [];
@@ -83,6 +85,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   useEffect(() => {
     if (isOpen) {
       setActiveTab('academics');
+      setIsMaximized(false);
     }
   }, [isOpen]);
 
@@ -533,19 +536,41 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   return (
     <div 
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md animate-fade-in"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-md animate-fade-in transition-all duration-300 ${
+        isMaximized ? 'p-0' : 'p-4'
+      }`}
     >
       <div 
         onClick={handleContentClick}
-        className="relative flex h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/60 bg-white/80 backdrop-blur-xl shadow-2xl transition duration-300 animate-scale-in"
+        className={`relative flex flex-col overflow-hidden bg-white/80 backdrop-blur-xl shadow-2xl transition-all duration-300 ${
+          isMaximized 
+            ? 'h-screen w-screen rounded-none border-none' 
+            : 'h-[90vh] w-full max-w-5xl rounded-[32px] border border-white/60'
+        }`}
       >
-        {/* Close Button */}
-        <button 
-          onClick={onClose}
-          className="absolute right-6 top-6 z-20 rounded-full p-2 text-slate-400 bg-white/80 border border-slate-100 hover:bg-slate-100 hover:text-slate-700 transition"
-        >
-          <X className="h-5 w-5" />
-        </button>
+        {/* Actions Bar */}
+        <div className="absolute right-6 top-6 z-20 flex items-center gap-2">
+          {/* Maximize Toggle Button */}
+          <button 
+            onClick={() => setIsMaximized(!isMaximized)}
+            className="rounded-full p-2 text-slate-400 bg-white/80 border border-slate-100 hover:bg-slate-100 hover:text-slate-700 transition"
+            title={isMaximized ? "Exit Full Screen" : "Full Screen"}
+          >
+            {isMaximized ? (
+              <Minimize2 className="h-4.5 w-4.5" />
+            ) : (
+              <Maximize2 className="h-4.5 w-4.5" />
+            )}
+          </button>
+
+          {/* Close Button */}
+          <button 
+            onClick={onClose}
+            className="rounded-full p-2 text-slate-400 bg-white/80 border border-slate-100 hover:bg-slate-100 hover:text-slate-700 transition"
+          >
+            <X className="h-4.5 w-4.5" />
+          </button>
+        </div>
 
         {loading ? (
           <div className="flex flex-1 flex-col items-center justify-center text-slate-500 py-20">
