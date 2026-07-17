@@ -25,7 +25,8 @@ import {
   Area, 
   Legend,
   LineChart,
-  Line
+  Line,
+  LabelList
 } from 'recharts';
 
 const studentSidebarItems = [
@@ -343,7 +344,9 @@ export default function PerformancePage() {
                           <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight={600} />
                           <YAxis stroke="#94a3b8" domain={[4, 10]} fontSize={10} fontWeight={600} />
                           <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }} />
-                          <Area type="monotone" name="CGPA" dataKey="CGPA" stroke="#1c5644" strokeWidth={3.5} fillOpacity={1} fill="url(#performanceCgpaGrad)" dot={{ r: 4, stroke: '#1c5644', strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} connectNulls isAnimationActive={true} animationDuration={600} />
+                          <Area type="monotone" name="CGPA" dataKey="CGPA" stroke="#1c5644" strokeWidth={3.5} fillOpacity={1} fill="url(#performanceCgpaGrad)" dot={{ r: 4, stroke: '#1c5644', strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} connectNulls isAnimationActive={true} animationDuration={600}>
+                            <LabelList dataKey="CGPA" position="top" offset={10} style={{ fontSize: '9px', fill: '#1c5644', fontWeight: 'bold' }} />
+                          </Area>
                         </AreaChart>
                       </ResponsiveContainer>
                     ) : (
@@ -376,7 +379,9 @@ export default function PerformancePage() {
                           <YAxis stroke="#94a3b8" domain={[0, 10]} fontSize={10} fontWeight={600} />
                           <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }} />
                           <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                          <Line type="monotone" name="Student SGPA" dataKey="Student" stroke="#1c5644" strokeWidth={3} dot={{ r: 4, stroke: '#1c5644', strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} connectNulls isAnimationActive={true} animationDuration={600} />
+                          <Line type="monotone" name="Student SGPA" dataKey="Student" stroke="#1c5644" strokeWidth={3} dot={{ r: 4, stroke: '#1c5644', strokeWidth: 2, fill: '#fff' }} activeDot={{ r: 6 }} connectNulls isAnimationActive={true} animationDuration={600}>
+                            <LabelList dataKey="Student" position="top" offset={10} style={{ fontSize: '9px', fill: '#1c5644', fontWeight: 'bold' }} />
+                          </Line>
                           <Line type="monotone" name="Class Average" dataKey="ClassAvg" stroke="#94a3b8" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 2 }} connectNulls />
                         </LineChart>
                       </ResponsiveContainer>
@@ -414,7 +419,9 @@ export default function PerformancePage() {
                           <YAxis stroke="#94a3b8" fontSize={10} fontWeight={600} allowDecimals={false} />
                           <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 600 }} />
                           <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', paddingTop: '10px' }} />
-                          <Bar name="Student Backlogs" dataKey="Student" fill="#e88913" radius={[5, 5, 0, 0]} barSize={16} isAnimationActive={true} animationDuration={600} />
+                          <Bar name="Student Backlogs" dataKey="Student" fill="#e88913" radius={[5, 5, 0, 0]} barSize={16} isAnimationActive={true} animationDuration={600}>
+                            <LabelList dataKey="Student" position="top" style={{ fontSize: '9px', fill: '#e88913', fontWeight: 'bold' }} />
+                          </Bar>
                           <Bar name="Class Average" dataKey="ClassAvg" fill="#94a3b8" radius={[5, 5, 0, 0]} barSize={16} />
                         </BarChart>
                       </ResponsiveContainer>
