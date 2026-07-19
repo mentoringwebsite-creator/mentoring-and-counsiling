@@ -942,8 +942,8 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                             data={extracurricularData}
                             cx="50%"
                             cy="38%"
-                            innerRadius={28}
-                            outerRadius={48}
+                            innerRadius={36}
+                            outerRadius={58}
                             paddingAngle={3}
                             dataKey="value"
                           >
@@ -1003,48 +1003,6 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                           <p className="text-[10px] text-slate-400 italic">No academic data found</p>
                         </div>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Graph 5: HOD Placement & Compliance */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] flex flex-col min-h-0">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
-                      <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
-                        <Activity className="h-3.5 w-3.5 text-[#1c5644]" />
-                        <span>HOD Placement & Compliance</span>
-                      </h2>
-                      <span className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold border ${
-                        backlogsVal === 0 ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
-                      }`}>
-                        {backlogsVal === 0 ? 'Compliant' : `${backlogsVal} Backlogs`}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-h-0 w-full flex flex-col justify-between gap-2 text-xs">
-                      <div className="grid grid-cols-2 gap-2 text-center p-1.5 rounded-lg bg-slate-50 border text-[9px]">
-                        <div className="border-r border-slate-200">
-                          <span className="text-slate-400 font-bold uppercase block text-[7px]">Backlogs</span>
-                          <span className={`font-black ${backlogsVal === 0 ? 'text-emerald-850' : 'text-rose-800'}`}>{backlogsVal}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-bold uppercase block text-[7px]">Placement</span>
-                          <span className={`font-black ${backlogsVal === 0 && cgpaVal >= 6.0 ? 'text-emerald-850' : 'text-rose-800'}`}>
-                            {backlogsVal === 0 && cgpaVal >= 6.0 ? 'ELIGIBLE' : 'INELIGIBLE'}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex-1 min-h-0">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={hodComplianceData} margin={{ top: 10, right: 5, left: -28, bottom: 2 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
-                            <YAxis stroke="#94a3b8" domain={[0, 100]} fontSize={8} fontWeight={600} />
-                            <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                            <Bar name="Student" dataKey="Student" fill="#e88913" radius={[3, 3, 0, 0]} barSize={14}>
-                              <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#e88913', fontWeight: 'bold' }} />
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
                     </div>
                   </div>
 
