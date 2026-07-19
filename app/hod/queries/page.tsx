@@ -5,7 +5,24 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw, User, UserCheck } from 'lucide-react';
+
+const parseQueryMetadata = (description: string) => {
+  let raisedBy = 'Student';
+  let raisedTo = 'Faculty';
+  let cleanDesc = description || '';
+
+  if (cleanDesc.includes('Raised By:')) {
+    const byMatch = cleanDesc.match(/Raised By:\s*([^\n]*)/);
+    if (byMatch) raisedBy = byMatch[1].trim();
+    
+    const toMatch = cleanDesc.match(/Raised To:\s*([^\n]*)/);
+    if (toMatch) raisedTo = toMatch[1].trim();
+    
+    cleanDesc = cleanDesc.replace(/Raised By:.*\nRaised To:.*\n\n?/, '').trim();
+  }
+  return { raisedBy, raisedTo, cleanDesc };
+};
 
 const isBranchInDepartment = (branch: string, department: string) => {
   if (!branch || !department) return false;
@@ -109,7 +126,14 @@ export default function HodQueriesPage() {
         .order('created_at', { ascending: false });
 
       if (queriesError) throw queriesError;
-      setQueries(queriesData || []);
+      
+      // Filter out queries to only show those raised explicitly to HOD
+      const filteredQueries = (queriesData || []).filter((q: any) => {
+        const { raisedTo } = parseQueryMetadata(q.description);
+        return raisedTo === 'HOD';
+      });
+      
+      setQueries(filteredQueries);
     } catch (err: any) {
       console.error('Error fetching queries:', err);
     } finally {
@@ -267,6 +291,7 @@ export default function HodQueriesPage() {
                           <th className="p-4">Student</th>
                           <th className="p-4">Type</th>
                           <th className="p-4">Subject</th>
+                          <th className="p-4">Raised By</th>
                           <th className="p-4">Status</th>
                         </tr>
                       </thead>
@@ -287,7 +312,9 @@ export default function HodQueriesPage() {
                             </td>
                           </tr>
                         ) : null}
-                        {queries.map((query) => (
+                        {queries.map((query) => {
+                          const { raisedBy } = parseQueryMetadata(query.description);
+                          return (
                           <tr 
                             key={query.id} 
                             onClick={() => setSelectedQuery(query)}
@@ -306,6 +333,12 @@ export default function HodQueriesPage() {
                             </td>
                             <td className="p-4 text-slate-800 max-w-[150px] truncate">{query.subject}</td>
                             <td className="p-4">
+                              <div className="flex items-center gap-1.5 text-slate-600">
+                                <User className="h-3.5 w-3.5 text-emerald-700" />
+                                <span className="text-xs font-semibold">{raisedBy}</span>
+                              </div>
+                            </td>
+                            <td className="p-4">
                               <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                                 query.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
                                 query.status === 'In Review' ? 'bg-blue-100 text-blue-800' :
@@ -315,7 +348,7 @@ export default function HodQueriesPage() {
                               </span>
                             </td>
                           </tr>
-                        ))}
+                        )})}
                       </tbody>
                     </table>
                   </div>
@@ -361,7 +394,7 @@ export default function HodQueriesPage() {
                     </div>
                     {selectedQuery.description && (
                       <p className="text-xs text-slate-500 mt-2 bg-slate-50 rounded-xl p-2.5 border border-slate-100 max-h-[80px] overflow-y-auto">
-                        <strong>Problem Detail:</strong> {selectedQuery.description}
+                        <strong>Problem Detail:</strong> {parseQueryMetadata(selectedQuery.description).cleanDesc}
                       </p>
                     )}
                   </div>
