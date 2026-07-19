@@ -18,6 +18,8 @@ export default function QueriesPage() {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newQueryType, setNewQueryType] = useState('Academic');
+  const [newQueryRaisedTo, setNewQueryRaisedTo] = useState('Faculty');
+  const [newQueryRaisedBy, setNewQueryRaisedBy] = useState('Student');
   const [newQuerySubject, setNewQuerySubject] = useState('');
   const [newQueryDescription, setNewQueryDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -129,7 +131,7 @@ export default function QueriesPage() {
             student_id: userId,
             type: newQueryType,
             subject: newQuerySubject.trim(),
-            description: newQueryDescription.trim(),
+            description: `Raised By: ${newQueryRaisedBy}\nRaised To: ${newQueryRaisedTo}\n\n${newQueryDescription.trim()}`,
             status: 'Pending',
           }
         ])
@@ -140,6 +142,8 @@ export default function QueriesPage() {
       setFeedback({ type: 'success', message: 'Query raised successfully!' });
       setNewQuerySubject('');
       setNewQueryDescription('');
+      setNewQueryRaisedTo('Faculty');
+      setNewQueryRaisedBy('Student');
       setIsModalOpen(false);
       fetchQueries();
     } catch (err: any) {
@@ -436,6 +440,31 @@ export default function QueriesPage() {
                     <option value="Administrative">Administrative</option>
                     <option value="Others">Others</option>
                   </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Raised To</label>
+                    <select
+                      value={newQueryRaisedTo}
+                      onChange={(e) => setNewQueryRaisedTo(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-sky-500 focus:bg-white focus:outline-none"
+                    >
+                      <option value="Faculty">Faculty</option>
+                      <option value="HOD">HOD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Raised By</label>
+                    <select
+                      value={newQueryRaisedBy}
+                      onChange={(e) => setNewQueryRaisedBy(e.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-sky-500 focus:bg-white focus:outline-none"
+                    >
+                      <option value="Student">Student</option>
+                      <option value="Parent">Parent</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div>
