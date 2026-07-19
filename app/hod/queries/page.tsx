@@ -84,29 +84,56 @@ export default function HodQueriesPage() {
         .single();
 
       if (hodError) throw hodError;
-      const dept = hodProfile?.department;
+      const dept = hodProfile?.department || '';
 
-      if (!dept) {
-        setQueries([]);
-        return;
-      }
+      // 2. Fetch faculties assigned to this HOD or in this department
+      const { data: facultyUsers } = await supabase
+        .from('users')
+        .select(`
+          id,
+          faculty_profiles (
+            department,
+            hod_id
+          )
+        `)
+        .eq('role', 'faculty');
+      
+      const deptFaculty = (facultyUsers || []).filter((f: any) => {
+        const fp = f.faculty_profiles?.[0];
+        if (fp?.hod_id === hodId) return true;
+        if (dept && fp?.department && isBranchInDepartment(fp.department, dept)) return true;
+        return false;
+      });
+      const facultyIds = deptFaculty.map(f => f.id);
 
-      // 2. Fetch student user IDs in this department (branch)
+      // 3. Fetch students mentored by these faculties or in this branch
       const { data: studentsData, error: studentsError } = await supabase
-        .from('student_profiles')
-        .select('user_id, branch');
+        .from('users')
+        .select(`
+          id,
+          student_profiles (
+            branch,
+            mentor_id
+          )
+        `)
+        .eq('role', 'student');
 
       if (studentsError) throw studentsError;
-      const studentIds = (studentsData || [])
-        .filter((s: any) => isBranchInDepartment(s.branch, dept))
-        .map((s: any) => s.user_id);
+
+      const deptStudents = (studentsData || []).filter((s: any) => {
+        const sp = s.student_profiles?.[0];
+        if (sp?.mentor_id && facultyIds.includes(sp.mentor_id)) return true;
+        if (dept && sp?.branch && isBranchInDepartment(sp.branch, dept)) return true;
+        return false;
+      });
+      const studentIds = deptStudents.map((s: any) => s.id);
 
       if (studentIds.length === 0) {
         setQueries([]);
         return;
       }
 
-      // 3. Fetch queries from those students
+      // 4. Fetch queries from those students
       const { data: queriesData, error: queriesError } = await supabase
         .from('queries')
         .select(`
