@@ -454,11 +454,11 @@ export default function PerformancePage() {
             ) : (
               <div className="flex flex-col gap-4 w-full h-auto animate-fadeIn">
                 
-                {/* TOP ROW: Minimized Academic & Extracurricular Graphs (Height: 275px) */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 h-[275px] shrink-0 gap-4 min-h-0">
+                {/* ALL GRAPHS GRID (Responsive, row-spanning Skills) */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 xl:grid-rows-[220px_minmax(0,1fr)] gap-4 w-full h-auto min-h-0">
                   
                   {/* Graph 1: SGPA Trend */}
-                  <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm h-full flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm flex flex-col min-h-0 h-[220px] xl:h-full">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1 mb-2 shrink-0">
                       <div>
                         <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
@@ -491,7 +491,7 @@ export default function PerformancePage() {
                   </div>
 
                   {/* Graph 2: Subject Marks Analysis */}
-                  <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm h-full flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm flex flex-col min-h-0 h-[220px] xl:h-full">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1 mb-2 shrink-0">
                       <div>
                         <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
@@ -533,7 +533,7 @@ export default function PerformancePage() {
                   </div>
 
                   {/* Graph 3: Extracurricular Activity */}
-                  <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm h-full flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm flex flex-col min-h-0 h-[340px] xl:h-full xl:row-span-2">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1 mb-2 shrink-0">
                       <div>
                         <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
@@ -555,9 +555,9 @@ export default function PerformancePage() {
                           <Pie
                             data={extracurricularData}
                             cx="50%"
-                            cy="36%"
-                            innerRadius={45}
-                            outerRadius={75}
+                            cy="45%"
+                            innerRadius={65}
+                            outerRadius={100}
                             paddingAngle={3}
                             dataKey="value"
                           >
@@ -577,7 +577,7 @@ export default function PerformancePage() {
                             formatter={(value, entry: any) => {
                               const item = entry.payload;
                               const suffix = showSkillsPie ? '%' : '';
-                              return <span className="text-[8px] font-bold text-slate-600">{value}: {item.value}{suffix}</span>;
+                              return <span className="text-[9px] font-bold text-slate-600">{value}: {item.value}{suffix}</span>;
                             }}
                           />
                         </PieChart>
@@ -585,13 +585,8 @@ export default function PerformancePage() {
                     </div>
                   </div>
 
-                </div>
-
-                {/* BOTTOM ROW: Professional Review Cards for Faculty, HOD, and Parents (Height: flex-1) */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 flex-1 min-h-0 gap-4">
-                  
                   {/* Card 1: Faculty Evaluation (Attendance & Internal Marks Consistency) */}
-                  <div className="rounded-[24px] border border-slate-150 bg-white p-4 shadow-sm h-full flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-150 bg-white p-4 shadow-sm flex flex-col min-h-0 h-[220px] xl:h-full">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 shrink-0">
                       <div className="flex items-center gap-2">
                         <div className="rounded-lg bg-emerald-50 p-1.5">

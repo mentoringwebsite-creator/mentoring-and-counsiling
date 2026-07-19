@@ -850,10 +850,10 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
 
               {/* Tab 2: Academics */}
               {activeTab === 'academics' && (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full min-h-0">
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-[220px_minmax(0,1fr)] w-full h-auto min-h-0">
                   
                   {/* Graph 1: SGPA Trend */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[235px] flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] lg:h-full flex flex-col min-h-0">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                       <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                         <TrendingUp className="h-3.5 w-3.5 text-[#1c5644]" />
@@ -883,7 +883,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                   </div>
 
                   {/* Graph 2: Subject Marks Breakdown */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[235px] flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] lg:h-full flex flex-col min-h-0">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                       <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                         <BookOpen className="h-3.5 w-3.5 text-[#1c5644]" />
@@ -922,7 +922,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                   </div>
 
                   {/* Graph 3: Extracurricular Activity */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[290px] flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[320px] lg:h-full lg:row-span-2 flex flex-col min-h-0">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                       <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                         <Trophy className="h-3.5 w-3.5 text-emerald-800" />
@@ -941,9 +941,9 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                           <Pie
                             data={extracurricularData}
                             cx="50%"
-                            cy="38%"
-                            innerRadius={45}
-                            outerRadius={75}
+                            cy="45%"
+                            innerRadius={65}
+                            outerRadius={100}
                             paddingAngle={3}
                             dataKey="value"
                           >
@@ -963,7 +963,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                             formatter={(value, entry: any) => {
                               const item = entry.payload;
                               const suffix = modalShowSkillsPie ? '%' : '';
-                              return <span className="text-[8px] font-bold text-slate-600">{value}: {item.value}{suffix}</span>;
+                              return <span className="text-[9px] font-bold text-slate-600">{value}: {item.value}{suffix}</span>;
                             }}
                           />
                         </PieChart>
@@ -972,7 +972,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                   </div>
 
                   {/* Graph 4: Faculty Evaluation */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] lg:h-full flex flex-col min-h-0">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                       <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                         <Users className="h-3.5 w-3.5 text-[#1c5644]" />
@@ -1023,7 +1023,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                     };
 
                     return (
-                      <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[290px] flex flex-col min-h-0">
+                      <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[290px] lg:h-full flex flex-col min-h-0">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                           <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                             <Heart className="h-3.5 w-3.5 text-emerald-850" />
