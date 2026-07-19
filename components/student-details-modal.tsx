@@ -14,7 +14,7 @@ import {
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, BarChart, Bar,
-  PieChart, Pie, Cell, LabelList
+  PieChart, Pie, Cell, LabelList, Legend
 } from 'recharts';
 
 const getStudentBTechYear = (roll: string, acYear: string) => {
@@ -72,6 +72,8 @@ const DEFAULT_DREAMS = "To become a software architect designing scalable and hi
 const DEFAULT_CAREER_GOALS = "Secure a Software Engineering role at a leading tech company and mentor aspiring developers.";
 
 const DEFAULT_SKILLS = ["JavaScript", "TypeScript", "React.js", "Next.js", "Node.js", "Python", "SQL", "Git", "Tailwind CSS", "Data Structures"];
+
+const PIE_COLORS = ['#1c5644', '#e88913', '#0284c7'];
 
 export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentDetailsModalProps) {
   const [loading, setLoading] = useState(false);
@@ -466,9 +468,14 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   };
 
   const getExtracurricularData = () => {
+    const clubsCount = clubsList.length > 0 ? clubsList.length : DEFAULT_CLUBS.length;
+    const certsCount = certificationsList.length > 0 ? certificationsList.length : DEFAULT_CERTS.length;
+    const skillsCount = parsedSkills.length > 0 ? parsedSkills.length : DEFAULT_SKILLS.length;
+
     return [
-      { name: 'Clubs Joined', Student: clubsList.length },
-      { name: 'Certifications', Student: certificationsList.length }
+      { name: 'Clubs Joined', value: clubsCount },
+      { name: 'Certifications', value: certsCount },
+      { name: 'Skills & Tech', value: skillsCount }
     ];
   };
 
@@ -869,15 +876,32 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                     </div>
                     <div className="flex-1 min-h-0 w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={extracurricularData} margin={{ top: 10, right: 5, left: -28, bottom: 2 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
-                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
-                          <YAxis stroke="#94a3b8" fontSize={8} fontWeight={600} allowDecimals={false} />
+                        <PieChart>
+                          <Pie
+                            data={extracurricularData}
+                            cx="50%"
+                            cy="42%"
+                            innerRadius={22}
+                            outerRadius={38}
+                            paddingAngle={3}
+                            dataKey="value"
+                          >
+                            {extracurricularData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
                           <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                          <Bar name="Student" dataKey="Student" fill="#e88913" radius={[3, 3, 0, 0]} barSize={12} isAnimationActive={true} animationDuration={600}>
-                            <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#e88913', fontWeight: 'bold' }} />
-                          </Bar>
-                        </BarChart>
+                          <Legend 
+                            verticalAlign="bottom" 
+                            align="center"
+                            iconType="circle"
+                            iconSize={6}
+                            formatter={(value, entry: any) => {
+                              const item = entry.payload;
+                              return <span className="text-[8px] font-bold text-slate-600">{value}: {item.value}</span>;
+                            }}
+                          />
+                        </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </div>

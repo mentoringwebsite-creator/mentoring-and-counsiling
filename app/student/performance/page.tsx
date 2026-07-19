@@ -36,6 +36,20 @@ import {
   Cell
 } from 'recharts';
 
+const DEFAULT_CLUBS = [
+  { name: "Robotics Club", role: "Technical Lead", joined: "2024", logo: "" },
+  { name: "Coding & Algorithms Club", role: "Core Member", joined: "2023", logo: "" }
+];
+
+const DEFAULT_CERTS = [
+  { name: "AWS Certified Cloud Practitioner", link: "https://aws.amazon.com", image: "" },
+  { name: "Meta Front-End Developer Specialization", link: "https://www.coursera.org", image: "" }
+];
+
+const DEFAULT_SKILLS = ["JavaScript", "TypeScript", "React.js", "Next.js", "Node.js", "Python", "SQL", "Git", "Tailwind CSS", "Data Structures"];
+
+const PIE_COLORS = ['#1c5644', '#e88913', '#0284c7'];
+
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
   { href: '/student/academic', label: 'Academic Profile' },
@@ -53,6 +67,7 @@ export default function PerformancePage() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
   const [certifications, setCertifications] = useState<any[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
   const [rollNumber, setRollNumber] = useState<string>('');
   const [classAverage, setClassAverage] = useState<number>(7.80);
   
@@ -80,6 +95,17 @@ export default function PerformancePage() {
       setClubs(profileDb.clubs || []);
       setCertifications(profileDb.certifications || []);
       setRollNumber(profileDb.roll_number || '');
+
+      const rawInterests = profileDb.interests || '';
+      let parsedSkills = DEFAULT_SKILLS;
+      if (rawInterests.includes('||skills:')) {
+        const parts = rawInterests.split('||skills:');
+        const skillStr = parts[1];
+        parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+      } else if (rawInterests.trim() !== '') {
+        parsedSkills = [];
+      }
+      setSkills(parsedSkills);
 
       // Compute dynamic CGPA/Backlog stats
       let backlogCount = 0;
@@ -226,9 +252,14 @@ export default function PerformancePage() {
   };
 
   const getExtracurricularData = () => {
+    const clubsCount = clubs.length > 0 ? clubs.length : DEFAULT_CLUBS.length;
+    const certsCount = certifications.length > 0 ? certifications.length : DEFAULT_CERTS.length;
+    const skillsCount = skills.length > 0 ? skills.length : DEFAULT_SKILLS.length;
+
     return [
-      { name: 'Clubs Joined', Student: clubs.length, ClassAvg: 2 },
-      { name: 'Certifications', Student: certifications.length, ClassAvg: 3 }
+      { name: 'Clubs Joined', value: clubsCount },
+      { name: 'Certifications', value: certsCount },
+      { name: 'Skills & Tech', value: skillsCount }
     ];
   };
 
@@ -459,15 +490,32 @@ export default function PerformancePage() {
 
                     <div className="flex-1 min-h-0 w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={extracurricularData} margin={{ top: 10, right: 5, left: -28, bottom: 2 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
-                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
-                          <YAxis stroke="#94a3b8" fontSize={8} fontWeight={600} allowDecimals={false} />
+                        <PieChart>
+                          <Pie
+                            data={extracurricularData}
+                            cx="50%"
+                            cy="42%"
+                            innerRadius={22}
+                            outerRadius={38}
+                            paddingAngle={3}
+                            dataKey="value"
+                          >
+                            {extracurricularData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
                           <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                          <Bar name="Student" dataKey="Student" fill="#e88913" radius={[3, 3, 0, 0]} barSize={12} isAnimationActive={true} animationDuration={600}>
-                            <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#e88913', fontWeight: 'bold' }} />
-                          </Bar>
-                        </BarChart>
+                          <Legend 
+                            verticalAlign="bottom" 
+                            align="center"
+                            iconType="circle"
+                            iconSize={6}
+                            formatter={(value, entry: any) => {
+                              const item = entry.payload;
+                              return <span className="text-[8px] font-bold text-slate-600">{value}: {item.value}</span>;
+                            }}
+                          />
+                        </PieChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
