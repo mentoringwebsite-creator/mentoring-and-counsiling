@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { QueryEmptySlider } from '@/components/query-empty-slider';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw, User, UserCheck } from 'lucide-react';
 
@@ -493,11 +494,23 @@ export default function HodQueriesPage() {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center p-6">
-                  <MessageSquare className="h-12 w-12 mb-3 stroke-1" />
-                  <h4 className="text-sm font-semibold text-slate-700">No Query Selected</h4>
-                  <p className="text-xs max-w-[220px] mt-1">Select a query from the watchlist to see detail history and reply.</p>
-                </div>
+                <QueryEmptySlider
+                  accentClassName="text-emerald-800"
+                  slides={[
+                    {
+                      title: 'No Query Selected',
+                      description: 'Select a query from the watchlist to inspect full details and join the discussion.',
+                    },
+                    {
+                      title: 'Department View',
+                      description: 'Monitor branch-wide concerns from students and mentors in one organized workspace.',
+                    },
+                    {
+                      title: 'Guide And Resolve',
+                      description: 'Step in with direction where needed, then mark items as resolved after closure.',
+                    },
+                  ]}
+                />
               )}
             </div>
           </div>

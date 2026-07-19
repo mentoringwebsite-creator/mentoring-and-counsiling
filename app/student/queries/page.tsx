@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
+import { QueryEmptySlider } from '@/components/query-empty-slider';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Send, MessageSquare, AlertCircle, X, CheckCircle, User, UserCheck } from 'lucide-react';
 
@@ -435,11 +436,23 @@ export default function QueriesPage() {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center p-6">
-                  <MessageSquare className="h-12 w-12 mb-3 stroke-1" />
-                  <h4 className="text-sm font-semibold text-slate-700">No Query Selected</h4>
-                  <p className="text-xs max-w-[220px] mt-1">Select a query from the list to view details and start chatting.</p>
-                </div>
+                <QueryEmptySlider
+                  accentClassName="text-sky-600"
+                  slides={[
+                    {
+                      title: 'No Query Selected',
+                      description: 'Choose a query from the list to open full details and continue the conversation.',
+                    },
+                    {
+                      title: 'Raise A New Query',
+                      description: 'Use the Raise Query button to submit an issue to Faculty or HOD in just a few steps.',
+                    },
+                    {
+                      title: 'Track Status Live',
+                      description: 'Check whether your request is pending or resolved and follow updates in one place.',
+                    },
+                  ]}
+                />
               )}
             </div>
           </div>
