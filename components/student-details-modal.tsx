@@ -809,15 +809,15 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                     <div className="flex-1 min-h-0 w-full">
                       {subjectMarksData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={subjectMarksData} margin={{ top: 10, right: 5, left: -28, bottom: 2 }}>
+                          <LineChart data={subjectMarksData} margin={{ top: 10, right: 10, left: -28, bottom: 2 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
                             <XAxis dataKey="name" stroke="#94a3b8" fontSize={7} fontWeight={600} />
                             <YAxis stroke="#94a3b8" domain={[0, 100]} fontSize={8} fontWeight={600} />
                             <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                            <Bar name="Marks" dataKey="Marks" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={10} isAnimationActive={true} animationDuration={600}>
+                            <Line type="monotone" name="Marks" dataKey="Marks" stroke="#1c5644" strokeWidth={2.5} dot={{ r: 3, stroke: '#1c5644', strokeWidth: 1.5, fill: '#fff' }} activeDot={{ r: 4 }} connectNulls isAnimationActive={true} animationDuration={600}>
                               <LabelList dataKey="Marks" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
-                            </Bar>
-                          </BarChart>
+                            </Line>
+                          </LineChart>
                         </ResponsiveContainer>
                       ) : (
                         <div className="flex h-full items-center justify-center"><p className="text-[10px] text-slate-400 italic">No marks found</p></div>
