@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from 'react';
 import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
-import { QueryEmptySlider } from '@/components/query-empty-slider';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw, User, UserCheck } from 'lucide-react';
 
@@ -390,7 +389,7 @@ export default function HodQueriesPage() {
             </div>
 
             {/* Right Column: Chat Window */}
-            <div className={selectedQuery ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden lg:flex portal-card h-[600px] flex-col justify-between border border-slate-200 bg-white"}>
+            <div className={selectedQuery ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden"}>
               {selectedQuery ? (
                 <>
                   {/* Chat Header */}
@@ -501,25 +500,7 @@ export default function HodQueriesPage() {
                     )}
                   </div>
                 </>
-              ) : (
-                <QueryEmptySlider
-                  accentClassName="text-emerald-800"
-                  slides={[
-                    {
-                      title: 'No Query Selected',
-                      description: 'Select a query from the watchlist to inspect full details and join the discussion.',
-                    },
-                    {
-                      title: 'Department View',
-                      description: 'Monitor branch-wide concerns from students and mentors in one organized workspace.',
-                    },
-                    {
-                      title: 'Guide And Resolve',
-                      description: 'Step in with direction where needed, then mark items as resolved after closure.',
-                    },
-                  ]}
-                />
-              )}
+              ) : null}
             </div>
           </div>
         </div>

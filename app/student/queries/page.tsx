@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from 'react';
 import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
-import { QueryEmptySlider } from '@/components/query-empty-slider';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Send, MessageSquare, AlertCircle, X, CheckCircle, User, UserCheck } from 'lucide-react';
 
@@ -339,7 +338,7 @@ export default function QueriesPage() {
             </div>
 
             {/* Right side: Chat Window */}
-            <div className={selectedQuery ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden lg:flex portal-card h-[600px] flex-col justify-between border border-slate-200 bg-white"}>
+            <div className={selectedQuery ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden"}>
               {selectedQuery ? (
                 <>
                   {/* Chat Header */}
@@ -443,25 +442,7 @@ export default function QueriesPage() {
                     )}
                   </div>
                 </>
-              ) : (
-                <QueryEmptySlider
-                  accentClassName="text-sky-600"
-                  slides={[
-                    {
-                      title: 'No Query Selected',
-                      description: 'Choose a query from the list to open full details and continue the conversation.',
-                    },
-                    {
-                      title: 'Raise A New Query',
-                      description: 'Use the Raise Query button to submit an issue to Faculty or HOD in just a few steps.',
-                    },
-                    {
-                      title: 'Track Status Live',
-                      description: 'Check whether your request is pending or resolved and follow updates in one place.',
-                    },
-                  ]}
-                />
-              )}
+              ) : null}
             </div>
           </div>
         </div>
