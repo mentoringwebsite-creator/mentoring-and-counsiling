@@ -10,6 +10,7 @@ import {
   Home, 
   User, 
   GraduationCap, 
+  TrendingUp,
   Trophy, 
   MessageSquare, 
   Users, 
@@ -94,6 +95,7 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
       return [
         { href: '/student', label: 'Profile', icon: User },
         { href: '/student/academic', label: 'Academics', icon: GraduationCap },
+        { href: '/student/performance', label: 'Perf', icon: TrendingUp },
         { href: '/student/extracurricular', label: 'Activities', icon: Trophy },
         { href: '/student/queries', label: 'Queries', icon: MessageSquare }
       ];
@@ -139,12 +141,12 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(199,217,207,0.42),transparent_30%),radial-gradient(circle_at_top_right,rgba(234,218,177,0.30),transparent_28%),linear-gradient(180deg,#f4f7f4_0%,#edf2ee_100%)] text-portal-ink">
-      <div className="min-h-screen w-full overflow-hidden bg-white/94 backdrop-blur-xl flex flex-col">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-black/5 bg-white/80 backdrop-blur-md px-3 sm:px-6">
+      <div className="min-h-screen w-full overflow-hidden bg-white/92 backdrop-blur-xl flex flex-col">
+        <header className="sticky top-0 z-40 flex h-16 sm:h-[72px] items-center justify-between border-b border-emerald-900/5 bg-white/78 backdrop-blur-xl px-3 sm:px-6">
           <div className="flex items-center gap-2 sm:gap-3 max-w-[70%] sm:max-w-[75%] overflow-hidden">
             <button 
               onClick={() => router.back()}
-              className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 text-slate-655 hover:bg-slate-100 hover:text-slate-800 transition shadow-sm active:scale-95 shrink-0"
+              className="flex items-center justify-center rounded-xl border border-slate-200/90 bg-white/95 p-1.5 text-slate-600 hover:bg-white hover:text-slate-800 transition shadow-sm active:scale-95 shrink-0"
               aria-label="Go Back"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -166,16 +168,16 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
             </div>
           </div>
 
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-6">
             <div className="hidden sm:text-right md:block">
               <div className="text-xl font-semibold tracking-[-0.04em]">{title}</div>
               {subtitle ? <div className="text-sm text-slate-600">{subtitle}</div> : null}
             </div>
 
             {userProfile && (
-              <div className="flex items-center gap-2 border-l border-slate-200 pl-4 sm:gap-3 sm:pl-6">
+              <div className="flex items-center gap-2 border-l border-slate-200/90 pl-3 sm:gap-3 sm:pl-6">
                 <span className="hidden text-sm font-semibold text-portal-ink md:inline">{userProfile.name}</span>
-                <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-emerald-500/20 bg-emerald-50 shrink-0">
+                <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-emerald-500/20 bg-emerald-50 shadow-[0_4px_16px_rgba(17,94,73,0.12)] shrink-0">
                   {userProfile.photo && (userProfile.photo.startsWith('data:') || userProfile.photo.startsWith('http') || userProfile.photo.startsWith('/')) ? (
                     <img
                       src={userProfile.photo}
@@ -223,8 +225,9 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
 
         {/* Dynamic Mobile Bottom Navigation Bar */}
         {mobileItems.length > 0 && (
-          <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200/80 bg-white/80 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur-lg shadow-[0_-8px_30px_rgba(0,0,0,0.06)] lg:hidden">
-            <div className="flex items-center justify-around px-2">
+          <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/90 bg-white/78 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur-xl shadow-[0_-10px_36px_rgba(0,0,0,0.08)] lg:hidden">
+            <div className="mx-2 rounded-2xl border border-slate-200/70 bg-white/78 px-1.5 py-1 shadow-[0_8px_22px_rgba(14,34,28,0.08)]">
+              <div className="flex items-center justify-around">
               {mobileItems.map((item) => {
                 const Icon = item.icon;
                 const active = isTabActive(item.href);
@@ -233,7 +236,7 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
                     key={item.href}
                     href={item.href as never}
                     className={cn(
-                      "flex flex-col items-center gap-1 px-2 py-0.5 rounded-xl transition-all duration-250 active:scale-90",
+                      "flex min-w-0 flex-col items-center gap-1 px-1.5 py-0.5 rounded-xl transition-all duration-250 active:scale-90",
                       active 
                         ? "text-emerald-800 font-bold" 
                         : "text-slate-500 hover:text-slate-700 font-medium"
@@ -242,19 +245,20 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
                     <div className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-250",
                       active 
-                        ? "bg-emerald-50 text-emerald-800 shadow-[0_4px_12px_rgba(16,185,129,0.12)] scale-105" 
+                        ? "bg-emerald-50 text-emerald-800 shadow-[0_5px_14px_rgba(16,185,129,0.14)] scale-105" 
                         : "bg-transparent text-slate-500"
                     )}>
                       <Icon className="h-5 w-5 stroke-[2.25]" />
                     </div>
-                    <span className="text-[0.65rem] tracking-tight">{item.label}</span>
+                    <span className="max-w-[58px] truncate text-[0.62rem] tracking-tight">{item.label}</span>
                   </Link>
                 );
               })}
+              </div>
             </div>
           </nav>
         )}
       </div>
     </div>
   );
-}
+}
