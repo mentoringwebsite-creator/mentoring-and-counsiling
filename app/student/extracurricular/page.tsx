@@ -7,6 +7,22 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
 import { Loader2, Edit2, Trash2, Plus, ExternalLink, X, Heart, Target, Sparkles, Image as ImageIcon, Users } from 'lucide-react';
 
+const DEFAULT_CLUBS = [
+  { name: "Robotics Club", role: "Technical Lead", joined: "2024", logo: "" },
+  { name: "Coding & Algorithms Club", role: "Core Member", joined: "2023", logo: "" }
+];
+
+const DEFAULT_CERTS = [
+  { name: "AWS Certified Cloud Practitioner", link: "https://aws.amazon.com", image: "" },
+  { name: "Meta Front-End Developer Specialization", link: "https://www.coursera.org", image: "" }
+];
+
+const DEFAULT_INTERESTS = "Web Development, Machine Learning, UI/UX Design, Open Source Contributions";
+const DEFAULT_DREAMS = "To become a software architect designing scalable and high-impact distributed applications.";
+const DEFAULT_CAREER_GOALS = "Secure a Software Engineering role at a leading tech company and mentor aspiring developers.";
+
+const DEFAULT_SKILLS = ["JavaScript", "TypeScript", "React.js", "Next.js", "Node.js", "Python", "SQL", "Git", "Tailwind CSS", "Data Structures"];
+
 export default function ExtracurricularPage() {
   const [loading, setLoading] = useState(true);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -14,6 +30,8 @@ export default function ExtracurricularPage() {
   // Data lists
   const [clubs, setClubs] = useState<any[]>([]);
   const [certifications, setCertifications] = useState<any[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
+  const [newSkillText, setNewSkillText] = useState('');
   
   // Aspirations states
   const [interests, setInterests] = useState('');
@@ -65,7 +83,21 @@ export default function ExtracurricularPage() {
       setProfileId(data.id);
       setClubs(data.clubs || []);
       setCertifications(data.certifications || []);
-      setInterests(data.interests || '');
+      
+      const rawInterests = data.interests || '';
+      let parsedInterests = rawInterests;
+      let parsedSkills = DEFAULT_SKILLS;
+      if (rawInterests.includes('||skills:')) {
+        const parts = rawInterests.split('||skills:');
+        parsedInterests = parts[0];
+        const skillStr = parts[1];
+        parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+      } else if (rawInterests.trim() !== '') {
+        parsedSkills = [];
+      }
+      
+      setInterests(parsedInterests);
+      setSkills(parsedSkills);
       setDreams(data.dreams || '');
       setCareerGoals(data.career_goals || '');
     } catch (err: any) {
@@ -80,7 +112,14 @@ export default function ExtracurricularPage() {
     loadExtracurriculars();
   }, []);
 
-  const saveToDatabase = async (updatedClubs: any[], updatedCerts: any[], updatedInterests?: string, updatedDreams?: string, updatedGoals?: string) => {
+  const saveToDatabase = async (
+    updatedClubs: any[], 
+    updatedCerts: any[], 
+    updatedInterests?: string, 
+    updatedDreams?: string, 
+    updatedGoals?: string,
+    updatedSkills?: string[]
+  ) => {
     if (!profileId) return;
 
     try {
@@ -90,7 +129,10 @@ export default function ExtracurricularPage() {
         certifications: updatedCerts,
       };
 
-      if (updatedInterests !== undefined) payload.interests = updatedInterests;
+      const finalInterestsVal = updatedInterests !== undefined ? updatedInterests : interests;
+      const finalSkillsVal = updatedSkills !== undefined ? updatedSkills : skills;
+      payload.interests = finalInterestsVal + '||skills:' + finalSkillsVal.join(',');
+
       if (updatedDreams !== undefined) payload.dreams = updatedDreams;
       if (updatedGoals !== undefined) payload.career_goals = updatedGoals;
 
@@ -163,7 +205,8 @@ export default function ExtracurricularPage() {
   };
 
   const openEditClubModal = (index: number) => {
-    const club = clubs[index];
+    const currentClubs = clubs.length > 0 ? clubs : DEFAULT_CLUBS;
+    const club = currentClubs[index];
     setEditingClubIndex(index);
     setClubName(club.name || '');
     setClubRole(club.role || '');
@@ -183,7 +226,8 @@ export default function ExtracurricularPage() {
       logo: clubLogo,
     };
 
-    let updatedClubs = [...clubs];
+    const currentClubs = clubs.length > 0 ? clubs : DEFAULT_CLUBS;
+    let updatedClubs = [...currentClubs];
     if (editingClubIndex !== null) {
       updatedClubs[editingClubIndex] = newClub;
     } else {
@@ -198,7 +242,8 @@ export default function ExtracurricularPage() {
   const handleClubDelete = async (index: number) => {
     if (!confirm('Are you sure you want to remove this club?')) return;
 
-    const updatedClubs = clubs.filter((_, i) => i !== index);
+    const currentClubs = clubs.length > 0 ? clubs : DEFAULT_CLUBS;
+    const updatedClubs = currentClubs.filter((_, i) => i !== index);
     setClubs(updatedClubs);
     await saveToDatabase(updatedClubs, certifications);
   };
@@ -213,7 +258,8 @@ export default function ExtracurricularPage() {
   };
 
   const openEditCertModal = (index: number) => {
-    const cert = certifications[index];
+    const currentCerts = certifications.length > 0 ? certifications : DEFAULT_CERTS;
+    const cert = currentCerts[index];
     setEditingCertIndex(index);
     setCertName(cert.name || '');
     setCertLink(cert.link || '');
@@ -231,7 +277,8 @@ export default function ExtracurricularPage() {
       image: certImage,
     };
 
-    let updatedCerts = [...certifications];
+    const currentCerts = certifications.length > 0 ? certifications : DEFAULT_CERTS;
+    let updatedCerts = [...currentCerts];
     if (editingCertIndex !== null) {
       updatedCerts[editingCertIndex] = newCert;
     } else {
@@ -246,16 +293,17 @@ export default function ExtracurricularPage() {
   const handleCertDelete = async (index: number) => {
     if (!confirm('Are you sure you want to remove this certification?')) return;
 
-    const updatedCerts = certifications.filter((_, i) => i !== index);
+    const currentCerts = certifications.length > 0 ? certifications : DEFAULT_CERTS;
+    const updatedCerts = currentCerts.filter((_, i) => i !== index);
     setCertifications(updatedCerts);
     await saveToDatabase(clubs, updatedCerts);
   };
 
   // Aspirations Operations
   const openEditAspirationsModal = () => {
-    setFormInterests(interests);
-    setFormDreams(dreams);
-    setFormCareerGoals(careerGoals);
+    setFormInterests(interests || DEFAULT_INTERESTS);
+    setFormDreams(dreams || DEFAULT_DREAMS);
+    setFormCareerGoals(careerGoals || DEFAULT_CAREER_GOALS);
     setAspirationModalOpen(true);
   };
 
@@ -266,6 +314,31 @@ export default function ExtracurricularPage() {
     setCareerGoals(formCareerGoals);
     setAspirationModalOpen(false);
     await saveToDatabase(clubs, certifications, formInterests, formDreams, formCareerGoals);
+  };
+
+  // Skills Operations
+  const handleAddSkill = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanSkill = newSkillText.trim();
+    if (!cleanSkill) return;
+
+    const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
+    if (currentSkills.includes(cleanSkill)) {
+      alert('Skill already exists.');
+      return;
+    }
+
+    const updatedSkills = [...currentSkills, cleanSkill];
+    setSkills(updatedSkills);
+    setNewSkillText('');
+    await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
+  };
+
+  const handleRemoveSkill = async (skillToRemove: string) => {
+    const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
+    const updatedSkills = currentSkills.filter(s => s !== skillToRemove);
+    setSkills(updatedSkills);
+    await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
   };
 
   return (
@@ -302,13 +375,9 @@ export default function ExtracurricularPage() {
                   <Loader2 className="h-5 w-5 animate-spin text-[#1c5644] mr-2" />
                   <span>Loading clubs...</span>
                 </div>
-              ) : clubs.length === 0 ? (
-                <p className="mt-6 text-sm text-slate-500 text-center py-6 bg-slate-50/50 rounded-[20px] border border-dashed border-slate-200">
-                  No clubs registered. Add the clubs you are involved in.
-                </p>
               ) : (
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
-                  {clubs.map((club, index) => (
+                  {(clubs.length > 0 ? clubs : DEFAULT_CLUBS).map((club, index) => (
                     <div key={index} className="group relative rounded-3xl bg-portal-paper p-5 border border-portal-line transition duration-300 hover:-translate-y-0.5 hover:shadow-soft">
                       {/* Action buttons (hover overlay) */}
                       <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -368,13 +437,9 @@ export default function ExtracurricularPage() {
                   <Loader2 className="h-5 w-5 animate-spin text-[#1c5644] mr-2" />
                   <span>Loading certifications...</span>
                 </div>
-              ) : certifications.length === 0 ? (
-                <p className="mt-6 text-sm text-slate-500 text-center py-6 bg-slate-50/50 rounded-[20px] border border-dashed border-slate-200">
-                  No certifications registered. Add your certificates and achievements.
-                </p>
               ) : (
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
-                  {certifications.map((item, index) => (
+                  {(certifications.length > 0 ? certifications : DEFAULT_CERTS).map((item, index) => (
                     <div key={index} className="group relative rounded-3xl border border-portal-line bg-white p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-soft flex flex-col justify-between min-h-[140px]">
                       {/* Action buttons (hover overlay) */}
                       <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -464,7 +529,7 @@ export default function ExtracurricularPage() {
                       <h3 className="font-bold text-base">My Core Interests</h3>
                     </div>
                     <p className="text-xs text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
-                      {interests.trim() || 'No interests added yet. Add what topics or fields excite you!'}
+                      {interests.trim() || DEFAULT_INTERESTS}
                     </p>
                   </div>
 
@@ -475,7 +540,7 @@ export default function ExtracurricularPage() {
                       <h3 className="font-bold text-base">My Biggest Dream</h3>
                     </div>
                     <p className="text-xs text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
-                      {dreams.trim() || 'No dream specified. Share your ultimate aspirations!'}
+                      {dreams.trim() || DEFAULT_DREAMS}
                     </p>
                   </div>
 
@@ -486,9 +551,62 @@ export default function ExtracurricularPage() {
                       <h3 className="font-bold text-base">Who I Want to Become</h3>
                     </div>
                     <p className="text-xs text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
-                      {careerGoals.trim() || 'No career goals specified. What role or type of person do you strive to become?'}
+                      {careerGoals.trim() || DEFAULT_CAREER_GOALS}
                     </p>
                   </div>
+                </div>
+              )}
+            </div>
+
+            {/* Skills & Expertise */}
+            <div className="portal-card relative overflow-hidden">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-portal-line pb-4 mb-5">
+                <div className="flex items-center gap-2">
+                  <Target className="h-6 w-6 text-emerald-850" />
+                  <h2 className="text-2xl font-semibold">Skills & Expertise</h2>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-6 text-slate-500">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#1c5644] mr-2" />
+                  <span>Loading skills...</span>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Skill tags container */}
+                  <div className="flex flex-wrap gap-2.5">
+                    {skills.map((skill, index) => (
+                      <span 
+                        key={index}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#1c5644]/10 text-emerald-850 border border-[#1c5644]/20 group/tag hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition duration-200 cursor-pointer"
+                        onClick={() => handleRemoveSkill(skill)}
+                        title="Click to remove skill"
+                      >
+                        <span>{skill}</span>
+                        <X className="h-3 w-3 text-slate-400 group-hover/tag:text-rose-500 transition" />
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Add skill input */}
+                  <form onSubmit={handleAddSkill} className="flex max-w-md items-center gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="Add a new skill (e.g. Python, React)"
+                      value={newSkillText}
+                      onChange={(e) => setNewSkillText(e.target.value)}
+                      className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold focus:border-[#1c5644] focus:bg-white focus:outline-none transition"
+                    />
+                    <button 
+                      type="submit"
+                      disabled={saving}
+                      className="rounded-xl bg-[#1c5644] hover:bg-[#154335] px-4 py-2 text-xs font-bold text-white transition flex items-center gap-1 shadow-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Add</span>
+                    </button>
+                  </form>
                 </div>
               )}
             </div>

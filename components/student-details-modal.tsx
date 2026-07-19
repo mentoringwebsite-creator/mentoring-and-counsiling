@@ -57,6 +57,22 @@ interface StudentDetailsModalProps {
   onClose: () => void;
 }
 
+const DEFAULT_CLUBS = [
+  { name: "Robotics Club", role: "Technical Lead", joined: "2024", logo: "" },
+  { name: "Coding & Algorithms Club", role: "Core Member", joined: "2023", logo: "" }
+];
+
+const DEFAULT_CERTS = [
+  { name: "AWS Certified Cloud Practitioner", link: "https://aws.amazon.com", image: "" },
+  { name: "Meta Front-End Developer Specialization", link: "https://www.coursera.org", image: "" }
+];
+
+const DEFAULT_INTERESTS = "Web Development, Machine Learning, UI/UX Design, Open Source Contributions";
+const DEFAULT_DREAMS = "To become a software architect designing scalable and high-impact distributed applications.";
+const DEFAULT_CAREER_GOALS = "Secure a Software Engineering role at a leading tech company and mentor aspiring developers.";
+
+const DEFAULT_SKILLS = ["JavaScript", "TypeScript", "React.js", "Next.js", "Node.js", "Python", "SQL", "Git", "Tailwind CSS", "Data Structures"];
+
 export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentDetailsModalProps) {
   const [loading, setLoading] = useState(false);
   const [student, setStudent] = useState<any>(null);
@@ -68,6 +84,18 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
 
   const profile = student?.student_profiles?.[0] || {};
   const subjects = profile.academic_subjects || [];
+
+  const rawInterests = profile.interests || '';
+  let parsedInterests = rawInterests;
+  let parsedSkills = DEFAULT_SKILLS;
+  if (rawInterests.includes('||skills:')) {
+    const parts = rawInterests.split('||skills:');
+    parsedInterests = parts[0];
+    const skillStr = parts[1];
+    parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+  } else if (rawInterests.trim() !== '') {
+    parsedSkills = [];
+  }
 
   // Semester filter state for Subject Marks Analysis Chart in Modal
   const [modalChartSemester, setModalChartSemester] = useState<string>('6');
@@ -358,8 +386,11 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
 
   const analysis = getAcademicAnalysis();
 
-  const clubsList = Array.isArray(profile.clubs) ? profile.clubs : [];
-  const certificationsList = Array.isArray(profile.certifications) ? profile.certifications : [];
+  const dbClubs = Array.isArray(profile.clubs) ? profile.clubs : [];
+  const clubsList = dbClubs.length > 0 ? dbClubs : DEFAULT_CLUBS;
+
+  const dbCerts = Array.isArray(profile.certifications) ? profile.certifications : [];
+  const certificationsList = dbCerts.length > 0 ? dbCerts : DEFAULT_CERTS;
 
   const getSgpaTrendData = () => {
     const semMap: { [key: number]: any[] } = {};
@@ -1018,7 +1049,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                           <h4 className="font-bold text-xs">Core Interests</h4>
                         </div>
                         <p className="text-[11px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
-                          {profile.interests?.trim() || 'No interests documented yet.'}
+                          {parsedInterests.trim() || DEFAULT_INTERESTS}
                         </p>
                       </div>
 
@@ -1029,7 +1060,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                           <h4 className="font-bold text-xs">Ultimate Dream</h4>
                         </div>
                         <p className="text-[11px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
-                          {profile.dreams?.trim() || 'No ultimate dreams documented yet.'}
+                          {profile.dreams?.trim() || DEFAULT_DREAMS}
                         </p>
                       </div>
 
@@ -1040,9 +1071,27 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                           <h4 className="font-bold text-xs">Who they want to become</h4>
                         </div>
                         <p className="text-[11px] text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">
-                          {profile.career_goals?.trim() || 'No career goals specified.'}
+                          {profile.career_goals?.trim() || DEFAULT_CAREER_GOALS}
                         </p>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Skills & Expertise */}
+                  <div className="rounded-[24px] border border-slate-200/60 bg-white p-6 shadow-sm">
+                    <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                      <Target className="h-5 w-5 text-emerald-800" />
+                      <span>Skills & Expertise</span>
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {parsedSkills.map((skill: string, index: number) => (
+                        <span 
+                          key={index}
+                          className="px-2.5 py-1.5 rounded-full text-[10px] font-bold bg-[#1c5644]/10 text-emerald-850 border border-[#1c5644]/20"
+                        >
+                          {skill}
+                        </span>
+                      ))}
                     </div>
                   </div>
 
