@@ -5,7 +5,24 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Send, MessageSquare, AlertCircle, X, CheckCircle } from 'lucide-react';
+import { Loader2, Send, MessageSquare, AlertCircle, X, CheckCircle, User, UserCheck } from 'lucide-react';
+
+const parseQueryMetadata = (description: string) => {
+  let raisedBy = 'Student';
+  let raisedTo = 'Faculty';
+  let cleanDesc = description || '';
+
+  if (cleanDesc.includes('Raised By:')) {
+    const byMatch = cleanDesc.match(/Raised By:\s*([^\n]*)/);
+    if (byMatch) raisedBy = byMatch[1].trim();
+    
+    const toMatch = cleanDesc.match(/Raised To:\s*([^\n]*)/);
+    if (toMatch) raisedTo = toMatch[1].trim();
+    
+    cleanDesc = cleanDesc.replace(/Raised By:.*\nRaised To:.*\n\n?/, '').trim();
+  }
+  return { raisedBy, raisedTo, cleanDesc };
+};
 
 export default function QueriesPage() {
   const [queries, setQueries] = useState<any[]>([]);
@@ -235,6 +252,8 @@ export default function QueriesPage() {
                         <tr className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
                           <th className="p-4">Type</th>
                           <th className="p-4">Subject</th>
+                          <th className="p-4">Raised To</th>
+                          <th className="p-4">Raised By</th>
                           <th className="p-4">Status</th>
                           <th className="p-4 text-center">Action</th>
                         </tr>
@@ -256,7 +275,9 @@ export default function QueriesPage() {
                             </td>
                           </tr>
                         ) : null}
-                        {queries.map((query) => (
+                        {queries.map((query) => {
+                          const { raisedBy, raisedTo } = parseQueryMetadata(query.description);
+                          return (
                           <tr 
                             key={query.id} 
                             onClick={() => setSelectedQuery(query)}
@@ -270,6 +291,18 @@ export default function QueriesPage() {
                               </span>
                             </td>
                             <td className="p-4 text-slate-900 max-w-[200px] truncate">{query.subject}</td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-1.5 text-slate-600">
+                                <UserCheck className="h-3.5 w-3.5 text-sky-600" />
+                                <span className="text-xs font-semibold">{raisedTo}</span>
+                              </div>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-1.5 text-slate-600">
+                                <User className="h-3.5 w-3.5 text-slate-400" />
+                                <span className="text-xs">{raisedBy}</span>
+                              </div>
+                            </td>
                             <td className="p-4">
                               <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                                 query.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
@@ -291,7 +324,7 @@ export default function QueriesPage() {
                               </button>
                             </td>
                           </tr>
-                        ))}
+                        )})}
                       </tbody>
                     </table>
                   </div>
@@ -330,7 +363,7 @@ export default function QueriesPage() {
                     </div>
                     {selectedQuery.description && (
                       <p className="text-xs text-slate-500 mt-2 bg-slate-50 rounded-xl p-2.5 border border-slate-100 max-h-[80px] overflow-y-auto">
-                        <strong>Problem:</strong> {selectedQuery.description}
+                        <strong>Problem:</strong> {parseQueryMetadata(selectedQuery.description).cleanDesc}
                       </p>
                     )}
                   </div>
@@ -345,7 +378,7 @@ export default function QueriesPage() {
                     ) : messages.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center p-4">
                         <MessageSquare className="h-8 w-8 mb-2 stroke-1" />
-                        <p className="text-xs font-semibold">No messages yet. Send a message to start chatting with your mentor!</p>
+                        <p className="text-xs font-semibold">No messages yet. Send a message to start chatting!</p>
                       </div>
                     ) : (
                       messages.map((msg) => {
@@ -387,7 +420,7 @@ export default function QueriesPage() {
                           type="text"
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Type a message to your mentor..."
+                          placeholder="Type a message..."
                           className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs focus:border-sky-500 focus:bg-white focus:outline-none"
                         />
                         <button
@@ -405,7 +438,7 @@ export default function QueriesPage() {
                 <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center p-6">
                   <MessageSquare className="h-12 w-12 mb-3 stroke-1" />
                   <h4 className="text-sm font-semibold text-slate-700">No Query Selected</h4>
-                  <p className="text-xs max-w-[220px] mt-1">Select a query from the list to view details and start chatting with your mentor.</p>
+                  <p className="text-xs max-w-[220px] mt-1">Select a query from the list to view details and start chatting.</p>
                 </div>
               )}
             </div>
