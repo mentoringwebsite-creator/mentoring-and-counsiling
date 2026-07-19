@@ -80,7 +80,7 @@ export default function PerformancePage() {
   const [clubs, setClubs] = useState<any[]>([]);
   const [certifications, setCertifications] = useState<any[]>([]);
   const [skills, setSkills] = useState<{ name: string; level: number }[]>([]);
-  const [showSkillsPie, setShowSkillsPie] = useState(false);
+  const [showSkillsPie, setShowSkillsPie] = useState(true);
   const [rollNumber, setRollNumber] = useState<string>('');
   const [classAverage, setClassAverage] = useState<number>(7.80);
   

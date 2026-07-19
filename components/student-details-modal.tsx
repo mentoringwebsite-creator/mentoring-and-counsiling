@@ -95,7 +95,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
-  const [modalShowSkillsPie, setModalShowSkillsPie] = useState(false);
+  const [modalShowSkillsPie, setModalShowSkillsPie] = useState(true);
 
   const profile = student?.student_profiles?.[0] || {};
   const subjects = profile.academic_subjects || [];
