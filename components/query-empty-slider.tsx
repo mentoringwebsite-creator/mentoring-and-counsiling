@@ -63,41 +63,62 @@ export function QueryEmptySlider({ slides, accentClassName = 'text-sky-600' }: Q
   if (slides.length === 0) return null;
 
   return (
-    <div className="flex h-full items-center justify-center p-4 sm:p-6">
-      <div className="w-full max-w-lg rounded-[28px] border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-slate-100 p-5 sm:p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-center">
-          <div className={`rounded-2xl bg-white p-3 shadow-sm ${accentClassName}`}>
-            <MessageSquare className="h-8 w-8 stroke-1.5" />
-          </div>
-        </div>
+    <div
+      className="relative flex h-full w-full flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-100"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-white/60 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-white/60 to-transparent" />
 
-        <div
-          className="relative min-h-[120px] touch-pan-y text-center sm:min-h-[112px]"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div key={activeIndex} className="animate-fadeIn">
-            <h4 className="text-base font-bold text-slate-800">{slides[activeIndex].title}</h4>
-            <p className="mx-auto mt-2 max-w-[300px] text-xs leading-relaxed text-slate-500 sm:text-sm">
-              {slides[activeIndex].description}
-            </p>
+      <div className="flex h-full flex-1 items-center justify-center px-6 py-10 text-center sm:px-10">
+        <div key={activeIndex} className="animate-fadeIn">
+          <div className="mb-5 flex items-center justify-center">
+            <div className={`rounded-2xl bg-white p-3 shadow-sm ${accentClassName}`}>
+              <MessageSquare className="h-9 w-9 stroke-1.5" />
+            </div>
           </div>
-        </div>
 
-        {slides.length > 1 && (
-          <div className="mt-2 flex items-center justify-between gap-3">
+          <h4 className="text-2xl font-bold text-slate-800 sm:text-3xl">{slides[activeIndex].title}</h4>
+          <p className="mx-auto mt-3 max-w-[560px] text-sm leading-relaxed text-slate-500 sm:text-base">
+            {slides[activeIndex].description}
+          </p>
+        </div>
+      </div>
+
+      {slides.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={goPrev}
+            className="absolute left-3 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 p-2 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-800 sm:inline-flex"
+            aria-label="Previous hint"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={goNext}
+            className="absolute right-3 top-1/2 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white/90 p-2 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-800 sm:inline-flex"
+            aria-label="Next hint"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
+          <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-2">
             <button
               type="button"
               onClick={goPrev}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-800 sm:hidden"
               aria-label="Previous hint"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               Prev
             </button>
 
-            <div className="flex items-center gap-1.5">
+            <div className="mx-1 flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-1">
               {slides.map((_, index) => (
                 <span
                   key={index}
@@ -109,15 +130,15 @@ export function QueryEmptySlider({ slides, accentClassName = 'text-sky-600' }: Q
             <button
               type="button"
               onClick={goNext}
-              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-800 sm:hidden"
               aria-label="Next hint"
             >
               Next
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   );
 }

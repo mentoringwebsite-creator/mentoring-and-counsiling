@@ -29,6 +29,7 @@ export default function FacultyQueriesPage() {
   const [queries, setQueries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuery, setSelectedQuery] = useState<any | null>(null);
+  const [showQueryList, setShowQueryList] = useState(true);
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState('');
@@ -157,6 +158,10 @@ export default function FacultyQueriesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    setShowQueryList(!selectedQuery);
+  }, [selectedQuery]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !selectedQuery) return;
@@ -215,7 +220,7 @@ export default function FacultyQueriesPage() {
           
           <div className="grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0">
             {/* Left Column: Queries List */}
-            <div className={selectedQuery ? "hidden lg:block space-y-6 w-full min-w-0" : "space-y-6 w-full min-w-0"}>
+            <div className={showQueryList ? "space-y-6 w-full min-w-0" : "hidden"}>
               <div className="portal-card">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold">Mentees' Queries</h2>
@@ -315,10 +320,13 @@ export default function FacultyQueriesPage() {
                 <>
                   {/* Chat Header */}
                   <div className="border-b border-slate-200 pb-4">
-                    {/* Mobile Back Button */}
+                    {/* Back Button */}
                     <button
-                      onClick={() => setSelectedQuery(null)}
-                      className="mb-3 flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-800 lg:hidden"
+                      onClick={() => {
+                        setSelectedQuery(null);
+                        setShowQueryList(true);
+                      }}
+                      className="mb-3 flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-800"
                     >
                       &larr; Back to Queries
                     </button>

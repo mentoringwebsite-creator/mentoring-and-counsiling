@@ -29,6 +29,7 @@ export default function QueriesPage() {
   const [queries, setQueries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedQuery, setSelectedQuery] = useState<any | null>(null);
+  const [showQueryList, setShowQueryList] = useState(true);
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState('');
@@ -130,6 +131,10 @@ export default function QueriesPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  useEffect(() => {
+    setShowQueryList(!selectedQuery);
+  }, [selectedQuery]);
+
   const handleCreateQuery = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newQuerySubject.trim()) return;
@@ -226,7 +231,7 @@ export default function QueriesPage() {
           
           <div className="grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0">
             {/* Left side: Query List */}
-            <div className={selectedQuery ? "hidden lg:block space-y-6 w-full min-w-0" : "space-y-6 w-full min-w-0"}>
+            <div className={showQueryList ? "space-y-6 w-full min-w-0" : "hidden"}>
               <div className="portal-card">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <h2 className="text-2xl font-semibold">Recent Queries</h2>
@@ -339,10 +344,13 @@ export default function QueriesPage() {
                 <>
                   {/* Chat Header */}
                   <div className="border-b border-slate-200 pb-4">
-                    {/* Mobile Back Button */}
+                    {/* Back Button */}
                     <button
-                      onClick={() => setSelectedQuery(null)}
-                      className="mb-3 flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700 lg:hidden"
+                      onClick={() => {
+                        setSelectedQuery(null);
+                        setShowQueryList(true);
+                      }}
+                      className="mb-3 flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700"
                     >
                       &larr; Back to Queries
                     </button>
