@@ -443,7 +443,7 @@ export default function PerformancePage() {
         <div className="grid gap-4 px-3 py-3 md:px-4 md:py-4 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0 h-[calc(100vh-110px)] overflow-hidden">
           <Sidebar active="/student/performance" items={studentSidebarItems} />
 
-          <div className="w-full min-w-0 h-full">
+          <div className="w-full min-w-0 h-full overflow-y-auto pr-1 pb-6 scrollbar-none">
             {loading ? (
               <div className="portal-card flex h-[400px] items-center justify-center">
                 <div className="flex flex-col items-center gap-3 text-slate-500">
@@ -452,7 +452,7 @@ export default function PerformancePage() {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col gap-4 h-full min-h-0 w-full overflow-hidden animate-fadeIn">
+              <div className="flex flex-col gap-4 w-full h-auto animate-fadeIn">
                 
                 {/* TOP ROW: Minimized Academic & Extracurricular Graphs (Height: 260px) */}
                 <div className="grid grid-cols-1 xl:grid-cols-3 h-[260px] shrink-0 gap-4 min-h-0">
