@@ -86,7 +86,7 @@ h4 {
 
 /* Premium Card and Interactive Shadows */
 .portal-card {
-  @apply rounded-[28px] border border-white/75 bg-white/82 backdrop-blur-xl p-4 sm:p-6 shadow-[0_14px_40px_rgba(15,44,34,0.06)] transition-all duration-300 ease-out;
+  @apply rounded-[28px] border border-white/75 bg-white/80 backdrop-blur-xl p-4 sm:p-6 shadow-[0_14px_40px_rgba(15,44,34,0.06)] transition-all duration-300 ease-out;
 }
 
 .portal-card:hover {
