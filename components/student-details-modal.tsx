@@ -491,7 +491,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
     if (modalShowSkillsPie) {
       const currentSkills = parsedSkills.length > 0 ? parsedSkills : DEFAULT_SKILLS;
       const sortedSkills = [...currentSkills].sort((a, b) => b.level - a.level);
-      return sortedSkills.slice(0, 5).map(s => ({
+      return sortedSkills.map(s => ({
         name: s.name,
         value: s.level
       }));

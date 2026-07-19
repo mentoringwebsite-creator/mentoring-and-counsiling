@@ -275,7 +275,7 @@ export default function PerformancePage() {
     if (showSkillsPie) {
       const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
       const sortedSkills = [...currentSkills].sort((a, b) => b.level - a.level);
-      return sortedSkills.slice(0, 5).map(s => ({
+      return sortedSkills.map(s => ({
         name: s.name,
         value: s.level
       }));
