@@ -454,8 +454,8 @@ export default function PerformancePage() {
             ) : (
               <div className="flex flex-col gap-4 w-full h-auto animate-fadeIn">
                 
-                {/* TOP ROW: Minimized Academic & Extracurricular Graphs (Height: 260px) */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 h-[260px] shrink-0 gap-4 min-h-0">
+                {/* TOP ROW: Minimized Academic & Extracurricular Graphs (Height: 330px) */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 h-[330px] shrink-0 gap-4 min-h-0">
                   
                   {/* Graph 1: SGPA Trend */}
                   <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm h-full flex flex-col min-h-0">
@@ -485,7 +485,7 @@ export default function PerformancePage() {
                           </BarChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div className="flex h-full items-center justify-center"><p className="text-[10px] text-slate-400 italic">No data</p></div>
+                        <div className="flex h-full items-center justify-center"><p className="text-[10px] text-slate-400 italic">No academic data found</p></div>
                       )}
                     </div>
                   </div>
@@ -556,8 +556,8 @@ export default function PerformancePage() {
                             data={extracurricularData}
                             cx="50%"
                             cy="38%"
-                            innerRadius={36}
-                            outerRadius={58}
+                            innerRadius={45}
+                            outerRadius={75}
                             paddingAngle={3}
                             dataKey="value"
                           >

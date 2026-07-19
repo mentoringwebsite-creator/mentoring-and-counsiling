@@ -853,7 +853,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 w-full min-h-0">
                   
                   {/* Graph 1: SGPA Trend */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[290px] flex flex-col min-h-0">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                       <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                         <TrendingUp className="h-3.5 w-3.5 text-[#1c5644]" />
@@ -877,13 +877,13 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                           </BarChart>
                         </ResponsiveContainer>
                       ) : (
-                        <div className="flex h-full items-center justify-center"><p className="text-[10px] text-slate-400 italic">No data</p></div>
+                        <div className="flex h-full items-center justify-center"><p className="text-[10px] text-slate-400 italic">No academic data found</p></div>
                       )}
                     </div>
                   </div>
 
                   {/* Graph 2: Subject Marks Breakdown */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[290px] flex flex-col min-h-0">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                       <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                         <BookOpen className="h-3.5 w-3.5 text-[#1c5644]" />
@@ -922,7 +922,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                   </div>
 
                   {/* Graph 3: Extracurricular Activity */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] flex flex-col min-h-0">
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[290px] flex flex-col min-h-0">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                       <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                         <Trophy className="h-3.5 w-3.5 text-emerald-800" />
@@ -942,8 +942,8 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                             data={extracurricularData}
                             cx="50%"
                             cy="38%"
-                            innerRadius={36}
-                            outerRadius={58}
+                            innerRadius={45}
+                            outerRadius={75}
                             paddingAngle={3}
                             dataKey="value"
                           >
