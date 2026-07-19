@@ -634,54 +634,81 @@ export default function PerformancePage() {
                   </div>
 
                   {/* Card 3: Parental Performance Summary & Feedback */}
-                  <div className="rounded-[24px] border border-slate-150 bg-gradient-to-b from-white to-slate-50/50 p-4 shadow-sm h-full flex flex-col min-h-0">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 shrink-0">
-                      <div className="flex items-center gap-2">
-                        <div className="rounded-lg bg-emerald-50 p-1.5">
-                          <Heart className="h-4 w-4 text-emerald-850" />
-                        </div>
-                        <div>
-                          <h2 className="text-xs font-black text-slate-900 leading-tight">Parent Dashboard Analytics</h2>
-                          <p className="text-[9px] font-bold text-slate-400 mt-0.5">Overall growth progress index</p>
-                        </div>
-                      </div>
-                      <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold bg-[#1c5644]/10 text-emerald-850">
-                        <Sparkles className="h-3 w-3 animate-pulse" />
-                        <span>Growth: {getGrowthRate()}</span>
-                      </span>
-                    </div>
+                  {(() => {
+                    const getSuitableRoles = () => {
+                      const sNames = (skills.length > 0 ? skills : DEFAULT_SKILLS).map(s => s.name.toLowerCase());
+                      const roles = [];
+                      const hasFront = sNames.some(n => n.includes('react') || n.includes('next') || n.includes('tailwind') || n.includes('javascript') || n.includes('typescript') || n.includes('html') || n.includes('css'));
+                      const hasBack = sNames.some(n => n.includes('node') || n.includes('sql') || n.includes('python') || n.includes('database') || n.includes('mongo'));
+                      const hasData = sNames.some(n => n.includes('structures') || n.includes('algorithm') || n.includes('python') || n.includes('java') || n.includes('c++'));
+                      if (hasFront) roles.push('Frontend Developer', 'UI Engineer');
+                      if (hasBack) roles.push('Backend Developer', 'Database Specialist');
+                      if (hasData) roles.push('Software Engineer (SDE)', 'Systems Analyst');
+                      if (roles.length === 0) roles.push('Graduate Engineer Trainee');
+                      return roles.slice(0, 3).join(', ');
+                    };
 
-                    <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col justify-between gap-3 text-xs">
-                      {/* Parental highlights card list */}
-                      <div className="space-y-2 flex-1 min-h-0 overflow-y-auto scrollbar-none">
-                        <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
-                          <span className="text-slate-550 font-bold text-[10px]">Academic CGPA</span>
-                          <span className="font-extrabold text-slate-800 text-[11px]">{cgpa} / 10.0</span>
-                        </div>
-                        <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
-                          <span className="text-slate-550 font-bold text-[10px]">Attendance Status</span>
-                          <span className={`font-extrabold text-[11px] ${studentAttendance >= 85 ? 'text-emerald-800' : studentAttendance >= 75 ? 'text-slate-700' : 'text-rose-800'}`}>
-                            {studentAttendance}% ({studentAttendance >= 85 ? 'Excellent' : studentAttendance >= 75 ? 'Good' : 'Critical'})
+                    return (
+                      <div className="rounded-[24px] border border-slate-150 bg-gradient-to-b from-white to-slate-50/50 p-4 shadow-sm h-full flex flex-col min-h-0">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 shrink-0">
+                          <div className="flex items-center gap-2">
+                            <div className="rounded-lg bg-emerald-50 p-1.5">
+                              <Heart className="h-4 w-4 text-emerald-850" />
+                            </div>
+                            <div>
+                              <h2 className="text-xs font-black text-slate-900 leading-tight">Parent Dashboard Analytics</h2>
+                              <p className="text-[9px] font-bold text-slate-400 mt-0.5">Overall growth progress index</p>
+                            </div>
+                          </div>
+                          <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold bg-[#1c5644]/10 text-emerald-850">
+                            <Sparkles className="h-3 w-3 animate-pulse" />
+                            <span>Growth: {getGrowthRate()}</span>
                           </span>
                         </div>
-                        <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
-                          <span className="text-slate-550 font-bold text-[10px]">Pending Backlogs</span>
-                          <span className="font-extrabold text-slate-800 text-[11px]">{backlogs === 0 ? 'Nil (Clean Record)' : `${backlogs} subjects`}</span>
-                        </div>
-                      </div>
 
-                      {/* Mentor note card */}
-                      <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm mt-1 flex flex-col gap-1 shrink-0">
-                        <div className="flex items-center gap-1 border-b pb-1 text-[8px] font-bold text-[#1c5644] uppercase tracking-wider">
-                          <MessageSquare className="h-3 w-3" />
-                          <span>Mentor's Recommendations</span>
+                        <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col justify-between gap-3 text-xs">
+                          {/* Parental highlights card list */}
+                          <div className="space-y-2 flex-1 min-h-0 overflow-y-auto scrollbar-none">
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
+                              <span className="text-slate-550 font-bold text-[10px]">Academic CGPA</span>
+                              <span className="font-extrabold text-slate-800 text-[11px]">{cgpa} / 10.0</span>
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
+                              <span className="text-slate-550 font-bold text-[10px]">Attendance Status</span>
+                              <span className={`font-extrabold text-[11px] ${studentAttendance >= 85 ? 'text-emerald-800' : studentAttendance >= 75 ? 'text-slate-700' : 'text-rose-800'}`}>
+                                {studentAttendance}% ({studentAttendance >= 85 ? 'Excellent' : studentAttendance >= 75 ? 'Good' : 'Critical'})
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
+                              <span className="text-slate-550 font-bold text-[10px]">Pending Backlogs</span>
+                              <span className="font-extrabold text-slate-800 text-[11px]">{backlogs === 0 ? 'Nil (Clean Record)' : `${backlogs} subjects`}</span>
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
+                              <span className="text-slate-550 font-bold text-[10px]">Placement Eligibility</span>
+                              <span className={`font-extrabold text-[10px] ${backlogs === 0 && cgpa >= 6.0 ? 'text-emerald-800 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded' : 'text-rose-800 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded'}`}>
+                                {backlogs === 0 && cgpa >= 6.0 ? 'Eligible' : 'Ineligible'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
+                              <span className="text-slate-550 font-bold text-[10px]">Recommended Job Roles</span>
+                              <span className="font-extrabold text-[#1c5644] text-[10px] text-right truncate max-w-[160px]" title={getSuitableRoles()}>{getSuitableRoles()}</span>
+                            </div>
+                          </div>
+
+                          {/* Mentor note card */}
+                          <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm mt-1 flex flex-col gap-1 shrink-0">
+                            <div className="flex items-center gap-1 border-b pb-1 text-[8px] font-bold text-[#1c5644] uppercase tracking-wider">
+                              <MessageSquare className="h-3 w-3" />
+                              <span>Mentor's Recommendations</span>
+                            </div>
+                            <p className="text-[10px] text-slate-650 font-semibold leading-relaxed italic">
+                              "{getParentProgressNote()}"
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-[10px] text-slate-650 font-semibold leading-relaxed italic">
-                          "{getParentProgressNote()}"
-                        </p>
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                 </div>
 

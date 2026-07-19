@@ -1007,39 +1007,67 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                   </div>
 
                   {/* Graph 6: Parent Dashboard */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[220px] flex flex-col min-h-0">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
-                      <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
-                        <Heart className="h-3.5 w-3.5 text-emerald-850" />
-                        <span>Parent Dashboard Analytics</span>
-                      </h2>
-                      <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold bg-[#1c5644]/10 text-emerald-850 animate-pulse">
-                        <Sparkles className="h-3 w-3" />
-                        <span>{getGrowthRate()}</span>
-                      </span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col justify-between gap-2 text-xs">
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
-                          <span className="text-slate-400 font-bold">CGPA</span>
-                          <span className="font-extrabold text-slate-800">{cgpaVal.toFixed(2)} / 10.0</span>
+                  {(() => {
+                    const getSuitableRoles = () => {
+                      const currentSkills = parsedSkills.length > 0 ? parsedSkills : DEFAULT_SKILLS;
+                      const sNames = currentSkills.map((s: any) => s.name.toLowerCase());
+                      const roles = [];
+                      const hasFront = sNames.some(n => n.includes('react') || n.includes('next') || n.includes('tailwind') || n.includes('javascript') || n.includes('typescript') || n.includes('html') || n.includes('css'));
+                      const hasBack = sNames.some(n => n.includes('node') || n.includes('sql') || n.includes('python') || n.includes('database') || n.includes('mongo'));
+                      const hasData = sNames.some(n => n.includes('structures') || n.includes('algorithm') || n.includes('python') || n.includes('java') || n.includes('c++'));
+                      if (hasFront) roles.push('Frontend Developer', 'UI Engineer');
+                      if (hasBack) roles.push('Backend Developer', 'Database Specialist');
+                      if (hasData) roles.push('Software Engineer (SDE)', 'Systems Analyst');
+                      if (roles.length === 0) roles.push('Graduate Engineer Trainee');
+                      return roles.slice(0, 3).join(', ');
+                    };
+
+                    return (
+                      <div className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm h-[290px] flex flex-col min-h-0">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
+                          <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
+                            <Heart className="h-3.5 w-3.5 text-emerald-850" />
+                            <span>Parent Dashboard Analytics</span>
+                          </h2>
+                          <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold bg-[#1c5644]/10 text-emerald-850 animate-pulse">
+                            <Sparkles className="h-3 w-3" />
+                            <span>{getGrowthRate()}</span>
+                          </span>
                         </div>
-                        <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
-                          <span className="text-slate-400 font-bold">Attendance</span>
-                          <span className="font-extrabold text-emerald-800">{studentAttendance}%</span>
+                        <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col justify-between gap-2 text-xs">
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
+                              <span className="text-slate-400 font-bold">CGPA</span>
+                              <span className="font-extrabold text-slate-800">{cgpaVal.toFixed(2)} / 10.0</span>
+                            </div>
+                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
+                              <span className="text-slate-400 font-bold">Attendance</span>
+                              <span className="font-extrabold text-emerald-800">{studentAttendance}%</span>
+                            </div>
+                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
+                              <span className="text-slate-400 font-bold">Placement Eligibility</span>
+                              <span className={`font-extrabold text-[9px] ${backlogsVal === 0 && cgpaVal >= 6.0 ? 'text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded' : 'text-rose-800 bg-rose-50 px-1 py-0.5 rounded'}`}>
+                                {backlogsVal === 0 && cgpaVal >= 6.0 ? 'Eligible' : 'Ineligible'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
+                              <span className="text-slate-400 font-bold">Recommended Roles</span>
+                              <span className="font-extrabold text-[#1c5644] text-[9px] truncate max-w-[140px]" title={getSuitableRoles()}>{getSuitableRoles()}</span>
+                            </div>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 bg-white p-2 flex flex-col gap-0.5 shrink-0">
+                            <div className="flex items-center gap-1 border-b pb-0.5 text-[7px] font-bold text-[#1c5644] uppercase tracking-wider">
+                              <Sparkles className="h-2.5 w-2.5" />
+                              <span>Recommendations</span>
+                            </div>
+                            <p className="text-[9px] text-slate-650 leading-relaxed italic truncate max-w-full">
+                              "{getParentProgressNote()}"
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="rounded-lg border border-slate-200 bg-white p-2 flex flex-col gap-0.5 shrink-0">
-                        <div className="flex items-center gap-1 border-b pb-0.5 text-[7px] font-bold text-[#1c5644] uppercase tracking-wider">
-                          <Sparkles className="h-2.5 w-2.5" />
-                          <span>Recommendations</span>
-                        </div>
-                        <p className="text-[9px] text-slate-650 leading-relaxed italic truncate max-w-full">
-                          "{getParentProgressNote()}"
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                 </div>
               )}
