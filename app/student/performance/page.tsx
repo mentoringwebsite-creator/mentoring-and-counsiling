@@ -292,6 +292,34 @@ export default function PerformancePage() {
     }
   };
 
+  const getSemesterBacklogsData = () => {
+    const semMap: { [key: number]: number } = {};
+    for (let i = 1; i <= 6; i++) {
+      semMap[i] = 0;
+    }
+
+    subjects.forEach((sub: any) => {
+      const sem = parseInt(sub.semester);
+      const gp = convertGradeToGP(sub.gpa);
+      const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
+      if (!isNaN(sem)) {
+        if (isF) {
+          semMap[sem] = (semMap[sem] || 0) + 1;
+        }
+      }
+    });
+
+    const maxSemInDb = Math.max(...subjects.map((s: any) => parseInt(s.semester) || 1), 6);
+    for (let i = 7; i <= maxSemInDb; i++) {
+      if (semMap[i] === undefined) semMap[i] = 0;
+    }
+
+    return Object.keys(semMap).map(Number).sort((a, b) => a - b).map((sem: number) => ({
+      name: `Sem ${sem}`,
+      Backlogs: semMap[sem]
+    }));
+  };
+
   // Dynamic Attendance evaluation based on roll number
   const getStudentAttendance = () => {
     if (!rollNumber) return 85.0;
@@ -371,6 +399,7 @@ export default function PerformancePage() {
   const sgpaTrendData = getSgpaTrendData();
   const subjectMarksData = getSubjectMarksData();
   const extracurricularData = getExtracurricularData();
+  const backlogData = getSemesterBacklogsData();
 
   const studentAttendance = getStudentAttendance();
   const studentInternalPct = getStudentInternalMarksPct();
@@ -526,9 +555,9 @@ export default function PerformancePage() {
                           <Pie
                             data={extracurricularData}
                             cx="50%"
-                            cy="42%"
-                            innerRadius={22}
-                            outerRadius={38}
+                            cy="38%"
+                            innerRadius={28}
+                            outerRadius={48}
                             paddingAngle={3}
                             dataKey="value"
                           >
@@ -570,79 +599,37 @@ export default function PerformancePage() {
                         </div>
                         <div>
                           <h2 className="text-xs font-black text-slate-900 leading-tight">Faculty / Mentor Review</h2>
-                          <p className="text-[9px] font-bold text-slate-400 mt-0.5">Monitoring core compliance & regularity</p>
+                          <p className="text-[9px] font-bold text-slate-400 mt-0.5">Semester-wise backlog tracker</p>
                         </div>
                       </div>
                       <span className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-bold border ${
-                        studentAttendance >= 75.0 
+                        backlogs === 0 
                           ? 'bg-emerald-50 border-emerald-100 text-emerald-800' 
                           : 'bg-rose-50 border-rose-100 text-rose-800'
                       }`}>
-                        <CheckCircle2 className="h-3 w-3" />
-                        <span>{studentAttendance >= 75.0 ? 'Regular' : 'Low Attendance'}</span>
+                        <AlertTriangle className="h-3 w-3" />
+                        <span>{backlogs === 0 ? 'Clear (0 Backlogs)' : `${backlogs} Backlog(s)`}</span>
                       </span>
                     </div>
 
-                    <div className="flex-1 min-h-0 w-full flex items-center justify-around">
-                      {/* Attendance Doughnut */}
-                      <div className="flex flex-col items-center gap-2 relative">
-                        <div className="relative w-[110px] h-[110px] flex items-center justify-center">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={[
-                                  { name: 'Present', value: studentAttendance },
-                                  { name: 'Absent', value: Number((100 - studentAttendance).toFixed(1)) }
-                                ]}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={34}
-                                outerRadius={44}
-                                paddingAngle={2}
-                                dataKey="value"
-                              >
-                                <Cell fill="#1c5644" />
-                                <Cell fill="#f1f5f9" />
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div className="absolute flex flex-col items-center justify-center">
-                            <span className="text-[12px] font-black text-slate-800">{studentAttendance}%</span>
-                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-wider">Present</span>
-                          </div>
+                    <div className="flex-1 min-h-0 w-full">
+                      {backlogData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={backlogData} margin={{ top: 15, right: 10, left: -25, bottom: 2 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
+                            <YAxis stroke="#94a3b8" fontSize={8} fontWeight={600} allowDecimals={false} domain={[0, 'dataMax + 1']} />
+                            <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
+                            <Bar name="Backlogs" dataKey="Backlogs" fill="#dc2626" radius={[3, 3, 0, 0]} barSize={12} isAnimationActive={true} animationDuration={600}>
+                              <LabelList dataKey="Backlogs" position="top" style={{ fontSize: '8px', fill: '#dc2626', fontWeight: 'bold' }} />
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <p className="text-[10px] text-slate-400 italic">No academic data found</p>
                         </div>
-                        <span className="text-[10px] font-bold text-slate-700">Attendance Rate</span>
-                      </div>
-
-                      {/* Internals Doughnut */}
-                      <div className="flex flex-col items-center gap-2 relative">
-                        <div className="relative w-[110px] h-[110px] flex items-center justify-center">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={[
-                                  { name: 'Scored', value: studentInternalPct },
-                                  { name: 'Remaining', value: Number((100 - studentInternalPct).toFixed(1)) }
-                                ]}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={34}
-                                outerRadius={44}
-                                paddingAngle={2}
-                                dataKey="value"
-                              >
-                                <Cell fill="#e88913" />
-                                <Cell fill="#f1f5f9" />
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div className="absolute flex flex-col items-center justify-center">
-                            <span className="text-[12px] font-black text-slate-800">{studentInternalPct}%</span>
-                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-wider">Internals</span>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-700">Internal Marks</span>
-                      </div>
+                      )}
                     </div>
                   </div>
 
