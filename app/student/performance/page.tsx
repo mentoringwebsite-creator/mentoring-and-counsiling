@@ -46,7 +46,18 @@ const DEFAULT_CERTS = [
   { name: "Meta Front-End Developer Specialization", link: "https://www.coursera.org", image: "" }
 ];
 
-const DEFAULT_SKILLS = ["JavaScript", "TypeScript", "React.js", "Next.js", "Node.js", "Python", "SQL", "Git", "Tailwind CSS", "Data Structures"];
+const DEFAULT_SKILLS = [
+  { name: "JavaScript", level: 90 },
+  { name: "TypeScript", level: 85 },
+  { name: "React.js", level: 88 },
+  { name: "Next.js", level: 80 },
+  { name: "Node.js", level: 75 },
+  { name: "Python", level: 70 },
+  { name: "SQL", level: 82 },
+  { name: "Git", level: 85 },
+  { name: "Tailwind CSS", level: 90 },
+  { name: "Data Structures", level: 78 }
+];
 
 const PIE_COLORS = ['#1c5644', '#e88913', '#0284c7'];
 
@@ -67,7 +78,7 @@ export default function PerformancePage() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [clubs, setClubs] = useState<any[]>([]);
   const [certifications, setCertifications] = useState<any[]>([]);
-  const [skills, setSkills] = useState<string[]>([]);
+  const [skills, setSkills] = useState<{ name: string; level: number }[]>([]);
   const [rollNumber, setRollNumber] = useState<string>('');
   const [classAverage, setClassAverage] = useState<number>(7.80);
   
@@ -101,7 +112,14 @@ export default function PerformancePage() {
       if (rawInterests.includes('||skills:')) {
         const parts = rawInterests.split('||skills:');
         const skillStr = parts[1];
-        parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+        parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => {
+          const item = s.trim();
+          if (item.includes(':')) {
+            const [name, lvl] = item.split(':');
+            return { name: name.trim(), level: parseInt(lvl) || 80 };
+          }
+          return { name: item, level: 80 };
+        }).filter((item: any) => item.name) : [];
       } else if (rawInterests.trim() !== '') {
         parsedSkills = [];
       }

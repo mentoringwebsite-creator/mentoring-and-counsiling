@@ -71,7 +71,18 @@ const DEFAULT_INTERESTS = "Web Development, Machine Learning, UI/UX Design, Open
 const DEFAULT_DREAMS = "To become a software architect designing scalable and high-impact distributed applications.";
 const DEFAULT_CAREER_GOALS = "Secure a Software Engineering role at a leading tech company and mentor aspiring developers.";
 
-const DEFAULT_SKILLS = ["JavaScript", "TypeScript", "React.js", "Next.js", "Node.js", "Python", "SQL", "Git", "Tailwind CSS", "Data Structures"];
+const DEFAULT_SKILLS = [
+  { name: "JavaScript", level: 90 },
+  { name: "TypeScript", level: 85 },
+  { name: "React.js", level: 88 },
+  { name: "Next.js", level: 80 },
+  { name: "Node.js", level: 75 },
+  { name: "Python", level: 70 },
+  { name: "SQL", level: 82 },
+  { name: "Git", level: 85 },
+  { name: "Tailwind CSS", level: 90 },
+  { name: "Data Structures", level: 78 }
+];
 
 const PIE_COLORS = ['#1c5644', '#e88913', '#0284c7'];
 
@@ -94,7 +105,14 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
     const parts = rawInterests.split('||skills:');
     parsedInterests = parts[0];
     const skillStr = parts[1];
-    parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+    parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => {
+      const item = s.trim();
+      if (item.includes(':')) {
+        const [name, lvl] = item.split(':');
+        return { name: name.trim(), level: parseInt(lvl) || 80 };
+      }
+      return { name: item, level: 80 };
+    }).filter((item: any) => item.name) : [];
   } else if (rawInterests.trim() !== '') {
     parsedSkills = [];
   }
@@ -1108,12 +1126,12 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                       <span>Skills & Expertise</span>
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {parsedSkills.map((skill: string, index: number) => (
+                      {parsedSkills.map((skill: any, index: number) => (
                         <span 
                           key={index}
                           className="px-2.5 py-1.5 rounded-full text-[10px] font-bold bg-[#1c5644]/10 text-emerald-850 border border-[#1c5644]/20"
                         >
-                          {skill}
+                          {skill.name} - {skill.level}%
                         </span>
                       ))}
                     </div>

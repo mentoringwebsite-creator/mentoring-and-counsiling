@@ -21,7 +21,18 @@ const DEFAULT_INTERESTS = "Web Development, Machine Learning, UI/UX Design, Open
 const DEFAULT_DREAMS = "To become a software architect designing scalable and high-impact distributed applications.";
 const DEFAULT_CAREER_GOALS = "Secure a Software Engineering role at a leading tech company and mentor aspiring developers.";
 
-const DEFAULT_SKILLS = ["JavaScript", "TypeScript", "React.js", "Next.js", "Node.js", "Python", "SQL", "Git", "Tailwind CSS", "Data Structures"];
+const DEFAULT_SKILLS = [
+  { name: "JavaScript", level: 90 },
+  { name: "TypeScript", level: 85 },
+  { name: "React.js", level: 88 },
+  { name: "Next.js", level: 80 },
+  { name: "Node.js", level: 75 },
+  { name: "Python", level: 70 },
+  { name: "SQL", level: 82 },
+  { name: "Git", level: 85 },
+  { name: "Tailwind CSS", level: 90 },
+  { name: "Data Structures", level: 78 }
+];
 
 export default function ExtracurricularPage() {
   const [loading, setLoading] = useState(true);
@@ -30,8 +41,9 @@ export default function ExtracurricularPage() {
   // Data lists
   const [clubs, setClubs] = useState<any[]>([]);
   const [certifications, setCertifications] = useState<any[]>([]);
-  const [skills, setSkills] = useState<string[]>([]);
+  const [skills, setSkills] = useState<{ name: string; level: number }[]>([]);
   const [newSkillText, setNewSkillText] = useState('');
+  const [newSkillLevel, setNewSkillLevel] = useState(80);
   
   // Aspirations states
   const [interests, setInterests] = useState('');
@@ -91,7 +103,14 @@ export default function ExtracurricularPage() {
         const parts = rawInterests.split('||skills:');
         parsedInterests = parts[0];
         const skillStr = parts[1];
-        parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => s.trim()).filter(Boolean) : [];
+        parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => {
+          const item = s.trim();
+          if (item.includes(':')) {
+            const [name, lvl] = item.split(':');
+            return { name: name.trim(), level: parseInt(lvl) || 80 };
+          }
+          return { name: item, level: 80 };
+        }).filter((item: any) => item.name) : [];
       } else if (rawInterests.trim() !== '') {
         parsedSkills = [];
       }
@@ -118,7 +137,7 @@ export default function ExtracurricularPage() {
     updatedInterests?: string, 
     updatedDreams?: string, 
     updatedGoals?: string,
-    updatedSkills?: string[]
+    updatedSkills?: { name: string; level: number }[]
   ) => {
     if (!profileId) return;
 
@@ -131,7 +150,7 @@ export default function ExtracurricularPage() {
 
       const finalInterestsVal = updatedInterests !== undefined ? updatedInterests : interests;
       const finalSkillsVal = updatedSkills !== undefined ? updatedSkills : skills;
-      payload.interests = finalInterestsVal + '||skills:' + finalSkillsVal.join(',');
+      payload.interests = finalInterestsVal + '||skills:' + finalSkillsVal.map(s => `${s.name}:${s.level}`).join(',');
 
       if (updatedDreams !== undefined) payload.dreams = updatedDreams;
       if (updatedGoals !== undefined) payload.career_goals = updatedGoals;
@@ -323,20 +342,21 @@ export default function ExtracurricularPage() {
     if (!cleanSkill) return;
 
     const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
-    if (currentSkills.includes(cleanSkill)) {
+    if (currentSkills.some(s => s.name.toLowerCase() === cleanSkill.toLowerCase())) {
       alert('Skill already exists.');
       return;
     }
 
-    const updatedSkills = [...currentSkills, cleanSkill];
+    const updatedSkills = [...currentSkills, { name: cleanSkill, level: newSkillLevel }];
     setSkills(updatedSkills);
     setNewSkillText('');
+    setNewSkillLevel(80);
     await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
   };
 
-  const handleRemoveSkill = async (skillToRemove: string) => {
+  const handleRemoveSkill = async (skillName: string) => {
     const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
-    const updatedSkills = currentSkills.filter(s => s !== skillToRemove);
+    const updatedSkills = currentSkills.filter(s => s.name !== skillName);
     setSkills(updatedSkills);
     await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
   };
@@ -576,21 +596,21 @@ export default function ExtracurricularPage() {
                 <div className="space-y-6">
                   {/* Skill tags container */}
                   <div className="flex flex-wrap gap-2.5">
-                    {skills.map((skill, index) => (
+                    {(skills.length > 0 ? skills : DEFAULT_SKILLS).map((skill, index) => (
                       <span 
                         key={index}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#1c5644]/10 text-emerald-850 border border-[#1c5644]/20 group/tag hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition duration-200 cursor-pointer"
-                        onClick={() => handleRemoveSkill(skill)}
+                        onClick={() => handleRemoveSkill(skill.name)}
                         title="Click to remove skill"
                       >
-                        <span>{skill}</span>
+                        <span>{skill.name} - {skill.level}%</span>
                         <X className="h-3 w-3 text-slate-400 group-hover/tag:text-rose-500 transition" />
                       </span>
                     ))}
                   </div>
 
                   {/* Add skill input */}
-                  <form onSubmit={handleAddSkill} className="flex max-w-md items-center gap-2">
+                  <form onSubmit={handleAddSkill} className="flex flex-col sm:flex-row max-w-lg items-stretch sm:items-center gap-3">
                     <input 
                       type="text" 
                       placeholder="Add a new skill (e.g. Python, React)"
@@ -598,10 +618,25 @@ export default function ExtracurricularPage() {
                       onChange={(e) => setNewSkillText(e.target.value)}
                       className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold focus:border-[#1c5644] focus:bg-white focus:outline-none transition"
                     />
+                    
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-[10px] font-bold text-slate-500">Level:</span>
+                      <input 
+                        type="range" 
+                        min="20" 
+                        max="100" 
+                        step="5"
+                        value={newSkillLevel}
+                        onChange={(e) => setNewSkillLevel(parseInt(e.target.value) || 80)}
+                        className="w-24 accent-[#1c5644] h-1 bg-slate-200 rounded-lg cursor-pointer"
+                      />
+                      <span className="text-[10px] font-bold text-slate-700 w-8">{newSkillLevel}%</span>
+                    </div>
+
                     <button 
                       type="submit"
                       disabled={saving}
-                      className="rounded-xl bg-[#1c5644] hover:bg-[#154335] px-4 py-2 text-xs font-bold text-white transition flex items-center gap-1 shadow-sm"
+                      className="rounded-xl bg-[#1c5644] hover:bg-[#154335] px-4 py-2 text-xs font-bold text-white transition flex items-center justify-center gap-1 shadow-sm shrink-0"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Add</span>
