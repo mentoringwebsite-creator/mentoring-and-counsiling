@@ -228,7 +228,7 @@ export default function QueriesPage() {
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/student/queries" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/performance', label: 'Performance' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
           
-          <div className={selectedQuery ? "grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0" : "grid gap-6 w-full min-w-0"}>
+          <div className={selectedQuery ? "grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
             {/* Left side: Query List */}
             <div className={showQueryList ? "space-y-6 w-full min-w-0" : "hidden"}>
               <div className="portal-card">
