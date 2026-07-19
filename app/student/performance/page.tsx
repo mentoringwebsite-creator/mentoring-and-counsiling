@@ -454,8 +454,8 @@ export default function PerformancePage() {
             ) : (
               <div className="flex flex-col gap-4 w-full h-auto animate-fadeIn">
                 
-                {/* TOP ROW: Minimized Academic & Extracurricular Graphs (Height: 330px) */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 h-[330px] shrink-0 gap-4 min-h-0">
+                {/* TOP ROW: Minimized Academic & Extracurricular Graphs (Height: 275px) */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 h-[275px] shrink-0 gap-4 min-h-0">
                   
                   {/* Graph 1: SGPA Trend */}
                   <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm h-full flex flex-col min-h-0">
@@ -555,7 +555,7 @@ export default function PerformancePage() {
                           <Pie
                             data={extracurricularData}
                             cx="50%"
-                            cy="38%"
+                            cy="36%"
                             innerRadius={45}
                             outerRadius={75}
                             paddingAngle={3}
@@ -598,7 +598,7 @@ export default function PerformancePage() {
                           <Users className="h-4 w-4 text-[#1c5644]" />
                         </div>
                         <div>
-                          <h2 className="text-xs font-black text-slate-900 leading-tight">Faculty / Mentor Review</h2>
+                          <h2 className="text-xs font-black text-slate-900 leading-tight">Backlog Analysis & Review</h2>
                           <p className="text-[9px] font-bold text-slate-400 mt-0.5">Semester-wise backlog tracker</p>
                         </div>
                       </div>
