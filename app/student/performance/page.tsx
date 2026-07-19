@@ -60,6 +60,7 @@ const DEFAULT_SKILLS = [
 ];
 
 const PIE_COLORS = ['#1c5644', '#e88913', '#0284c7'];
+const SKILLS_COLORS = ['#1c5644', '#e88913', '#0284c7', '#8b5cf6', '#ec4899'];
 
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
@@ -79,6 +80,7 @@ export default function PerformancePage() {
   const [clubs, setClubs] = useState<any[]>([]);
   const [certifications, setCertifications] = useState<any[]>([]);
   const [skills, setSkills] = useState<{ name: string; level: number }[]>([]);
+  const [showSkillsPie, setShowSkillsPie] = useState(false);
   const [rollNumber, setRollNumber] = useState<string>('');
   const [classAverage, setClassAverage] = useState<number>(7.80);
   
@@ -270,15 +272,24 @@ export default function PerformancePage() {
   };
 
   const getExtracurricularData = () => {
-    const clubsCount = clubs.length > 0 ? clubs.length : DEFAULT_CLUBS.length;
-    const certsCount = certifications.length > 0 ? certifications.length : DEFAULT_CERTS.length;
-    const skillsCount = skills.length > 0 ? skills.length : DEFAULT_SKILLS.length;
+    if (showSkillsPie) {
+      const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
+      const sortedSkills = [...currentSkills].sort((a, b) => b.level - a.level);
+      return sortedSkills.slice(0, 5).map(s => ({
+        name: s.name,
+        value: s.level
+      }));
+    } else {
+      const clubsCount = clubs.length > 0 ? clubs.length : DEFAULT_CLUBS.length;
+      const certsCount = certifications.length > 0 ? certifications.length : DEFAULT_CERTS.length;
+      const skillsCount = skills.length > 0 ? skills.length : DEFAULT_SKILLS.length;
 
-    return [
-      { name: 'Clubs Joined', value: clubsCount },
-      { name: 'Certifications', value: certsCount },
-      { name: 'Skills & Tech', value: skillsCount }
-    ];
+      return [
+        { name: 'Clubs Joined', value: clubsCount },
+        { name: 'Certifications', value: certsCount },
+        { name: 'Skills & Tech', value: skillsCount }
+      ];
+    }
   };
 
   // Dynamic Attendance evaluation based on roll number
@@ -498,12 +509,15 @@ export default function PerformancePage() {
                       <div>
                         <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                           <Trophy className="h-3.5 w-3.5 text-emerald-800" />
-                          <span>Activity & Certifications</span>
+                          <span>{showSkillsPie ? "Skills Breakdown" : "Activity & Certifications"}</span>
                         </h2>
                       </div>
-                      <span className="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-lg border border-emerald-100">
-                        Certs & Clubs
-                      </span>
+                      <button 
+                        onClick={() => setShowSkillsPie(!showSkillsPie)}
+                        className="text-[9px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-lg border border-emerald-150 transition select-none flex items-center gap-1 shadow-sm"
+                      >
+                        {showSkillsPie ? "Show Certs & Clubs" : "Show Skills"}
+                      </button>
                     </div>
 
                     <div className="flex-1 min-h-0 w-full">
@@ -519,7 +533,10 @@ export default function PerformancePage() {
                             dataKey="value"
                           >
                             {extracurricularData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={showSkillsPie ? SKILLS_COLORS[index % SKILLS_COLORS.length] : PIE_COLORS[index % PIE_COLORS.length]} 
+                              />
                             ))}
                           </Pie>
                           <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
@@ -530,7 +547,8 @@ export default function PerformancePage() {
                             iconSize={6}
                             formatter={(value, entry: any) => {
                               const item = entry.payload;
-                              return <span className="text-[8px] font-bold text-slate-600">{value}: {item.value}</span>;
+                              const suffix = showSkillsPie ? '%' : '';
+                              return <span className="text-[8px] font-bold text-slate-600">{value}: {item.value}{suffix}</span>;
                             }}
                           />
                         </PieChart>

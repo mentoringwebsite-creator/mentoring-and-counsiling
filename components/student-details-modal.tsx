@@ -85,6 +85,7 @@ const DEFAULT_SKILLS = [
 ];
 
 const PIE_COLORS = ['#1c5644', '#e88913', '#0284c7'];
+const SKILLS_COLORS = ['#1c5644', '#e88913', '#0284c7', '#8b5cf6', '#ec4899'];
 
 export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentDetailsModalProps) {
   const [loading, setLoading] = useState(false);
@@ -94,6 +95,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [modalShowSkillsPie, setModalShowSkillsPie] = useState(false);
 
   const profile = student?.student_profiles?.[0] || {};
   const subjects = profile.academic_subjects || [];
@@ -486,15 +488,24 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
   };
 
   const getExtracurricularData = () => {
-    const clubsCount = clubsList.length > 0 ? clubsList.length : DEFAULT_CLUBS.length;
-    const certsCount = certificationsList.length > 0 ? certificationsList.length : DEFAULT_CERTS.length;
-    const skillsCount = parsedSkills.length > 0 ? parsedSkills.length : DEFAULT_SKILLS.length;
+    if (modalShowSkillsPie) {
+      const currentSkills = parsedSkills.length > 0 ? parsedSkills : DEFAULT_SKILLS;
+      const sortedSkills = [...currentSkills].sort((a, b) => b.level - a.level);
+      return sortedSkills.slice(0, 5).map(s => ({
+        name: s.name,
+        value: s.level
+      }));
+    } else {
+      const clubsCount = clubsList.length > 0 ? clubsList.length : DEFAULT_CLUBS.length;
+      const certsCount = certificationsList.length > 0 ? certificationsList.length : DEFAULT_CERTS.length;
+      const skillsCount = parsedSkills.length > 0 ? parsedSkills.length : DEFAULT_SKILLS.length;
 
-    return [
-      { name: 'Clubs Joined', value: clubsCount },
-      { name: 'Certifications', value: certsCount },
-      { name: 'Skills & Tech', value: skillsCount }
-    ];
+      return [
+        { name: 'Clubs Joined', value: clubsCount },
+        { name: 'Certifications', value: certsCount },
+        { name: 'Skills & Tech', value: skillsCount }
+      ];
+    }
   };
 
   const getStudentAttendance = () => {
@@ -886,11 +897,14 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 shrink-0">
                       <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                         <Trophy className="h-3.5 w-3.5 text-emerald-800" />
-                        <span>Activity & Certifications</span>
+                        <span>{modalShowSkillsPie ? "Skills Breakdown" : "Activity & Certifications"}</span>
                       </h2>
-                      <span className="text-[9px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded-lg border border-emerald-100">
-                        Certs & Clubs
-                      </span>
+                      <button 
+                        onClick={() => setModalShowSkillsPie(!modalShowSkillsPie)}
+                        className="text-[9px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded-lg border border-emerald-150 transition select-none flex items-center gap-1 shadow-sm"
+                      >
+                        {modalShowSkillsPie ? "Show Certs & Clubs" : "Show Skills"}
+                      </button>
                     </div>
                     <div className="flex-1 min-h-0 w-full">
                       <ResponsiveContainer width="100%" height="100%">
@@ -905,7 +919,10 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                             dataKey="value"
                           >
                             {extracurricularData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                              <Cell 
+                                key={`cell-${index}`} 
+                                fill={modalShowSkillsPie ? SKILLS_COLORS[index % SKILLS_COLORS.length] : PIE_COLORS[index % PIE_COLORS.length]} 
+                              />
                             ))}
                           </Pie>
                           <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
@@ -916,7 +933,8 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                             iconSize={6}
                             formatter={(value, entry: any) => {
                               const item = entry.payload;
-                              return <span className="text-[8px] font-bold text-slate-600">{value}: {item.value}</span>;
+                              const suffix = modalShowSkillsPie ? '%' : '';
+                              return <span className="text-[8px] font-bold text-slate-600">{value}: {item.value}{suffix}</span>;
                             }}
                           />
                         </PieChart>
