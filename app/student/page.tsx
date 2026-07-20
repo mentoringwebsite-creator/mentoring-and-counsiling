@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Phone, Smartphone, Edit2, Loader2, X, User, GraduationCap, Mail, Calendar, ArrowLeft } from 'lucide-react';
+import { Phone, Smartphone, Edit2, Loader2, X, User, GraduationCap, Mail, Calendar, ArrowLeft, Linkedin, FileText } from 'lucide-react';
 
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
@@ -36,7 +36,9 @@ export default function StudentProfilePage() {
     section: '',
     academic_year: '',
     btech_year: '',
-    profile_photo: ''
+    profile_photo: '',
+    linkedin_url: '',
+    resume_url: ''
   });
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -78,7 +80,9 @@ export default function StudentProfilePage() {
         academic_year: parsed.batch,
         btech_year: inferredBTechYear,
         email: email,
-        profile_photo: profileDb?.profile_photo || ''
+        profile_photo: profileDb?.profile_photo || '',
+        linkedin_url: profileDb?.linkedin_url || '',
+        resume_url: profileDb?.resume_url || ''
       };
 
       setProfile(initialData);
@@ -168,6 +172,27 @@ export default function StudentProfilePage() {
     reader.readAsDataURL(file);
   };
 
+  const handleResumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      alert('Please select a PDF file.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Resume file size must be less than 2MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFormData((prev: any) => ({ ...prev, resume_url: event.target?.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -201,7 +226,9 @@ export default function StudentProfilePage() {
         phone: formData.phone,
         dob: formData.dob && formData.dob.trim() !== '' ? formData.dob : null,
         profile_photo: formData.profile_photo,
-        alternate_phone: formData.alternate_phone
+        alternate_phone: formData.alternate_phone,
+        linkedin_url: formData.linkedin_url,
+        resume_url: formData.resume_url
       };
 
       let profileError = null;
@@ -213,10 +240,12 @@ export default function StudentProfilePage() {
         .eq('user_id', userId);
 
       if (primaryError) {
-        // If column alternate_phone does not exist, retry without it
-        if (primaryError.message.includes('alternate_phone') || primaryError.code === '42703') {
+        // If column alternate_phone, linkedin_url or resume_url does not exist, retry without them
+        if (primaryError.message.includes('alternate_phone') || primaryError.message.includes('linkedin_url') || primaryError.message.includes('resume_url') || primaryError.code === '42703') {
           alternatePhoneMissing = true;
           delete updatePayload.alternate_phone;
+          delete updatePayload.linkedin_url;
+          delete updatePayload.resume_url;
           const { error: retryError } = await supabase
             .from('student_profiles')
             .update(updatePayload)
@@ -232,7 +261,7 @@ export default function StudentProfilePage() {
       if (profileError) throw profileError;
 
       if (alternatePhoneMissing) {
-        setSaveMessage('Profile saved! (Note: Alternate phone was not updated. Ask admin to run supabase/add_alternate_phone.sql query.)');
+        setSaveMessage('Profile saved! (Note: Alternate Phone, LinkedIn and Resume were not updated. Ask admin to run SQL to add these columns to student_profiles.)');
       } else {
         setSaveMessage('Profile updated successfully!');
       }
@@ -362,6 +391,46 @@ export default function StudentProfilePage() {
                               <span className="text-xs font-extrabold text-slate-850 truncate block">{profileData.email || '-'}</span>
                             </div>
                           </div>
+
+                          <div className="flex items-center gap-3 text-slate-650">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 border border-sky-100">
+                              <Linkedin className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">LinkedIn Profile</div>
+                              {profileData.linkedin_url ? (
+                                <a href={profileData.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs font-extrabold text-sky-600 hover:underline truncate block">View Profile</a>
+                              ) : (
+                                <span className="text-xs font-extrabold text-slate-400 truncate block">Not provided</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Resume Download */}
+                        <div className="w-full mt-5 p-4 rounded-2xl bg-rose-50 border border-rose-100/60 flex items-center justify-between group cursor-default">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600 border border-rose-100 shadow-sm">
+                              <FileText className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-bold text-rose-950 leading-tight">Professional Resume</h3>
+                              {profileData.resume_url ? (
+                                <p className="text-[10px] font-semibold text-rose-700/80 mt-0.5">PDF Document uploaded</p>
+                              ) : (
+                                <p className="text-[10px] font-semibold text-rose-700/60 mt-0.5">No resume uploaded yet</p>
+                              )}
+                            </div>
+                          </div>
+                          {profileData.resume_url && (
+                            <a 
+                              href={profileData.resume_url} 
+                              download={`${profileData.name || 'Student'}_Resume.pdf`}
+                              className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold shadow-sm hover:bg-rose-700 transition"
+                            >
+                              Download
+                            </a>
+                          )}
                         </div>
 
                       </div>
@@ -584,6 +653,42 @@ export default function StudentProfilePage() {
                       />
                     </div>
                     <p className="mt-2 text-xs text-slate-400">Choose a real image file from your device. The image will be compressed automatically before saving.</p>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">LinkedIn URL</label>
+                    <input
+                      type="url"
+                      name="linkedin_url"
+                      value={formData.linkedin_url || ''}
+                      onChange={handleChange}
+                      placeholder="https://linkedin.com/in/yourprofile"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Professional Resume (PDF)</label>
+                    <div className="mt-1 flex flex-col gap-3">
+                      {formData.resume_url && (
+                        <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-100 rounded-xl">
+                          <FileText className="h-5 w-5 text-rose-600" />
+                          <span className="text-xs font-semibold text-rose-800">Resume uploaded (PDF)</span>
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleResumeChange}
+                        className="block w-full text-sm text-slate-500
+                          file:mr-4 file:py-2.5 file:px-4
+                          file:rounded-xl file:border-0
+                          file:text-sm file:font-semibold
+                          file:bg-rose-50 file:text-rose-700
+                          hover:file:bg-rose-100 transition"
+                      />
+                      <p className="text-[10px] text-slate-400">Upload your latest resume in PDF format. Maximum file size is 2MB.</p>
+                    </div>
                   </div>
 
                 </div>
