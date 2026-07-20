@@ -52,7 +52,7 @@ export function Sidebar({ items, active }: { items: Item[]; active: string }) {
 
   return (
     <aside className="hidden w-[260px] shrink-0 rounded-[16px] bg-white p-5 text-slate-700 shadow-sm border border-slate-200 lg:flex lg:flex-col">
-      <div className="mb-6 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold uppercase tracking-[0.15em] text-emerald-700 text-center">
+      <div className="mb-6 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold uppercase tracking-[0.15em] text-white text-center shadow-sm">
         {getPortalTitle()}
       </div>
       <nav className="flex flex-col gap-2">
