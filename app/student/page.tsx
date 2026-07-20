@@ -346,213 +346,176 @@ export default function StudentProfilePage() {
                 <div className="grid gap-6">
                   
                   {/* Main Profile Dashboard Layout */}
-                  <div className="grid gap-6 lg:grid-cols-3">
+                  <div className="flex flex-col gap-6">
                     
-                    {/* Left Column - Quick Overview */}
-                    <div className="lg:col-span-1 space-y-6">
+                    {/* Premium Horizontal Profile Header */}
+                    <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm overflow-hidden relative">
+                      {/* Cover Background */}
+                      <div className="h-40 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800" />
                       
-                      {/* Profile Photo & Primary Stats Card */}
-                      <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm flex flex-col items-center text-center relative overflow-hidden group">
-                        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-emerald-700 via-emerald-800 to-teal-900 opacity-95" />
-                        
-                        {/* Edit Floating Action */}
-                        <button 
-                          onClick={() => {
-                            setFormData(profileData);
-                            setIsEditing(true);
-                          }} 
-                          className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 backdrop-blur-md transition duration-200 shadow-sm"
-                          title="Edit Profile"
-                        >
-                          <Edit2 className="h-4 w-4" />
-                        </button>
+                      {/* Edit Button */}
+                      <button 
+                        onClick={() => {
+                          setFormData(profileData);
+                          setIsEditing(true);
+                        }} 
+                        className="absolute right-6 top-6 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur-md transition duration-200 shadow-sm"
+                        title="Edit Profile"
+                      >
+                        <Edit2 className="h-5 w-5" />
+                      </button>
 
-                        {/* Profile Picture */}
-                        <div className="relative mt-12 z-10 h-36 w-36 rounded-3xl overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
-                          {profileData.profile_photo ? (
-                            <img
-                              src={profileData.profile_photo}
-                              alt={profileData.name || 'Student'}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(profileData.name || 'Student')}`;
-                              }}
-                            />
-                          ) : (
-                            <User className="h-16 w-16 text-emerald-200" />
-                          )}
-                        </div>
-
-                        {/* Name and Roll No */}
-                        <div className="mt-4">
-                          <h2 className="text-xl font-black text-slate-800 leading-tight">{profileData.name || 'N/A'}</h2>
-                          <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-wider font-mono">{profileData.rollNumber || 'N/A'}</p>
-                        </div>
-
-                        {/* B.Tech Year Tag */}
-                        <span className="mt-3.5 inline-flex items-center gap-1 rounded-2xl bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm">
-                          <GraduationCap className="h-3.5 w-3.5 text-emerald-700" />
-                          <span>{bTechYear || 'N/A'}</span>
-                        </span>
-
-                        <div className="w-full px-6 pb-6 pt-5 flex flex-col items-center">
-                          {/* Quick Contacts */}
-                          <div className="w-full h-px bg-slate-100 mb-6" />
-                          <div className="w-full space-y-4 text-left">
-                          <div className="flex items-center gap-3 text-slate-650">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
-                              <Smartphone className="h-4 w-4 text-emerald-700" />
-                            </div>
-                            <div>
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Primary Mobile</div>
-                              <span className="text-xs font-extrabold text-slate-800">{profileData.phone || '-'}</span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-3 text-slate-650">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
-                              <Phone className="h-4 w-4 text-emerald-700" />
-                            </div>
-                            <div>
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Alternate Mobile</div>
-                              <span className="text-xs font-extrabold text-slate-800">{profileData.alternate_phone || '-'}</span>
-                            </div>
+                      <div className="px-8 pb-8">
+                        <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end -mt-16 relative z-10">
+                          {/* Profile Picture */}
+                          <div className="h-32 w-32 rounded-[24px] overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
+                            {profileData.profile_photo ? (
+                              <img
+                                src={profileData.profile_photo}
+                                alt={profileData.name || 'Student'}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(profileData.name || 'Student')}`;
+                                }}
+                              />
+                            ) : (
+                              <User className="h-14 w-14 text-emerald-200" />
+                            )}
                           </div>
 
-                          <div className="flex items-center gap-3 text-slate-650">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
-                              <Calendar className="h-4 w-4 text-emerald-700" />
-                            </div>
-                            <div>
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Date of Birth</div>
-                              <span className="text-xs font-extrabold text-slate-800">{profileData.dob || '-'}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-slate-650">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
-                              <Mail className="h-4 w-4 text-emerald-700" />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">College Email</div>
-                              <span className="text-xs font-extrabold text-slate-850 truncate block">{profileData.email || '-'}</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-slate-650">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 border border-sky-100">
-                              <Linkedin className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">LinkedIn Profile</div>
-                              {profileData.linkedin_url ? (
-                                <a href={profileData.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs font-extrabold text-sky-600 hover:underline truncate block">View Profile</a>
-                              ) : (
-                                <span className="text-xs font-extrabold text-slate-400 truncate block">Not provided</span>
-                              )}
+                          {/* Basic Info */}
+                          <div className="flex-1 pb-2">
+                            <h2 className="text-2xl font-black text-slate-800 leading-tight">{profileData.name || 'N/A'}</h2>
+                            <div className="flex flex-wrap items-center gap-3 mt-2">
+                              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider font-mono">{profileData.rollNumber || 'N/A'}</p>
+                              <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                                <GraduationCap className="h-3.5 w-3.5" />
+                                {bTechYear || 'N/A'}
+                              </span>
                             </div>
                           </div>
                         </div>
-
-                        {/* Resume Download */}
-                        <div className="w-full mt-6 p-4 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100/60 flex items-center justify-between group cursor-default shadow-sm">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600 border border-rose-100 shadow-sm">
-                              <FileText className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-bold text-rose-950 leading-tight">Professional Resume</h3>
-                              {profileData.resume_url ? (
-                                <p className="text-[10px] font-semibold text-rose-700/80 mt-0.5">PDF uploaded</p>
-                              ) : (
-                                <p className="text-[10px] font-semibold text-rose-700/60 mt-0.5">No resume uploaded</p>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {profileData.resume_url ? (
-                            <div className="flex flex-col gap-1.5">
-                              <a 
-                                href={profileData.resume_url} 
-                                download={`${profileData.name || 'Student'}_Resume.pdf`}
-                                className="px-3 py-1 text-center rounded-lg bg-rose-600 text-white text-[10px] font-bold shadow-sm hover:bg-rose-700 transition"
-                              >
-                                Download
-                              </a>
-                              <label className="px-3 py-1 text-center rounded-lg bg-white border border-rose-200 text-rose-600 text-[10px] font-bold shadow-sm hover:bg-rose-50 transition cursor-pointer">
-                                {saving ? 'Wait...' : 'Update'}
-                                <input type="file" accept="application/pdf" className="hidden" onChange={handleDirectResumeUpload} disabled={saving} />
-                              </label>
-                            </div>
-                          ) : (
-                            <label className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shadow-sm hover:bg-rose-700 transition cursor-pointer flex items-center gap-1.5">
-                              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                              <span>Upload</span>
-                              <input type="file" accept="application/pdf" className="hidden" onChange={handleDirectResumeUpload} disabled={saving} />
-                            </label>
-                          )}
-                        </div>
-
-                        </div>
-
                       </div>
-
                     </div>
 
-                    {/* Right Column - Academic & Personal Details */}
-                    <div className="lg:col-span-2 space-y-6">
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       
-                      {/* Academic & Institutional Card */}
-                      <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
-                        <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4 mb-5">
-                          <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-2 text-emerald-800">
-                            <GraduationCap className="h-5 w-5" />
+                      {/* Contact Information */}
+                      <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-600 border border-slate-100">
+                            <Smartphone className="h-5 w-5" />
+                          </div>
+                          <h3 className="text-base font-extrabold text-slate-800">Contact Details</h3>
+                        </div>
+                        
+                        <div className="space-y-5 flex-1">
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Primary Mobile</div>
+                            <div className="text-sm font-bold text-slate-800">{profileData.phone || '-'}</div>
                           </div>
                           <div>
-                            <h3 className="text-base font-extrabold text-slate-800">Academic & Institutional Profile</h3>
-                            <p className="text-[10px] font-semibold text-slate-450 uppercase tracking-wider mt-0.5">SNIST Official Registrar Enrollment</p>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">College Email</div>
+                            <div className="text-sm font-bold text-slate-800 truncate" title={profileData.email}>{profileData.email || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Alternate Mobile</div>
+                            <div className="text-sm font-bold text-slate-800">{profileData.alternate_phone || '-'}</div>
                           </div>
                         </div>
+                      </div>
 
-                        <div className="grid gap-4 sm:grid-cols-2">
+                      {/* Academic Profile */}
+                      <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100">
+                            <GraduationCap className="h-5 w-5" />
+                          </div>
+                          <h3 className="text-base font-extrabold text-slate-800">Academic Profile</h3>
+                        </div>
+                        
+                        <div className="space-y-5 flex-1">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Branch</div>
+                              <div className="text-sm font-bold text-slate-800 uppercase">{profileData.branch || '-'}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Section</div>
+                              <div className="text-sm font-bold text-slate-800 uppercase">{profileData.section || '-'}</div>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Academic Year</div>
+                            <div className="text-sm font-bold text-slate-800">{profileData.academic_year || '-'}</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Date of Birth</div>
+                            <div className="text-sm font-bold text-slate-800">{profileData.dob || '-'}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Professional Links & Resume */}
+                      <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 border border-sky-100">
+                            <Linkedin className="h-5 w-5" />
+                          </div>
+                          <h3 className="text-base font-extrabold text-slate-800">Professional</h3>
+                        </div>
+                        
+                        <div className="space-y-6 flex-1">
+                          <div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">LinkedIn Profile</div>
+                            {profileData.linkedin_url ? (
+                              <a href={profileData.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-sky-600 hover:underline truncate block">View LinkedIn Profile ↗</a>
+                            ) : (
+                              <span className="text-sm font-bold text-slate-400">Not provided</span>
+                            )}
+                          </div>
                           
-                          <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
-                            <div>
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">B.Tech Year</div>
-                              <div className="text-sm font-extrabold text-emerald-900 mt-1 uppercase">{bTechYear || 'N/A'}</div>
+                          <div className="pt-2">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Resume Document</div>
+                            <div className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col gap-3">
+                              <div className="flex items-center gap-3">
+                                <FileText className="h-6 w-6 text-slate-400" />
+                                <div>
+                                  <h4 className="text-xs font-bold text-slate-800 leading-tight">Professional Resume</h4>
+                                  <p className="text-[10px] font-medium text-slate-500 mt-0.5">{profileData.resume_url ? 'PDF Uploaded' : 'No file uploaded'}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                {profileData.resume_url ? (
+                                  <>
+                                    <a 
+                                      href={profileData.resume_url} 
+                                      download={`${profileData.name || 'Student'}_Resume.pdf`}
+                                      className="flex-1 py-1.5 text-center rounded-lg bg-slate-800 text-white text-[11px] font-bold shadow-sm hover:bg-slate-900 transition"
+                                    >
+                                      Download
+                                    </a>
+                                    <label className="flex-1 py-1.5 text-center rounded-lg bg-white border border-slate-300 text-slate-700 text-[11px] font-bold shadow-sm hover:bg-slate-50 transition cursor-pointer">
+                                      {saving ? 'Wait...' : 'Update'}
+                                      <input type="file" accept="application/pdf" className="hidden" onChange={handleDirectResumeUpload} disabled={saving} />
+                                    </label>
+                                  </>
+                                ) : (
+                                  <label className="w-full py-2 rounded-lg bg-slate-800 text-white text-[11px] font-bold shadow-sm hover:bg-slate-900 transition cursor-pointer flex justify-center items-center gap-1.5">
+                                    {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                                    <span>Upload PDF Resume</span>
+                                    <input type="file" accept="application/pdf" className="hidden" onChange={handleDirectResumeUpload} disabled={saving} />
+                                  </label>
+                                )}
+                              </div>
                             </div>
-                            <span className="text-xs font-black text-slate-300">YEAR</span>
                           </div>
-
-                          <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
-                            <div>
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Registered Branch</div>
-                              <div className="text-sm font-extrabold text-slate-850 mt-1 uppercase">{profileData.branch || '-'}</div>
-                            </div>
-                            <span className="text-xs font-black text-slate-300">DEPT</span>
-                          </div>
-
-                          <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
-                            <div>
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Class Section</div>
-                              <div className="text-sm font-extrabold text-slate-855 mt-1 uppercase">{profileData.section || '-'}</div>
-                            </div>
-                            <span className="text-xs font-black text-slate-300">SEC</span>
-                          </div>
-
-                          <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
-                            <div>
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Academic Year</div>
-                              <div className="text-sm font-extrabold text-slate-850 mt-1">{profileData.academic_year || '-'}</div>
-                            </div>
-                            <span className="text-xs font-black text-slate-300">BATCH</span>
-                          </div>
-
                         </div>
                       </div>
 
                     </div>
-
                   </div>
                 </div>
               );
