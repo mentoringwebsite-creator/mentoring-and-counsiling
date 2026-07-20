@@ -87,54 +87,7 @@ export default function HodQueriesPage() {
       if (hodError) throw hodError;
       const dept = hodProfile?.department || '';
 
-      // 2. Fetch faculties assigned to this HOD or in this department
-      const { data: facultyUsers } = await supabase
-        .from('users')
-        .select(`
-          id,
-          faculty_profiles (
-            department,
-            hod_id
-          )
-        `)
-        .eq('role', 'faculty');
-      
-      const deptFaculty = (facultyUsers || []).filter((f: any) => {
-        const fp = f.faculty_profiles?.[0];
-        if (fp?.hod_id === hodId) return true;
-        if (dept && fp?.department && isBranchInDepartment(fp.department, dept)) return true;
-        return false;
-      });
-      const facultyIds = deptFaculty.map(f => f.id);
-
-      // 3. Fetch students mentored by these faculties or in this branch
-      const { data: studentsData, error: studentsError } = await supabase
-        .from('users')
-        .select(`
-          id,
-          student_profiles (
-            branch,
-            mentor_id
-          )
-        `)
-        .eq('role', 'student');
-
-      if (studentsError) throw studentsError;
-
-      const deptStudents = (studentsData || []).filter((s: any) => {
-        const sp = s.student_profiles?.[0];
-        if (sp?.mentor_id && facultyIds.includes(sp.mentor_id)) return true;
-        if (dept && sp?.branch && isBranchInDepartment(sp.branch, dept)) return true;
-        return false;
-      });
-      const studentIds = deptStudents.map((s: any) => s.id);
-
-      if (studentIds.length === 0) {
-        setQueries([]);
-        return;
-      }
-
-      // 4. Fetch queries from those students
+      // 2. Fetch all queries directly (to avoid missing queries when students have no mentor)
       const { data: queriesData, error: queriesError } = await supabase
         .from('queries')
         .select(`
@@ -147,20 +100,29 @@ export default function HodQueriesPage() {
           student_id,
           student:student_id (
             name,
-            email
+            email,
+            student_profiles (
+              branch
+            )
           )
         `)
-        .in('student_id', studentIds)
         .order('created_at', { ascending: false });
 
       if (queriesError) throw queriesError;
-      
-      // Filter out queries to only show those raised explicitly to HOD
+
+      // 3. Filter queries to only show those raised explicitly to HOD, and from their department
       const filteredQueries = (queriesData || []).filter((q: any) => {
         const { raisedTo } = parseQueryMetadata(q.description);
-        return raisedTo === 'HOD';
+        if (raisedTo !== 'HOD') return false;
+
+        if (dept) {
+          const studentBranch = q.student?.student_profiles?.[0]?.branch || '';
+          return isBranchInDepartment(studentBranch, dept);
+        }
+        
+        return true;
       });
-      
+
       setQueries(filteredQueries);
     } catch (err: any) {
       console.error('Error fetching queries:', err);
@@ -233,8 +195,13 @@ export default function HodQueriesPage() {
   }, [messages]);
 
   useEffect(() => {
-    setShowQueryList(!selectedQuery);
-  }, [selectedQuery]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // We handle hiding the list via CSS for side-by-side layout
+  // useEffect(() => {
+  //   setShowQueryList(!selectedQuery);
+  // }, [selectedQuery]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -292,9 +259,9 @@ export default function HodQueriesPage() {
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/hod/queries" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/profile', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
           
-          <div className={selectedQuery ? "grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
+          <div className={selectedQuery ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
             {/* Left Column: Queries List */}
-            <div className={showQueryList ? "space-y-6 w-full min-w-0" : "hidden"}>
+            <div className={`${selectedQuery ? 'hidden lg:block' : 'block'} space-y-6 w-full min-w-0`}>
               <div className="portal-card">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-semibold">Department Watchlist</h2>
@@ -394,13 +361,10 @@ export default function HodQueriesPage() {
                 <>
                   {/* Chat Header */}
                   <div className="border-b border-slate-200 pb-4">
-                    {/* Back Button */}
+                    {/* Back Button (Mobile Only) */}
                     <button
-                      onClick={() => {
-                        setSelectedQuery(null);
-                        setShowQueryList(true);
-                      }}
-                      className="mb-3 flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-855"
+                      onClick={() => setSelectedQuery(null)}
+                      className="mb-3 flex lg:hidden items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-855"
                     >
                       &larr; Back to Queries
                     </button>
