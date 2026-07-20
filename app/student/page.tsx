@@ -352,8 +352,8 @@ export default function StudentProfilePage() {
                     <div className="lg:col-span-1 space-y-6">
                       
                       {/* Profile Photo & Primary Stats Card */}
-                      <div className="rounded-[32px] border border-slate-200 bg-white shadow-sm flex flex-col items-center text-center relative overflow-hidden group">
-                        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-emerald-800 via-teal-800 to-sky-900 opacity-95" />
+                      <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm flex flex-col items-center text-center relative overflow-hidden group">
+                        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-blue-700 via-indigo-700 to-blue-900 opacity-95" />
                         
                         {/* Edit Floating Action */}
                         <button 
@@ -379,7 +379,7 @@ export default function StudentProfilePage() {
                               }}
                             />
                           ) : (
-                            <User className="h-16 w-16 text-emerald-850/40" />
+                            <User className="h-16 w-16 text-blue-200" />
                           )}
                         </div>
 
@@ -390,8 +390,8 @@ export default function StudentProfilePage() {
                         </div>
 
                         {/* B.Tech Year Tag */}
-                        <span className="mt-3.5 inline-flex items-center gap-1 rounded-2xl bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 shadow-sm">
-                          <GraduationCap className="h-3.5 w-3.5 text-emerald-700" />
+                        <span className="mt-3.5 inline-flex items-center gap-1 rounded-2xl bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
+                          <GraduationCap className="h-3.5 w-3.5 text-blue-700" />
                           <span>{bTechYear || 'N/A'}</span>
                         </span>
 
@@ -401,7 +401,7 @@ export default function StudentProfilePage() {
                           <div className="w-full space-y-4 text-left">
                           <div className="flex items-center gap-3 text-slate-650">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
-                              <Smartphone className="h-4 w-4 text-emerald-800" />
+                              <Smartphone className="h-4 w-4 text-blue-700" />
                             </div>
                             <div>
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Primary Mobile</div>
@@ -411,7 +411,7 @@ export default function StudentProfilePage() {
                           
                           <div className="flex items-center gap-3 text-slate-650">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
-                              <Phone className="h-4 w-4 text-emerald-800" />
+                              <Phone className="h-4 w-4 text-blue-700" />
                             </div>
                             <div>
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Alternate Mobile</div>
@@ -421,7 +421,7 @@ export default function StudentProfilePage() {
 
                           <div className="flex items-center gap-3 text-slate-650">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
-                              <Calendar className="h-4 w-4 text-emerald-800" />
+                              <Calendar className="h-4 w-4 text-blue-700" />
                             </div>
                             <div>
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Date of Birth</div>
@@ -431,7 +431,7 @@ export default function StudentProfilePage() {
 
                           <div className="flex items-center gap-3 text-slate-650">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
-                              <Mail className="h-4 w-4 text-emerald-800" />
+                              <Mail className="h-4 w-4 text-blue-700" />
                             </div>
                             <div className="min-w-0">
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">College Email</div>
@@ -503,9 +503,9 @@ export default function StudentProfilePage() {
                     <div className="lg:col-span-2 space-y-6">
                       
                       {/* Academic & Institutional Card */}
-                      <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm">
+                      <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
                         <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4 mb-5">
-                          <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-2 text-emerald-800">
+                          <div className="rounded-xl bg-blue-50 border border-blue-100 p-2 text-blue-800">
                             <GraduationCap className="h-5 w-5" />
                           </div>
                           <div>
@@ -519,7 +519,7 @@ export default function StudentProfilePage() {
                           <div className="bg-slate-50/50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between">
                             <div>
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">B.Tech Year</div>
-                              <div className="text-sm font-extrabold text-emerald-900 mt-1 uppercase">{bTechYear || 'N/A'}</div>
+                              <div className="text-sm font-extrabold text-blue-900 mt-1 uppercase">{bTechYear || 'N/A'}</div>
                             </div>
                             <span className="text-xs font-black text-slate-300">YEAR</span>
                           </div>
@@ -562,11 +562,11 @@ export default function StudentProfilePage() {
 
         {/* Edit Profile Modal */}
         {isEditing && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-portal-ink/40 p-4 backdrop-blur-md">
-            <div className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-[28px] border border-portal-line bg-white shadow-soft animate-in fade-in zoom-in-95 duration-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-md">
+            <div className="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-soft animate-in fade-in zoom-in-95 duration-200">
               
-              <div className="flex items-center justify-between border-b border-portal-line bg-slate-50 px-6 py-4 shrink-0">
-                <h3 className="text-xl font-bold text-portal-ink">Edit Profile Details</h3>
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 shrink-0">
+                <h3 className="text-xl font-bold text-slate-900">Edit Profile Details</h3>
                 <button 
                   onClick={() => setIsEditing(false)}
                   className="rounded-full p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
@@ -587,7 +587,7 @@ export default function StudentProfilePage() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-600 focus:outline-none"
                     />
                   </div>
 
@@ -599,7 +599,7 @@ export default function StudentProfilePage() {
                       value={formData.rollNumber}
                       onChange={handleChange}
                       required
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-600 focus:outline-none"
                     />
                   </div>
 
@@ -611,7 +611,7 @@ export default function StudentProfilePage() {
                       value={formData.phone}
                       onChange={handleChange}
                       required
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-600 focus:outline-none"
                     />
                   </div>
 
@@ -645,7 +645,7 @@ export default function StudentProfilePage() {
                       value={formData.branch}
                       onChange={handleChange}
                       required
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-600 focus:outline-none"
                     />
                   </div>
 
@@ -657,7 +657,7 @@ export default function StudentProfilePage() {
                       value={formData.section}
                       onChange={handleChange}
                       required
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-600 focus:outline-none"
                     />
                   </div>
 
@@ -669,7 +669,7 @@ export default function StudentProfilePage() {
                       value={formData.academic_year}
                       onChange={handleChange}
                       required
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-600 focus:outline-none"
                     />
                   </div>
 
@@ -680,7 +680,7 @@ export default function StudentProfilePage() {
                       value={formData.btech_year || ''}
                       onChange={(e) => setFormData((prev: any) => ({ ...prev, btech_year: e.target.value }))}
                       required
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none bg-white font-semibold text-slate-800"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-600 focus:outline-none bg-white font-semibold text-slate-800"
                     >
                       <option value="">Select Year</option>
                       <option value="I Year">I Year</option>
@@ -709,9 +709,9 @@ export default function StudentProfilePage() {
                         className="block w-full text-sm text-slate-500
                           file:mr-4 file:py-2.5 file:px-4
                           file:rounded-xl file:border-0
-                          file:text-sm file:font-semibold
-                          file:bg-emerald-50 file:text-emerald-700
-                          hover:file:bg-emerald-100 transition"
+                          file:text-sm file:font-bold
+                          file:bg-blue-50 file:text-blue-700
+                          hover:file:bg-blue-100 transition"
                       />
                     </div>
                     <p className="mt-2 text-xs text-slate-400">Choose a real image file from your device. The image will be compressed automatically before saving.</p>
@@ -725,7 +725,7 @@ export default function StudentProfilePage() {
                       value={formData.linkedin_url || ''}
                       onChange={handleChange}
                       placeholder="https://linkedin.com/in/yourprofile"
-                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-blue-600 focus:outline-none"
                     />
                   </div>
 
@@ -762,25 +762,25 @@ export default function StudentProfilePage() {
                 )}
 
                 {saveMessage && (
-                  <div className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-700 border border-emerald-200">
+                  <div className="mt-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-700 border border-blue-200">
                     {saveMessage}
                   </div>
                 )}
               </div>
 
-              <div className="border-t border-portal-line p-6 bg-slate-50 flex justify-end gap-3 shrink-0 rounded-b-[28px]">
+              <div className="border-t border-slate-200 p-6 bg-slate-50 flex justify-end gap-3 shrink-0 rounded-b-[24px]">
                 <button
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition"
                 >
-                  <ArrowLeft className="h-4 w-4 text-slate-550" />
+                  <ArrowLeft className="h-4 w-4 text-slate-500" />
                   <span>Back</span>
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 transition disabled:opacity-70"
+                  className="flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition disabled:opacity-70"
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   <span>Save Changes</span>

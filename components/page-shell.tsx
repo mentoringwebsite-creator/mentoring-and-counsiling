@@ -140,9 +140,9 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(199,217,207,0.42),transparent_30%),radial-gradient(circle_at_top_right,rgba(234,218,177,0.30),transparent_28%),linear-gradient(180deg,#f4f7f4_0%,#edf2ee_100%)] text-portal-ink">
-      <div className="min-h-screen w-full overflow-hidden bg-white/92 backdrop-blur-xl flex flex-col">
-        <header className="sticky top-0 z-40 flex h-16 sm:h-[72px] items-center justify-between border-b border-emerald-900/5 bg-white/78 backdrop-blur-xl px-3 sm:px-6">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <div className="min-h-screen w-full overflow-hidden flex flex-col">
+        <header className="sticky top-0 z-40 flex h-16 sm:h-[72px] items-center justify-between border-b border-slate-200 bg-white px-3 sm:px-6 shadow-sm">
           <div className="flex items-center gap-2 sm:gap-3 max-w-[70%] sm:max-w-[75%] overflow-hidden">
             <button 
               onClick={() => router.back()}
@@ -158,10 +158,10 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
 
             {/* Mobile/Tablet Page Title (hidden on Desktop) */}
             <div className="border-l border-slate-200 pl-2 sm:pl-3 lg:hidden overflow-hidden text-ellipsis whitespace-nowrap">
-              <span className="text-xs sm:text-sm font-bold tracking-tight text-portal-ink sm:text-base">{title}</span>
+              <span className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 sm:text-base">{title}</span>
             </div>
             {/* Desktop Subtitle */}
-            <div className="hidden border-l border-black/10 pl-4 text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-[#315d47] md:grid shrink-0">
+            <div className="hidden border-l border-slate-200 pl-4 text-[0.65rem] font-bold uppercase tracking-[0.28em] text-blue-700 md:grid shrink-0">
               <span>Sreenidhi</span>
               <span>Student</span>
               <span>Portal</span>
@@ -175,9 +175,9 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
             </div>
 
             {userProfile && (
-              <div className="flex items-center gap-2 border-l border-slate-200/90 pl-3 sm:gap-3 sm:pl-6">
-                <span className="hidden text-sm font-semibold text-portal-ink md:inline">{userProfile.name}</span>
-                <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-emerald-500/20 bg-emerald-50 shadow-[0_4px_16px_rgba(17,94,73,0.12)] shrink-0">
+              <div className="flex items-center gap-2 border-l border-slate-200 pl-3 sm:gap-3 sm:pl-6">
+                <span className="hidden text-sm font-bold text-slate-900 md:inline">{userProfile.name}</span>
+                <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-blue-100 bg-blue-50 shadow-sm shrink-0">
                   {userProfile.photo && (userProfile.photo.startsWith('data:') || userProfile.photo.startsWith('http') || userProfile.photo.startsWith('/')) ? (
                     <img
                       src={userProfile.photo}
@@ -188,7 +188,7 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
                       }}
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-emerald-700 font-bold text-white uppercase text-sm">
+                    <div className="flex h-full w-full items-center justify-center bg-blue-600 font-bold text-white uppercase text-sm">
                       {userProfile.name.charAt(0)}
                     </div>
                   )}
@@ -225,8 +225,8 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
 
         {/* Dynamic Mobile Bottom Navigation Bar */}
         {mobileItems.length > 0 && (
-          <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/90 bg-white/78 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 backdrop-blur-xl shadow-[0_-10px_36px_rgba(0,0,0,0.08)] lg:hidden">
-            <div className="mx-2 rounded-2xl border border-slate-200/70 bg-white/78 px-1.5 py-1 shadow-[0_8px_22px_rgba(14,34,28,0.08)]">
+          <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 shadow-[0_-4px_24px_rgba(0,0,0,0.04)] lg:hidden">
+            <div className="mx-2 rounded-xl bg-white px-1.5 py-1">
               <div className="flex items-center justify-around">
               {mobileItems.map((item) => {
                 const Icon = item.icon;
@@ -236,16 +236,16 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
                     key={item.href}
                     href={item.href as never}
                     className={cn(
-                      "flex min-w-0 flex-col items-center gap-1 px-1.5 py-0.5 rounded-xl transition-all duration-250 active:scale-90",
+                      "flex min-w-0 flex-col items-center gap-1 px-1.5 py-0.5 rounded-xl transition-all duration-200 active:scale-95",
                       active 
-                        ? "text-emerald-800 font-bold" 
-                        : "text-slate-500 hover:text-slate-700 font-medium"
+                        ? "text-blue-700 font-bold" 
+                        : "text-slate-500 hover:text-slate-900 font-medium"
                     )}
                   >
                     <div className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-250",
+                      "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200",
                       active 
-                        ? "bg-emerald-50 text-emerald-800 shadow-[0_5px_14px_rgba(16,185,129,0.14)] scale-105" 
+                        ? "bg-blue-50 text-blue-700 shadow-sm" 
                         : "bg-transparent text-slate-500"
                     )}>
                       <Icon className="h-5 w-5 stroke-[2.25]" />
