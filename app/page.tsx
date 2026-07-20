@@ -28,41 +28,41 @@ export default function HomePage() {
 
         <section
           id="home"
-          className="relative overflow-hidden bg-[url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center bg-no-repeat"
+          className="relative overflow-hidden bg-[url('/assets/college-bg.jpg')] bg-cover bg-center bg-no-repeat"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(17,81,64,0.68),transparent_25%),linear-gradient(180deg,rgba(4,30,20,0.76),rgba(10,39,40,0.9))]" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.12),transparent_16%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(22,101,52,0.8),transparent_40%),linear-gradient(180deg,rgba(2,12,8,0.7),rgba(6,35,25,0.95))]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.1),transparent_25%)]" />
           <div className="relative z-10 mx-auto flex min-h-[680px] max-w-[1180px] items-center px-6 py-16 md:px-10">
             <div className="max-w-[660px] text-white">
-              <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-white/85 backdrop-blur-sm">
-                <BadgeCheck className="h-4 w-4 text-emerald-200" /> Trusted mentoring for every student
+              <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-900/40 px-4 py-2 text-[0.7rem] font-bold uppercase tracking-[0.25em] text-emerald-100 backdrop-blur-md shadow-lg">
+                <BadgeCheck className="h-4 w-4 text-emerald-300" /> Trusted mentoring for every student
               </span>
 
-              <h1 className="text-4xl font-extrabold leading-tight tracking-[-0.04em] md:text-[4.75rem] md:leading-[1.02]">
-                Empowering students with mentoring, counseling, and career guidance.
+              <h1 className="text-4xl font-extrabold leading-[1.1] tracking-[-0.03em] md:text-[4.75rem] md:leading-[1.02] drop-shadow-lg">
+                Empowering students with <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-100">mentoring, counseling,</span> and career guidance.
               </h1>
 
-              <p className="mt-6 max-w-[610px] text-base leading-8 text-white/85 md:text-lg">
+              <p className="mt-6 max-w-[610px] text-base leading-8 text-slate-300 md:text-lg font-medium">
                 A modern portal for SNIST students, faculty, and administrators to track progress, connect with mentors, and access confidential support across academics and careers.
               </p>
 
               <div className="mt-10 flex flex-wrap gap-4">
-                <PortalButton href="/login" className="px-7 py-4 text-[0.98rem]">Open Portal</PortalButton>
-                <PortalButton href="#about" variant="secondary" className="px-7 py-4">See Details</PortalButton>
+                <PortalButton href="/login" className="px-8 py-4 text-[1rem] bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all">Open Portal</PortalButton>
+                <PortalButton href="#about" variant="secondary" className="px-8 py-4 text-[1rem] bg-white/10 hover:bg-white/20 border-white/20 text-white backdrop-blur-md">See Details</PortalButton>
               </div>
 
-              <div className="mt-10 grid gap-3 rounded-[30px] border border-white/15 bg-white/10 p-5 text-sm text-white/90 shadow-soft backdrop-blur-md sm:grid-cols-3">
-                <div>
-                  <div className="text-3xl font-bold">800+</div>
-                  <div className="mt-1 uppercase tracking-[0.18em] text-white/70">Students supported</div>
+              <div className="mt-12 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 text-sm shadow-xl backdrop-blur-md hover:bg-white/10 transition-colors">
+                  <div className="text-3xl font-black text-emerald-300">800+</div>
+                  <div className="mt-1 uppercase tracking-[0.15em] text-slate-300 font-semibold text-xs">Students supported</div>
                 </div>
-                <div>
-                  <div className="text-3xl font-bold">24/7</div>
-                  <div className="mt-1 uppercase tracking-[0.18em] text-white/70">Counseling access</div>
+                <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 text-sm shadow-xl backdrop-blur-md hover:bg-white/10 transition-colors">
+                  <div className="text-3xl font-black text-emerald-300">24/7</div>
+                  <div className="mt-1 uppercase tracking-[0.15em] text-slate-300 font-semibold text-xs">Counseling access</div>
                 </div>
-                <div>
-                  <div className="text-3xl font-bold">98%</div>
-                  <div className="mt-1 uppercase tracking-[0.18em] text-white/70">Mentor satisfaction</div>
+                <div className="rounded-[24px] border border-white/10 bg-white/5 p-5 text-sm shadow-xl backdrop-blur-md hover:bg-white/10 transition-colors">
+                  <div className="text-3xl font-black text-emerald-300">98%</div>
+                  <div className="mt-1 uppercase tracking-[0.15em] text-slate-300 font-semibold text-xs">Mentor satisfaction</div>
                 </div>
               </div>
             </div>
