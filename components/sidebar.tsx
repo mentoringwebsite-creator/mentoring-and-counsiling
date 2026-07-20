@@ -65,7 +65,7 @@ export function Sidebar({ items, active }: { items: Item[]; active: string }) {
               className={cn(
                 'flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                 isActive 
-                  ? 'bg-emerald-50 text-emerald-700 border-l-4 border-emerald-600 font-bold' 
+                  ? 'bg-emerald-700 text-white shadow-md font-bold' 
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               )}
             >
