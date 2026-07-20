@@ -161,7 +161,7 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
               <span className="text-xs sm:text-sm font-bold tracking-tight text-slate-900 sm:text-base">{title}</span>
             </div>
             {/* Desktop Subtitle */}
-            <div className="hidden border-l border-slate-200 pl-4 text-[0.65rem] font-bold uppercase tracking-[0.28em] text-blue-700 md:grid shrink-0">
+            <div className="hidden border-l border-slate-200 pl-4 text-[0.65rem] font-bold uppercase tracking-[0.28em] text-emerald-700 md:grid shrink-0">
               <span>Sreenidhi</span>
               <span>Student</span>
               <span>Portal</span>
@@ -177,7 +177,7 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
             {userProfile && (
               <div className="flex items-center gap-2 border-l border-slate-200 pl-3 sm:gap-3 sm:pl-6">
                 <span className="hidden text-sm font-bold text-slate-900 md:inline">{userProfile.name}</span>
-                <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-blue-100 bg-blue-50 shadow-sm shrink-0">
+                <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-emerald-100 bg-emerald-50 shadow-sm shrink-0">
                   {userProfile.photo && (userProfile.photo.startsWith('data:') || userProfile.photo.startsWith('http') || userProfile.photo.startsWith('/')) ? (
                     <img
                       src={userProfile.photo}
@@ -188,7 +188,7 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
                       }}
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-blue-600 font-bold text-white uppercase text-sm">
+                    <div className="flex h-full w-full items-center justify-center bg-emerald-600 font-bold text-white uppercase text-sm">
                       {userProfile.name.charAt(0)}
                     </div>
                   )}
@@ -238,14 +238,14 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
                     className={cn(
                       "flex min-w-0 flex-col items-center gap-1 px-1.5 py-0.5 rounded-xl transition-all duration-200 active:scale-95",
                       active 
-                        ? "text-blue-700 font-bold" 
+                        ? "text-emerald-700 font-bold" 
                         : "text-slate-500 hover:text-slate-900 font-medium"
                     )}
                   >
                     <div className={cn(
                       "flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200",
                       active 
-                        ? "bg-blue-50 text-blue-700 shadow-sm" 
+                        ? "bg-emerald-50 text-emerald-700 shadow-sm" 
                         : "bg-transparent text-slate-500"
                     )}>
                       <Icon className="h-5 w-5 stroke-[2.25]" />
