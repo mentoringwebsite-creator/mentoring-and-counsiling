@@ -87,7 +87,27 @@ export default function HodQueriesPage() {
       if (hodError) throw hodError;
       const dept = hodProfile?.department || '';
 
-      // 2. Fetch all queries directly (to avoid missing queries when students have no mentor)
+      // 2. Fetch faculties assigned to this HOD or in this department
+      const { data: facultyUsers } = await supabase
+        .from('users')
+        .select(`
+          id,
+          faculty_profiles (
+            department,
+            hod_id
+          )
+        `)
+        .eq('role', 'faculty');
+      
+      const deptFaculty = (facultyUsers || []).filter((f: any) => {
+        const fp = f.faculty_profiles?.[0];
+        if (fp?.hod_id === hodId) return true;
+        if (dept && fp?.department && isBranchInDepartment(fp.department, dept)) return true;
+        return false;
+      });
+      const facultyIds = deptFaculty.map(f => f.id);
+
+      // 3. Fetch all queries directly (to avoid missing queries when students have no mentor)
       const { data: queriesData, error: queriesError } = await supabase
         .from('queries')
         .select(`
@@ -102,7 +122,8 @@ export default function HodQueriesPage() {
             name,
             email,
             student_profiles (
-              branch
+              branch,
+              mentor_id
             )
           )
         `)
@@ -110,17 +131,25 @@ export default function HodQueriesPage() {
 
       if (queriesError) throw queriesError;
 
-      // 3. Filter queries to only show those raised explicitly to HOD, and from their department
+      // 4. Filter queries to only show those raised explicitly to HOD, and from their department or assigned faculty
       const filteredQueries = (queriesData || []).filter((q: any) => {
         const { raisedTo } = parseQueryMetadata(q.description);
         if (raisedTo !== 'HOD') return false;
 
-        if (dept) {
-          const studentBranch = q.student?.student_profiles?.[0]?.branch || '';
-          return isBranchInDepartment(studentBranch, dept);
-        }
+        const studentProfile = q.student?.student_profiles?.[0];
+        const studentBranch = studentProfile?.branch || '';
+        const mentorId = studentProfile?.mentor_id;
+
+        // Check 1: Is the student mentored by a faculty under this HOD?
+        if (mentorId && facultyIds.includes(mentorId)) return true;
+
+        // Check 2: Does the student's branch match HOD's department?
+        if (dept && isBranchInDepartment(studentBranch, dept)) return true;
         
-        return true;
+        // Check 3: If HOD has no dept set and student has no mentor, fallback?
+        if (!dept && !facultyIds.length) return true; // Extreme fallback
+
+        return false;
       });
 
       setQueries(filteredQueries);
