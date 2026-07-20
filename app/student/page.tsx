@@ -22,6 +22,24 @@ const parseAcademicYear = (val: string) => {
   return { btechYear: null, batch: val };
 };
 
+const isBranchInDepartment = (branch: string, department: string) => {
+  if (!branch || !department) return false;
+  const b = branch.toLowerCase().trim();
+  const d = department.toLowerCase().trim();
+  if (b === d) return true;
+  if (b === 'ece' && (d.includes('electronics') || d.includes('ece'))) return true;
+  if (d.includes('electronics') && b.includes('ece')) return true;
+  if (b === 'cse' && (d.includes('computer science') || d.includes('cse'))) return true;
+  if (d.includes('computer science') && b.includes('cse')) return true;
+  if (b === 'it' && (d.includes('information technology') || d.includes('it'))) return true;
+  if (d.includes('information technology') && b.includes('it')) return true;
+  if (b === 'eee' && (d.includes('electrical') || d.includes('eee'))) return true;
+  if (d.includes('electrical') && b.includes('eee')) return true;
+  if ((b === 'me' || b === 'mech' || b.includes('mechanical')) && (d.includes('mechanical') || d.includes('mech') || d === 'me')) return true;
+  if ((b === 'ce' || b.includes('civil')) && (d.includes('civil') || d === 'ce')) return true;
+  return d.includes(b) || b.includes(d);
+};
+
 export default function StudentProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +61,9 @@ export default function StudentProfilePage() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  const [mentorName, setMentorName] = useState<string>('Not Assigned');
+  const [hodName, setHodName] = useState<string>('Not Assigned');
 
   async function loadProfile() {
     try {
@@ -84,6 +105,39 @@ export default function StudentProfilePage() {
         linkedin_url: profileDb?.linkedin_url || '',
         resume_url: profileDb?.resume_url || ''
       };
+
+      let mName = 'Not Assigned';
+      let hName = 'Not Assigned';
+
+      if (profileDb?.mentor_id) {
+        const { data: mentorUser } = await supabase
+          .from('users')
+          .select(`name, faculty_profiles(hod_id)`)
+          .eq('id', profileDb.mentor_id)
+          .single();
+        if (mentorUser) {
+          mName = mentorUser.name;
+          const hodId = mentorUser.faculty_profiles?.[0]?.hod_id;
+          if (hodId) {
+            const { data: hodUser } = await supabase.from('users').select('name').eq('id', hodId).single();
+            if (hodUser) hName = hodUser.name;
+          }
+        }
+      }
+
+      // Fallback for HOD if mentor doesn't have hod_id set, or no mentor assigned
+      if (hName === 'Not Assigned' && profileDb?.branch) {
+        const { data: hods } = await supabase.from('users').select('name, hod_profiles(department)').eq('role', 'hod');
+        const matchedHod = (hods || []).find((h: any) => {
+          const d = h.hod_profiles?.[0]?.department;
+          if (!d) return false;
+          return isBranchInDepartment(profileDb.branch, d);
+        });
+        if (matchedHod) hName = matchedHod.name;
+      }
+
+      setMentorName(mName);
+      setHodName(hName);
 
       setProfile(initialData);
       setFormData(initialData);
@@ -454,6 +508,17 @@ export default function StudentProfilePage() {
                           <div>
                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Date of Birth</div>
                             <div className="text-sm font-bold text-slate-800">{profileData.dob || '-'}</div>
+                          </div>
+                          
+                          <div className="pt-3 mt-3 border-t border-slate-100 grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Faculty Mentor</div>
+                              <div className="text-sm font-bold text-slate-800 truncate" title={mentorName}>{mentorName}</div>
+                            </div>
+                            <div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">HOD</div>
+                              <div className="text-sm font-bold text-slate-800 truncate" title={hodName}>{hodName}</div>
+                            </div>
                           </div>
                         </div>
                       </div>
