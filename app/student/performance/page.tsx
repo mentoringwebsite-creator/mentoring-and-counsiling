@@ -536,7 +536,12 @@ export default function PerformancePage() {
                             <XAxis dataKey="name" stroke="#94a3b8" fontSize={7} fontWeight={600} />
                             <YAxis stroke="#94a3b8" domain={[0, 100]} fontSize={8} fontWeight={600} />
                             <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                            <Bar onClick={(data: any) => { if (data && data.name) { router.push(`/student/academic?semester=${chartSemester}&subject=${encodeURIComponent(data.name)}`); } }} style={{ cursor: 'pointer' }} name="Marks" dataKey="Marks" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={10} isAnimationActive={true} animationDuration={600}>
+                            <Bar onClick={(data: any) => { 
+                              const subjectStr = data.fullName || (data.payload && data.payload.fullName) || data.name;
+                              if (subjectStr) { 
+                                router.push(`/student/academic?semester=${chartSemester}&subject=${encodeURIComponent(subjectStr)}`); 
+                              } 
+                            }} style={{ cursor: 'pointer' }} name="Marks" dataKey="Marks" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={10} isAnimationActive={true} animationDuration={600}>
                               <LabelList dataKey="Marks" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
                             </Bar>
                           </BarChart>
