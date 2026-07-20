@@ -193,6 +193,53 @@ export default function StudentProfilePage() {
     reader.readAsDataURL(file);
   };
 
+  const handleDirectResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      alert('Please select a PDF file.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Resume file size must be less than 2MB.');
+      return;
+    }
+
+    setSaving(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64Pdf = event.target?.result as string;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error('No active user session.');
+        
+        const { error } = await supabase
+          .from('student_profiles')
+          .update({ resume_url: base64Pdf })
+          .eq('user_id', session.user.id);
+
+        if (error) {
+          if (error.code === '42703' || error.message.includes('resume_url')) {
+            alert('Database missing resume column. Ask admin to run SQL.');
+          } else {
+            throw error;
+          }
+        } else {
+          await loadProfile();
+        }
+      } catch (err: any) {
+        console.error('Error uploading resume directly:', err);
+        alert(err.message || 'Failed to upload resume.');
+      } finally {
+        setSaving(false);
+      }
+    };
+    reader.readAsDataURL(file);
+    // Reset file input
+    e.target.value = '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -305,8 +352,8 @@ export default function StudentProfilePage() {
                     <div className="lg:col-span-1 space-y-6">
                       
                       {/* Profile Photo & Primary Stats Card */}
-                      <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col items-center text-center relative overflow-hidden group">
-                        <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-r from-emerald-800 to-teal-800 opacity-90" />
+                      <div className="rounded-[32px] border border-slate-200 bg-white shadow-sm flex flex-col items-center text-center relative overflow-hidden group">
+                        <div className="absolute top-0 inset-x-0 h-32 bg-gradient-to-br from-emerald-800 via-teal-800 to-sky-900 opacity-95" />
                         
                         {/* Edit Floating Action */}
                         <button 
@@ -314,14 +361,14 @@ export default function StudentProfilePage() {
                             setFormData(profileData);
                             setIsEditing(true);
                           }} 
-                          className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 backdrop-blur-md transition duration-200 shadow-sm"
+                          className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/40 backdrop-blur-md transition duration-200 shadow-sm"
                           title="Edit Profile"
                         >
-                          <Edit2 className="h-3.5 w-3.5" />
+                          <Edit2 className="h-4 w-4" />
                         </button>
 
                         {/* Profile Picture */}
-                        <div className="relative mt-8 z-10 h-32 w-32 rounded-3xl overflow-hidden border-4 border-white shadow-md bg-slate-100 flex items-center justify-center shrink-0">
+                        <div className="relative mt-12 z-10 h-36 w-36 rounded-3xl overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
                           {profileData.profile_photo ? (
                             <img
                               src={profileData.profile_photo}
@@ -348,10 +395,10 @@ export default function StudentProfilePage() {
                           <span>{bTechYear || 'N/A'}</span>
                         </span>
 
-                        <div className="w-full h-px bg-slate-100 my-5" />
-
-                        {/* Quick Contacts */}
-                        <div className="w-full space-y-3 text-left">
+                        <div className="w-full px-6 pb-6 pt-5 flex flex-col items-center">
+                          {/* Quick Contacts */}
+                          <div className="w-full h-px bg-slate-100 mb-6" />
+                          <div className="w-full space-y-4 text-left">
                           <div className="flex items-center gap-3 text-slate-650">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-slate-400 border border-slate-100">
                               <Smartphone className="h-4 w-4 text-emerald-800" />
@@ -408,29 +455,44 @@ export default function StudentProfilePage() {
                         </div>
 
                         {/* Resume Download */}
-                        <div className="w-full mt-5 p-4 rounded-2xl bg-rose-50 border border-rose-100/60 flex items-center justify-between group cursor-default">
+                        <div className="w-full mt-6 p-4 rounded-2xl bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100/60 flex items-center justify-between group cursor-default shadow-sm">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600 border border-rose-100 shadow-sm">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-rose-600 border border-rose-100 shadow-sm">
                               <FileText className="h-5 w-5" />
                             </div>
                             <div>
                               <h3 className="text-sm font-bold text-rose-950 leading-tight">Professional Resume</h3>
                               {profileData.resume_url ? (
-                                <p className="text-[10px] font-semibold text-rose-700/80 mt-0.5">PDF Document uploaded</p>
+                                <p className="text-[10px] font-semibold text-rose-700/80 mt-0.5">PDF uploaded</p>
                               ) : (
-                                <p className="text-[10px] font-semibold text-rose-700/60 mt-0.5">No resume uploaded yet</p>
+                                <p className="text-[10px] font-semibold text-rose-700/60 mt-0.5">No resume uploaded</p>
                               )}
                             </div>
                           </div>
-                          {profileData.resume_url && (
-                            <a 
-                              href={profileData.resume_url} 
-                              download={`${profileData.name || 'Student'}_Resume.pdf`}
-                              className="px-3 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-bold shadow-sm hover:bg-rose-700 transition"
-                            >
-                              Download
-                            </a>
+                          
+                          {profileData.resume_url ? (
+                            <div className="flex flex-col gap-1.5">
+                              <a 
+                                href={profileData.resume_url} 
+                                download={`${profileData.name || 'Student'}_Resume.pdf`}
+                                className="px-3 py-1 text-center rounded-lg bg-rose-600 text-white text-[10px] font-bold shadow-sm hover:bg-rose-700 transition"
+                              >
+                                Download
+                              </a>
+                              <label className="px-3 py-1 text-center rounded-lg bg-white border border-rose-200 text-rose-600 text-[10px] font-bold shadow-sm hover:bg-rose-50 transition cursor-pointer">
+                                {saving ? 'Wait...' : 'Update'}
+                                <input type="file" accept="application/pdf" className="hidden" onChange={handleDirectResumeUpload} disabled={saving} />
+                              </label>
+                            </div>
+                          ) : (
+                            <label className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shadow-sm hover:bg-rose-700 transition cursor-pointer flex items-center gap-1.5">
+                              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                              <span>Upload</span>
+                              <input type="file" accept="application/pdf" className="hidden" onChange={handleDirectResumeUpload} disabled={saving} />
+                            </label>
                           )}
+                        </div>
+
                         </div>
 
                       </div>
