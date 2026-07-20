@@ -34,7 +34,7 @@ export default function HomePage() {
           {/* Full Width Horizontal College Image */}
           <div className="w-full relative bg-slate-100 shadow-md">
             <img 
-              src="/assets/college-bg.jpg" 
+              src="/assets/college-bg.png" 
               alt="Sreenidhi Institute Campus Banner" 
               className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] object-cover object-center"
             />
