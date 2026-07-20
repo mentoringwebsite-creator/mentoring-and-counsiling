@@ -366,9 +366,9 @@ export default function StudentProfilePage() {
                       </button>
 
                       <div className="px-8 pb-8">
-                        <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-end -mt-16 relative z-10">
+                        <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end -mt-16 relative z-10">
                           {/* Profile Picture */}
-                          <div className="h-32 w-32 rounded-[24px] overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
+                          <div className="h-32 w-32 min-h-[128px] max-h-[128px] min-w-[128px] max-w-[128px] rounded-[24px] overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
                             {profileData.profile_photo ? (
                               <img
                                 src={profileData.profile_photo}

@@ -131,8 +131,10 @@ export default function QueriesPage() {
   }, [messages]);
 
   useEffect(() => {
-    setShowQueryList(!selectedQuery);
-  }, [selectedQuery]);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // We don't hide the list unconditionally anymore. It's handled via CSS for responsive side-by-side view.
 
   const handleCreateQuery = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,9 +230,9 @@ export default function QueriesPage() {
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/student/queries" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/performance', label: 'Performance' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
           
-          <div className={selectedQuery ? "grid gap-6 lg:grid-cols-[1fr_400px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
+          <div className={selectedQuery ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
             {/* Left side: Query List */}
-            <div className={showQueryList ? "space-y-6 w-full min-w-0" : "hidden"}>
+            <div className={`${selectedQuery ? 'hidden lg:block' : 'block'} space-y-6 w-full min-w-0`}>
               <div className="portal-card">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <h2 className="text-2xl font-semibold">Recent Queries</h2>
@@ -343,13 +345,10 @@ export default function QueriesPage() {
                 <>
                   {/* Chat Header */}
                   <div className="border-b border-slate-200 pb-4">
-                    {/* Back Button */}
+                    {/* Back Button (Mobile Only) */}
                     <button
-                      onClick={() => {
-                        setSelectedQuery(null);
-                        setShowQueryList(true);
-                      }}
-                      className="mb-3 flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700"
+                      onClick={() => setSelectedQuery(null)}
+                      className="mb-3 flex lg:hidden items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700"
                     >
                       &larr; Back to Queries
                     </button>
