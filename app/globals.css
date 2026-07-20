@@ -2,30 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+@layer base {
+  :root {
+    --background: 210 40% 98%; /* #f8fafc */
+    --foreground: 222.2 84% 4.9%; /* #0f172a */
+    
+    --card: 0 0% 100%; /* #ffffff */
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%; /* #2563EB */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 243.3 75.4% 58.6%; /* #4f46e5 */
+    --secondary-foreground: 210 40% 98%;
+
+    --accent: 271.5 81.3% 55.9%; /* #9333ea */
+    --accent-foreground: 210 40% 98%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --border: 214.3 31.8% 91.4%; /* #e2e8f0 */
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --success: 142.1 76.2% 36.3%; /* #16a34a */
+    --success-foreground: 355.7 100% 97.3%;
+    
+    --warning: 38 92% 50%; /* #f59e0b */
+    --warning-foreground: 48 96% 89%;
+    
+    --danger: 0 84.2% 60.2%; /* #ef4444 */
+    --danger-foreground: 210 40% 98%;
+
+    --radius: 0.75rem;
+  }
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-body {
-  margin: 0;
-  min-height: 100%;
-  background:
-    radial-gradient(circle at 8% 4%, rgba(136, 201, 174, 0.26), transparent 30%),
-    radial-gradient(circle at 90% 10%, rgba(247, 212, 146, 0.26), transparent 30%),
-    radial-gradient(circle at 50% 100%, rgba(183, 208, 235, 0.15), transparent 36%),
-    linear-gradient(180deg, #f5faf7 0%, #e9f2ee 55%, #e6efec 100%);
-  color: #16362f;
-  font-family: var(--font-manrope), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-* {
-  box-sizing: border-box;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
 }
 
 a {
@@ -42,69 +72,40 @@ h4 {
 
 /* Keyframe Animations */
 @keyframes slideUp {
-  0% {
-    transform: translateY(16px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  0% { transform: translateY(12px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  0% {
-    transform: scale(0.97);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 .animate-slide-up {
-  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
 }
 
-.animate-scale-in {
-  animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Premium Card and Interactive Shadows */
+/* Premium Card Design System */
 .portal-card {
-  @apply rounded-[28px] border border-white/75 bg-white/80 backdrop-blur-xl p-4 sm:p-6 shadow-[0_14px_40px_rgba(15,44,34,0.06)] transition-all duration-300 ease-out;
+  @apply rounded-[16px] border border-slate-200 bg-white p-6 shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-all duration-200;
 }
 
 .portal-card:hover {
-  @apply shadow-[0_24px_58px_rgba(15,44,34,0.1)] -translate-y-0.5 border-white;
+  @apply shadow-[0_8px_24px_rgba(15,23,42,0.08)] border-slate-300;
 }
 
 .feature-card {
-  @apply rounded-[28px] border border-slate-200/80 bg-white p-6 shadow-soft transition duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_28px_90px_rgba(18,46,36,0.12)];
-}
-
-.cta-panel {
-  @apply rounded-[2rem] bg-[#164d41] px-8 py-8 text-white shadow-soft;
+  @apply rounded-[16px] border border-slate-200 bg-white p-6 shadow-[0_2px_12px_rgba(15,23,42,0.04)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_32px_rgba(15,23,42,0.08)];
 }
 
 /* Scrollbar Customization */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -112,21 +113,21 @@ h4 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(22, 54, 47, 0.15);
-  border-radius: 10px;
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(22, 54, 47, 0.3);
+  background: #94a3b8;
 }
 
 ::selection {
-  background: rgba(212, 123, 16, 0.2);
-  color: #16362f;
+  background: rgba(37, 99, 235, 0.2);
+  color: #0f172a;
 }
 
 @media (max-width: 640px) {
   .portal-card {
-    @apply rounded-[24px] p-4;
+    @apply p-4 rounded-[12px];
   }
 }
