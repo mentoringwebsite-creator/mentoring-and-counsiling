@@ -51,8 +51,8 @@ export function Sidebar({ items, active }: { items: Item[]; active: string }) {
   };
 
   return (
-    <aside className="hidden w-[260px] shrink-0 rounded-[16px] bg-white p-5 text-slate-700 shadow-sm border border-slate-200 lg:flex lg:flex-col">
-      <div className="mb-6 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold uppercase tracking-[0.15em] text-white text-center shadow-sm">
+    <aside className="hidden w-[260px] shrink-0 rounded-[16px] bg-emerald-800 p-5 text-emerald-50 shadow-sm border border-emerald-900/50 lg:flex lg:flex-col">
+      <div className="mb-6 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold uppercase tracking-[0.15em] text-white text-center shadow-sm border border-white/10">
         {getPortalTitle()}
       </div>
       <nav className="flex flex-col gap-2">
@@ -65,8 +65,8 @@ export function Sidebar({ items, active }: { items: Item[]; active: string }) {
               className={cn(
                 'flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                 isActive 
-                  ? 'bg-emerald-700 text-white shadow-md font-bold' 
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  ? 'bg-white text-emerald-800 shadow-md font-bold' 
+                  : 'text-emerald-100/80 hover:bg-white/10 hover:text-white'
               )}
             >
               {getIcon(item.label)}
