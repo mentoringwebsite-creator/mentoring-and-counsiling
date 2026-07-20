@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -84,6 +85,7 @@ const studentSidebarItems = [
 ];
 
 export default function PerformancePage() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   
   // Data states
@@ -492,7 +494,7 @@ export default function PerformancePage() {
                             <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
                             <YAxis stroke="#94a3b8" domain={[0, 10]} fontSize={8} fontWeight={600} />
                             <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                            <Bar name="Student" dataKey="Student" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={14} isAnimationActive={true} animationDuration={600}>
+                            <Bar onClick={(data: any) => { if (data && data.name) { const sem = data.name.replace('Sem ', ''); router.push(`/student/academic?semester=${sem}`); } }} style={{ cursor: 'pointer' }} name="Student" dataKey="Student" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={14} isAnimationActive={true} animationDuration={600}>
                               <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
                             </Bar>
                           </BarChart>
@@ -534,7 +536,7 @@ export default function PerformancePage() {
                             <XAxis dataKey="name" stroke="#94a3b8" fontSize={7} fontWeight={600} />
                             <YAxis stroke="#94a3b8" domain={[0, 100]} fontSize={8} fontWeight={600} />
                             <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                            <Bar name="Marks" dataKey="Marks" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={10} isAnimationActive={true} animationDuration={600}>
+                            <Bar onClick={(data: any) => { if (data && data.name) { router.push(`/student/academic?semester=${chartSemester}&subject=${encodeURIComponent(data.name)}`); } }} style={{ cursor: 'pointer' }} name="Marks" dataKey="Marks" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={10} isAnimationActive={true} animationDuration={600}>
                               <LabelList dataKey="Marks" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
                             </Bar>
                           </BarChart>

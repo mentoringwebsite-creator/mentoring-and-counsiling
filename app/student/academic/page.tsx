@@ -54,6 +54,7 @@ export default function AcademicPage() {
   const [backlogs, setBacklogs] = useState<number>(0);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSemester, setSelectedSemester] = useState<string>('All');
+  const [highlightSubject, setHighlightSubject] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [classAverage, setClassAverage] = useState<number>(7.80);
 
@@ -150,7 +151,25 @@ export default function AcademicPage() {
 
   useEffect(() => {
     loadAcademicProfile();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const sem = params.get('semester');
+      if (sem) setSelectedSemester(sem);
+      const subj = params.get('subject');
+      if (subj) setHighlightSubject(subj);
+    }
   }, []);
+
+  useEffect(() => {
+    if (highlightSubject && !loading && selectedSemester !== 'All') {
+      setTimeout(() => {
+        const el = document.getElementById(`subject-row-${highlightSubject}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500); // small delay to ensure rendering is complete
+    }
+  }, [highlightSubject, loading, selectedSemester]);
 
   const getSemesterMetadata = (sem: string) => {
     const sub = subjects.find((s: any) => s.semester?.toString() === sem);
@@ -642,8 +661,14 @@ export default function AcademicPage() {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 bg-white">
-                              {filteredSubjects.map((sub, index) => (
-                                <tr key={index} className="hover:bg-slate-50/40 transition">
+                              {filteredSubjects.map((sub, index) => {
+                                const isHighlighted = sub.name === highlightSubject;
+                                return (
+                                <tr 
+                                  key={index} 
+                                  id={`subject-row-${sub.name}`}
+                                  className={`transition ${isHighlighted ? 'bg-amber-50 ring-2 ring-amber-400 ring-inset z-10 relative' : 'hover:bg-slate-50/40'}`}
+                                >
                                   <td className="p-3 font-mono font-bold text-slate-600">{sub.code || '-'}</td>
                                   <td className="p-3 font-semibold text-slate-800">{sub.name}</td>
                                   <td className="p-3 text-slate-600 text-center font-bold">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
@@ -664,7 +689,8 @@ export default function AcademicPage() {
                                     </span>
                                   </td>
                                 </tr>
-                              ))}
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
