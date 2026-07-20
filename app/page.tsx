@@ -29,83 +29,61 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* Hero Section */}
-        <section id="home" className="relative pt-32 pb-20 lg:pt-40 lg:pb-28 px-6 md:px-12">
-          <div className="mx-auto max-w-[1280px]">
-            <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 items-center">
-              
-              {/* Left Content */}
-              <div className="max-w-xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 mb-6">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white">
-                    <BadgeCheck className="h-3 w-3" />
-                  </span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-emerald-800">
-                    Official Mentoring Portal
-                  </span>
-                </div>
+        {/* Hero Section with Horizontal Banner */}
+        <section id="home" className="pt-[80px] w-full">
+          {/* Full Width Horizontal College Image */}
+          <div className="w-full relative bg-slate-100 shadow-md">
+            <img 
+              src="/assets/college-bg.jpg" 
+              alt="Sreenidhi Institute Campus Banner" 
+              className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] object-cover object-center"
+            />
+          </div>
 
-                <h1 className="text-5xl md:text-6xl lg:text-[4rem] font-black text-slate-900 leading-[1.1] tracking-tight">
-                  Empowering <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
-                    Students
-                  </span> for <br /> Tomorrow.
-                </h1>
+          {/* Centered Hero Content Below Banner */}
+          <div className="mx-auto max-w-[1000px] px-6 text-center py-16 md:py-24">
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 mb-8 mx-auto shadow-sm">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white">
+                <BadgeCheck className="h-3 w-3" />
+              </span>
+              <span className="text-xs font-bold uppercase tracking-widest text-emerald-800">
+                Official Mentoring Portal
+              </span>
+            </div>
 
-                <p className="mt-6 text-lg text-slate-600 leading-relaxed font-medium max-w-lg">
-                  A modern, unified platform for SNIST students, faculty, and administrators to track academic progress, connect with mentors, and access confidential counseling.
-                </p>
+            <h1 className="text-5xl md:text-6xl font-black text-slate-900 leading-[1.1] tracking-tight mx-auto max-w-4xl">
+              Empowering <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Students</span> for Tomorrow.
+            </h1>
 
-                <div className="mt-10 flex flex-wrap items-center gap-5">
-                  <PortalButton href="/login" className="px-8 py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-[15px] shadow-xl shadow-slate-900/20 transition-all transform hover:-translate-y-1 flex items-center gap-2">
-                    Open Student Portal
-                  </PortalButton>
-                  <PortalButton href="#features" variant="secondary" className="px-8 py-4 rounded-full bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 text-[15px] transition-all">
-                    Explore Features
-                  </PortalButton>
-                </div>
+            <p className="mt-8 text-lg md:text-xl text-slate-600 leading-relaxed font-medium max-w-3xl mx-auto">
+              A modern, unified platform for SNIST students, faculty, and administrators to track academic progress, connect with mentors, and access confidential counseling.
+            </p>
 
-                <div className="mt-12 flex items-center gap-8 border-t border-slate-200 pt-8">
-                  <div>
-                    <div className="text-3xl font-black text-slate-900">800+</div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mt-1">Students</div>
-                  </div>
-                  <div className="w-px h-10 bg-slate-200"></div>
-                  <div>
-                    <div className="text-3xl font-black text-slate-900">24/7</div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mt-1">Support</div>
-                  </div>
-                  <div className="w-px h-10 bg-slate-200 hidden sm:block"></div>
-                  <div className="hidden sm:block">
-                    <div className="text-3xl font-black text-slate-900">100%</div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mt-1">Confidential</div>
-                  </div>
-                </div>
+            <div className="mt-10 flex flex-wrap justify-center items-center gap-5">
+              <PortalButton href="/login" className="px-8 py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-[15px] shadow-xl shadow-slate-900/20 transition-all transform hover:-translate-y-1 flex items-center gap-2">
+                Open Student Portal
+              </PortalButton>
+              <PortalButton href="#features" variant="secondary" className="px-8 py-4 rounded-full bg-white border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 text-[15px] transition-all">
+                Explore Features
+              </PortalButton>
+            </div>
+            
+            {/* Quick Stats */}
+            <div className="mt-16 flex flex-wrap justify-center items-center gap-8 md:gap-16 border-t border-slate-200 pt-10">
+              <div>
+                <div className="text-4xl font-black text-emerald-700">800+</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-2">Students Supported</div>
               </div>
-
-              {/* Right Image (College BG) */}
-              <div className="relative h-[500px] lg:h-[650px] w-full rounded-[2.5rem] overflow-hidden shadow-2xl shadow-emerald-900/10 group">
-                <div className="absolute inset-0 bg-emerald-900/10 group-hover:bg-transparent transition-colors duration-700 z-10" />
-                <img 
-                  src="/assets/college-bg.jpg" 
-                  alt="Sreenidhi Institute Campus" 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                />
-                
-                {/* Floating Glassmorphism Card */}
-                <div className="absolute bottom-8 left-8 right-8 z-20 rounded-3xl border border-white/20 bg-white/70 backdrop-blur-xl p-6 shadow-2xl">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/30">
-                      <GraduationCap className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-lg">Academic Excellence</h3>
-                      <p className="text-sm font-medium text-slate-700 mt-0.5">Track your SGPA, CGPA & Backlogs</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="w-px h-12 bg-slate-200 hidden sm:block"></div>
+              <div>
+                <div className="text-4xl font-black text-emerald-700">24/7</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-2">Counseling Access</div>
               </div>
-
+              <div className="w-px h-12 bg-slate-200 hidden sm:block"></div>
+              <div>
+                <div className="text-4xl font-black text-emerald-700">100%</div>
+                <div className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-2">Confidential</div>
+              </div>
             </div>
           </div>
         </section>
