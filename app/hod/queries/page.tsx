@@ -102,8 +102,9 @@ export default function HodQueriesPage() {
       const deptFaculty = (facultyUsers || []).filter((f: any) => {
         const fp = f.faculty_profiles?.[0];
         if (fp?.hod_id === hodId) return true;
-        if (dept && fp?.department && isBranchInDepartment(fp.department, dept)) return true;
-        return false;
+        const fDept = fp?.department;
+        if (!dept || !fDept) return true;
+        return isBranchInDepartment(fDept, dept);
       });
       const facultyIds = deptFaculty.map(f => f.id);
 
@@ -140,16 +141,11 @@ export default function HodQueriesPage() {
         const studentBranch = studentProfile?.branch || '';
         const mentorId = studentProfile?.mentor_id;
 
-        // Check 1: Is the student mentored by a faculty under this HOD?
-        if (mentorId && facultyIds.includes(mentorId)) return true;
+        const branchMatches = studentBranch && dept && isBranchInDepartment(studentBranch, dept);
+        const mentorInDept = mentorId && facultyIds.includes(mentorId);
 
-        // Check 2: Does the student's branch match HOD's department?
-        if (dept && isBranchInDepartment(studentBranch, dept)) return true;
-        
-        // Check 3: If HOD has no dept set and student has no mentor, fallback?
-        if (!dept && !facultyIds.length) return true; // Extreme fallback
-
-        return false;
+        if (!dept) return true;
+        return branchMatches || mentorInDept;
       });
 
       setQueries(filteredQueries);
