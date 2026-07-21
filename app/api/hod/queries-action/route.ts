@@ -86,22 +86,31 @@ export async function POST(request: NextRequest) {
       });
       const facultyIds = deptFaculty.map(f => f.id);
 
-      const { data: queriesData } = await supabase
+      const { data: queriesData, error: queriesError } = await supabase
         .from('queries')
-        .select(`
-          id, type, subject, description, status, created_at, student_id,
-          student:student_id (
-            name, email,
-            student_profiles (branch, mentor_id)
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
+
+      if (queriesError) throw queriesError;
+
+      // Manually fetch student details for these queries to avoid PostgREST relationship ambiguity errors
+      const studentIds = Array.from(new Set((queriesData || []).map(q => q.student_id).filter(Boolean)));
+      
+      let studentDetails: any[] = [];
+      if (studentIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, name, email, student_profiles(branch, mentor_id)')
+          .in('id', studentIds);
+        studentDetails = usersData || [];
+      }
 
       const filteredQueries = (queriesData || []).filter((q: any) => {
         const { raisedTo } = parseQueryMetadata(q.description);
         if (raisedTo !== 'HOD') return false;
 
-        const studentProfile = q.student?.student_profiles?.[0];
+        const studentData = studentDetails.find(s => s.id === q.student_id);
+        const studentProfile = studentData?.student_profiles?.[0];
         const studentBranch = studentProfile?.branch || '';
         const mentorId = studentProfile?.mentor_id;
 
@@ -112,7 +121,15 @@ export async function POST(request: NextRequest) {
         return branchMatches || mentorInDept;
       });
 
-      return NextResponse.json({ success: true, queries: filteredQueries });
+      const formattedQueries = filteredQueries.map((q: any) => {
+        const studentData = studentDetails.find(s => s.id === q.student_id);
+        return {
+          ...q,
+          student: studentData || null
+        };
+      });
+
+      return NextResponse.json({ success: true, queries: formattedQueries });
     }
 
     if (action === 'updateStatus') {
