@@ -112,14 +112,20 @@ export default function StudentProfilePage() {
       if (profileDb?.mentor_id) {
         const { data: mentorUser } = await supabase
           .from('users')
-          .select(`name, faculty_profiles(hod_id)`)
+          .select('name')
           .eq('id', profileDb.mentor_id)
           .single();
+          
         if (mentorUser) {
           mName = mentorUser.name;
-          const hodId = mentorUser.faculty_profiles?.[0]?.hod_id;
-          if (hodId) {
-            const { data: hodUser } = await supabase.from('users').select('name').eq('id', hodId).single();
+          const { data: facProfile } = await supabase
+            .from('faculty_profiles')
+            .select('hod_id')
+            .eq('user_id', profileDb.mentor_id)
+            .single();
+            
+          if (facProfile?.hod_id) {
+            const { data: hodUser } = await supabase.from('users').select('name').eq('id', facProfile.hod_id).single();
             if (hodUser) hName = hodUser.name;
           }
         }
