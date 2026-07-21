@@ -77,78 +77,22 @@ export default function HodQueriesPage() {
       const hodId = sessionData?.session?.user?.id;
       if (!hodId) return;
 
-      // 1. Fetch HOD's department
-      const { data: hodProfile, error: hodError } = await supabase
-        .from('hod_profiles')
-        .select('department')
-        .eq('user_id', hodId)
-        .single();
-
-      if (hodError) throw hodError;
-      const dept = hodProfile?.department || '';
-
-      // 2. Fetch faculties assigned to this HOD or in this department
-      const { data: facultyUsers } = await supabase
-        .from('users')
-        .select(`
-          id,
-          faculty_profiles (
-            department,
-            hod_id
-          )
-        `)
-        .eq('role', 'faculty');
-      
-      const deptFaculty = (facultyUsers || []).filter((f: any) => {
-        const fp = f.faculty_profiles?.[0];
-        if (fp?.hod_id === hodId) return true;
-        const fDept = fp?.department;
-        if (!dept || !fDept) return true;
-        return isBranchInDepartment(fDept, dept);
-      });
-      const facultyIds = deptFaculty.map(f => f.id);
-
-      // 3. Fetch all queries directly (to avoid missing queries when students have no mentor)
-      const { data: queriesData, error: queriesError } = await supabase
-        .from('queries')
-        .select(`
-          id,
-          type,
-          subject,
-          description,
-          status,
-          created_at,
-          student_id,
-          student:student_id (
-            name,
-            email,
-            student_profiles (
-              branch,
-              mentor_id
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (queriesError) throw queriesError;
-
-      // 4. Filter queries to only show those raised explicitly to HOD, and from their department or assigned faculty
-      const filteredQueries = (queriesData || []).filter((q: any) => {
-        const { raisedTo } = parseQueryMetadata(q.description);
-        if (raisedTo !== 'HOD') return false;
-
-        const studentProfile = q.student?.student_profiles?.[0];
-        const studentBranch = studentProfile?.branch || '';
-        const mentorId = studentProfile?.mentor_id;
-
-        const branchMatches = studentBranch && dept && isBranchInDepartment(studentBranch, dept);
-        const mentorInDept = mentorId && facultyIds.includes(mentorId);
-
-        if (!dept) return true;
-        return branchMatches || mentorInDept;
-      });
-
-      setQueries(filteredQueries);
+      try {
+        const res = await fetch('/api/hod/queries-fetch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ hodId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setQueries(data.queries || []);
+        } else {
+          setQueries([]);
+        }
+      } catch (e) {
+        console.error('Fetch via API failed', e);
+        setQueries([]);
+      }
     } catch (err: any) {
       console.error('Error fetching queries:', err);
     } finally {
@@ -159,24 +103,15 @@ export default function HodQueriesPage() {
   const fetchMessages = async (queryId: string) => {
     try {
       setLoadingMessages(true);
-      const { data, error } = await supabase
-        .from('query_messages')
-        .select(`
-          id,
-          query_id,
-          sender_id,
-          message,
-          created_at,
-          users:sender_id (
-            name,
-            role
-          )
-        `)
-        .eq('query_id', queryId)
-        .order('created_at', { ascending: true });
-
-      if (error) throw error;
-      setMessages(data || []);
+      const res = await fetch('/api/hod/queries-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'fetchMessages', queryId })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessages(data.messages || []);
+      }
     } catch (err: any) {
       console.error('Error fetching messages:', err);
     } finally {
@@ -237,17 +172,19 @@ export default function HodQueriesPage() {
       const userId = sessionData?.session?.user?.id;
       if (!userId) return;
 
-      const { error } = await supabase
-        .from('query_messages')
-        .insert([
-          {
-            query_id: selectedQuery.id,
-            sender_id: userId,
-            message: newMessage.trim(),
-          }
-        ]);
-
-      if (error) throw error;
+      const res = await fetch('/api/hod/queries-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'sendMessage', 
+          queryId: selectedQuery.id, 
+          senderId: userId, 
+          message: newMessage.trim() 
+        })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      
       setNewMessage('');
       fetchMessages(selectedQuery.id);
     } catch (err: any) {
@@ -261,12 +198,18 @@ export default function HodQueriesPage() {
     try {
       setUpdatingStatus(true);
       setFeedback(null);
-      const { error } = await supabase
-        .from('queries')
-        .update({ status: newStatus })
-        .eq('id', selectedQuery.id);
-
-      if (error) throw error;
+      
+      const res = await fetch('/api/hod/queries-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'updateStatus', 
+          queryId: selectedQuery.id, 
+          status: newStatus 
+        })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
       
       setSelectedQuery((prev: any) => prev ? { ...prev, status: newStatus } : null);
       setFeedback({ type: 'success', message: `Query status overridden to ${newStatus}.` });
