@@ -109,37 +109,25 @@ export default function StudentProfilePage() {
       let mName = 'Not Assigned';
       let hName = 'Not Assigned';
 
-      if (profileDb?.mentor_id) {
-        const { data: mentorUser } = await supabase
-          .from('users')
-          .select('name')
-          .eq('id', profileDb.mentor_id)
-          .single();
-          
-        if (mentorUser) {
-          mName = mentorUser.name;
-          const { data: facProfile } = await supabase
-            .from('faculty_profiles')
-            .select('hod_id')
-            .eq('user_id', profileDb.mentor_id)
-            .single();
-            
-          if (facProfile?.hod_id) {
-            const { data: hodUser } = await supabase.from('users').select('name').eq('id', facProfile.hod_id).single();
-            if (hodUser) hName = hodUser.name;
+      try {
+        const response = await fetch('/api/student/mentor-info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            mentorId: profileDb?.mentor_id || null, 
+            branch: profileDb?.branch || '' 
+          })
+        });
+        
+        if (response.ok) {
+          const resData = await response.json();
+          if (resData.success) {
+            mName = resData.mName || 'Not Assigned';
+            hName = resData.hName || 'Not Assigned';
           }
         }
-      }
-
-      // Fallback for HOD if mentor doesn't have hod_id set, or no mentor assigned
-      if (hName === 'Not Assigned' && profileDb?.branch) {
-        const { data: hods } = await supabase.from('users').select('name, hod_profiles(department)').eq('role', 'hod');
-        const matchedHod = (hods || []).find((h: any) => {
-          const d = h.hod_profiles?.[0]?.department;
-          if (!d) return false;
-          return isBranchInDepartment(profileDb.branch, d);
-        });
-        if (matchedHod) hName = matchedHod.name;
+      } catch (err) {
+        console.error('Failed to fetch mentor/HOD info:', err);
       }
 
       setMentorName(mName);
