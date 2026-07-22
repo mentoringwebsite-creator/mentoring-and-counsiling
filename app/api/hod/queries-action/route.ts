@@ -115,7 +115,27 @@ export async function POST(request: NextRequest) {
           .from('users')
           .select('id, name, email, student_profiles(branch, mentor_id)')
           .in('id', studentIds);
-        studentDetails = usersData || [];
+
+        const { data: studentsData } = await supabase
+          .from('students')
+          .select('id, name, email, branch')
+          .in('id', studentIds);
+
+        const studentMap = new Map<string, any>();
+        (usersData || []).forEach((student: any) => {
+          studentMap.set(student.id, student);
+        });
+
+        (studentsData || []).forEach((student: any) => {
+          const existing = studentMap.get(student.id) || {};
+          studentMap.set(student.id, {
+            ...existing,
+            ...student,
+            student_profiles: existing.student_profiles || [{ branch: student.branch || null, mentor_id: null }],
+          });
+        });
+
+        studentDetails = Array.from(studentMap.values());
       }
 
       const filteredQueries = (queriesData || []).filter((q: any) => {
