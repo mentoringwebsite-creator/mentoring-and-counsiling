@@ -38,7 +38,6 @@ export default function QueriesPage() {
   const [newQueryType, setNewQueryType] = useState('Academic');
   const [newQueryRaisedTo, setNewQueryRaisedTo] = useState('Faculty');
   const [newQueryRaisedBy, setNewQueryRaisedBy] = useState('Student');
-  const [targetHodId, setTargetHodId] = useState<string | null>(null);
   const [newQuerySubject, setNewQuerySubject] = useState('');
   const [newQueryDescription, setNewQueryDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -101,42 +100,6 @@ export default function QueriesPage() {
   }, []);
 
   useEffect(() => {
-    const loadRecipientContext = async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        const userId = sessionData?.session?.user?.id;
-        if (!userId) return;
-
-        const { data: profileData } = await supabase
-          .from('student_profiles')
-          .select('branch, mentor_id')
-          .eq('user_id', userId)
-          .single();
-
-        const response = await fetch('/api/student/mentor-info', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            mentorId: profileData?.mentor_id || null,
-            branch: profileData?.branch || ''
-          })
-        });
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-        if (data.success) {
-          setTargetHodId(data.hId || null);
-        }
-      } catch (err) {
-        console.error('Error resolving HOD recipient:', err);
-      }
-    };
-
-    loadRecipientContext();
-  }, []);
-
-  useEffect(() => {
     if (selectedQuery) {
       fetchMessages(selectedQuery.id);
       
@@ -184,9 +147,6 @@ export default function QueriesPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id;
       if (!userId) throw new Error('You must be logged in to raise a query.');
-      if (newQueryRaisedTo === 'HOD' && !targetHodId) {
-        throw new Error('HOD recipient is still loading. Please try again in a moment.');
-      }
 
       const { data, error } = await supabase
         .from('queries')
