@@ -1315,14 +1315,15 @@ export default function AdminStudentsPage() {
                     <th className="px-5 py-4 font-semibold">Roll Number</th>
                     <th className="px-5 py-4 font-semibold">Branch & Section</th>
                     <th className="px-5 py-4 font-semibold">Contact Info</th>
-                    <th className="px-5 py-4 font-semibold">Assigned Mentor & HOD</th>
+                    <th className="px-5 py-4 font-semibold">Assigned Mentor</th>
+                    <th className="px-5 py-4 font-semibold">Assigned HOD</th>
                     <th className="px-5 py-4 font-semibold text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {loading ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={6}>
+                      <td className="px-5 py-8 text-slate-500" colSpan={7}>
                         <div className="flex items-center gap-2">
                           <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
                           <span>Loading students…</span>
@@ -1331,7 +1332,7 @@ export default function AdminStudentsPage() {
                     </tr>
                   ) : filteredStudents.length === 0 ? (
                     <tr>
-                      <td className="px-5 py-8 text-slate-400 italic text-center" colSpan={6}>No students matched the selected filters.</td>
+                      <td className="px-5 py-8 text-slate-400 italic text-center" colSpan={7}>No students matched the selected filters.</td>
                     </tr>
                   ) : null}
                   {filteredStudents.map((student) => {
@@ -1376,7 +1377,7 @@ export default function AdminStudentsPage() {
                           <select
                             value={profile.mentor_id || ''}
                             onChange={(e) => handleMentorChange(student.id, e.target.value)}
-                            className="rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-700 focus:border-emerald-600 focus:outline-none w-full max-w-[170px]"
+                            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 focus:border-emerald-600 focus:outline-none w-full max-w-[170px] shadow-sm transition-colors hover:border-emerald-400 cursor-pointer"
                           >
                             <option value="">Unassigned</option>
                             {facultyList.map((f) => (
@@ -1385,17 +1386,21 @@ export default function AdminStudentsPage() {
                               </option>
                             ))}
                           </select>
-                          {profile.mentor_id && (
-                            <div className="mt-1.5 text-[10px] font-medium text-slate-500 pl-1">
-                              HOD: {
+                        </td>
+                        <td className="px-5 py-4">
+                          {profile.mentor_id ? (
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
+                              {
                                 (() => {
                                   const fac = facultyList.find(f => f.id === profile.mentor_id);
-                                  if (!fac || !fac.faculty_profiles || !fac.faculty_profiles[0]?.hod_id) return 'Unassigned';
+                                  if (!fac || !fac.faculty_profiles || !fac.faculty_profiles[0]?.hod_id) return <span className="text-slate-400 italic">Unassigned</span>;
                                   const h = hodList.find(h => h.id === fac.faculty_profiles[0].hod_id);
-                                  return h ? h.name : 'Unassigned';
+                                  return h ? h.name : <span className="text-slate-400 italic">Unassigned</span>;
                                 })()
                               }
                             </div>
+                          ) : (
+                            <span className="text-xs text-slate-400 italic px-2">N/A</span>
                           )}
                         </td>
                         <td className="px-5 py-4">
