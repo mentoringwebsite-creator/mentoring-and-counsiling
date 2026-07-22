@@ -195,10 +195,7 @@ export default function QueriesPage() {
             student_id: userId,
             type: newQueryType,
             subject: newQuerySubject.trim(),
-            raised_by_role: newQueryRaisedBy,
-            raised_to_role: newQueryRaisedTo,
-            target_hod_id: newQueryRaisedTo === 'HOD' ? targetHodId : null,
-            description: newQueryDescription.trim(),
+            description: `Raised By: ${newQueryRaisedBy}\nRaised To: ${newQueryRaisedTo}\n\n${newQueryDescription.trim()}`,
             status: 'Pending',
           }
         ])
