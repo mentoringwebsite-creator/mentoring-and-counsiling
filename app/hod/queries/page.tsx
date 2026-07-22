@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw, User, UserCheck, Trash2 } from 'lucide-react';
+import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw, User, UserCheck, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const parseQueryMetadata = (description: string) => {
   let raisedBy = 'Student';
@@ -67,6 +67,7 @@ export default function HodQueriesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -221,8 +222,7 @@ export default function HodQueriesPage() {
     }
   };
 
-  const handleDeleteQuery = async () => {
-    if (!selectedQuery) return;
+  const deleteQueryById = async (queryId: string) => {
     if (!window.confirm('Are you sure you want to delete this query completely? This action cannot be undone.')) return;
 
     try {
@@ -234,13 +234,15 @@ export default function HodQueriesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           action: 'deleteQuery', 
-          queryId: selectedQuery.id
+          queryId
         })
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       
-      setSelectedQuery(null);
+      if (selectedQuery?.id === queryId) {
+        setSelectedQuery(null);
+      }
       setFeedback({ type: 'success', message: 'Query deleted successfully.' });
       fetchQueries();
     } catch (err: any) {
@@ -250,25 +252,39 @@ export default function HodQueriesPage() {
     }
   };
 
+  const showChat = selectedQuery && !chatCollapsed;
+
   return (
     <ProtectedRoute role="hod">
       <PageShell title="Student Queries" subtitle="Department query watchlist">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/hod/queries" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/profile', label: 'Profile' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
           
-          <div className={selectedQuery ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
+          <div className={showChat ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
             {/* Left Column: Queries List */}
-            <div className={`${selectedQuery ? 'hidden lg:block' : 'block'} space-y-6 w-full min-w-0`}>
+            <div className={`${showChat ? 'hidden lg:block' : 'block'} space-y-6 w-full min-w-0`}>
               <div className="portal-card">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-semibold">Department Watchlist</h2>
-                  <button 
-                    onClick={fetchQueries}
-                    className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50 transition"
-                    title="Refresh Watchlist"
-                  >
-                    <RefreshCw className="h-4 w-4 text-slate-500" />
-                  </button>
+                  <h2 className="text-2xl font-semibold">Student Queries Watchlist</h2>
+                  <div className="flex items-center gap-2">
+                    {selectedQuery && chatCollapsed && (
+                      <button
+                        onClick={() => setChatCollapsed(false)}
+                        className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition shadow-sm"
+                        title="Expand Chat"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <span>Show Chat</span>
+                      </button>
+                    )}
+                    <button 
+                      onClick={fetchQueries}
+                      className="rounded-xl border border-slate-200 bg-white p-2 hover:bg-slate-50 transition"
+                      title="Refresh Watchlist"
+                    >
+                      <RefreshCw className="h-4 w-4 text-slate-500" />
+                    </button>
+                  </div>
                 </div>
 
                 {feedback && (
@@ -289,12 +305,13 @@ export default function HodQueriesPage() {
                           <th className="p-4">Subject</th>
                           <th className="p-4">Raised By</th>
                           <th className="p-4">Status</th>
+                          <th className="p-4 text-center">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
                         {loading ? (
                           <tr>
-                            <td className="p-8 text-center text-slate-500" colSpan={4}>
+                            <td className="p-8 text-center text-slate-500" colSpan={6}>
                               <div className="flex items-center justify-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
                                 <span>Loading department watchlist...</span>
@@ -303,7 +320,7 @@ export default function HodQueriesPage() {
                           </tr>
                         ) : queries.length === 0 ? (
                           <tr>
-                            <td className="p-8 text-center text-slate-500" colSpan={4}>
+                            <td className="p-8 text-center text-slate-500" colSpan={6}>
                               No student queries found.
                             </td>
                           </tr>
@@ -314,7 +331,10 @@ export default function HodQueriesPage() {
                           return (
                           <tr 
                             key={query.id} 
-                            onClick={() => setSelectedQuery(query)}
+                            onClick={() => {
+                              setSelectedQuery(query);
+                              setChatCollapsed(false);
+                            }}
                             className={`cursor-pointer hover:bg-slate-50/70 transition-colors ${
                               selectedQuery?.id === query.id ? 'bg-emerald-50/30 font-semibold' : ''
                             }`}
@@ -344,6 +364,15 @@ export default function HodQueriesPage() {
                                 {query.status}
                               </span>
                             </td>
+                            <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => deleteQueryById(query.id)}
+                                className="p-1.5 text-rose-500 hover:bg-rose-50 hover:text-rose-700 rounded-lg transition"
+                                title="Delete Query"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </td>
                           </tr>
                         )})}
                       </tbody>
@@ -354,7 +383,7 @@ export default function HodQueriesPage() {
             </div>
 
             {/* Right Column: Chat Window */}
-            <div className={selectedQuery ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden"}>
+            <div className={showChat ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden"}>
               {selectedQuery ? (
                 <>
                   {/* Chat Header */}
@@ -367,11 +396,20 @@ export default function HodQueriesPage() {
                       &larr; Back to Queries
                     </button>
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                          From: {selectedQuery.student?.name || 'Student'}
-                        </span>
-                        <h3 className="text-base font-bold text-slate-900 leading-tight mt-0.5">{selectedQuery.subject}</h3>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setChatCollapsed(true)}
+                          className="hidden lg:flex items-center justify-center p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition border border-slate-200 hover:text-slate-700 hover:border-slate-300"
+                          title="Collapse Chat"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            From: {selectedQuery.student?.name || 'Student'}
+                          </span>
+                          <h3 className="text-base font-bold text-slate-900 leading-tight mt-0.5">{selectedQuery.subject}</h3>
+                        </div>
                       </div>
                       
                       {/* Status Dropdown */}
@@ -388,7 +426,7 @@ export default function HodQueriesPage() {
                           <option value="Resolved">Resolved</option>
                         </select>
                         <button
-                          onClick={handleDeleteQuery}
+                          onClick={() => deleteQueryById(selectedQuery.id)}
                           disabled={updatingStatus}
                           title="Delete Query"
                           className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg ml-1 transition disabled:opacity-50"
