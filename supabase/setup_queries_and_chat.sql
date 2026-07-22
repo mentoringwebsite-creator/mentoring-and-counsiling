@@ -13,6 +13,9 @@ CREATE TABLE queries (
   student_id uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   type text NOT NULL,
   subject text NOT NULL,
+  raised_by_role text NOT NULL DEFAULT 'Student',
+  raised_to_role text NOT NULL DEFAULT 'Faculty',
+  target_hod_id uuid REFERENCES users(id) ON DELETE SET NULL,
   description text,
   status text DEFAULT 'Pending' NOT NULL,
   created_at timestamp with time zone DEFAULT now() NOT NULL

@@ -275,12 +275,13 @@ export default function HodQueriesPage() {
                         ) : queries.length === 0 ? (
                           <tr>
                             <td className="p-8 text-center text-slate-500" colSpan={4}>
-                              No student queries found in your department.
+                              No student queries found.
                             </td>
                           </tr>
                         ) : null}
                         {queries.map((query) => {
                           const { raisedBy } = parseQueryMetadata(query.description);
+                          const effectiveRaisedBy = query.raised_by_role || raisedBy;
                           return (
                           <tr 
                             key={query.id} 
@@ -302,7 +303,7 @@ export default function HodQueriesPage() {
                             <td className="p-4">
                               <div className="flex items-center gap-1.5 text-slate-600">
                                 <User className="h-3.5 w-3.5 text-emerald-700" />
-                                <span className="text-xs font-semibold">{raisedBy}</span>
+                                <span className="text-xs font-semibold">{effectiveRaisedBy}</span>
                               </div>
                             </td>
                             <td className="p-4">

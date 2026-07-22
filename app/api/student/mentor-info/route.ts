@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
 
   let mName = 'Not Assigned';
   let hName = 'Not Assigned';
+  let hId: string | null = null;
 
   if (mentorId) {
     const { data: mentorUser } = await supabase
@@ -45,6 +46,7 @@ export async function POST(request: NextRequest) {
         .single();
         
       if (facProfile?.hod_id) {
+        hId = facProfile.hod_id;
         const { data: hodUser } = await supabase.from('users').select('name').eq('id', facProfile.hod_id).single();
         if (hodUser) hName = hodUser.name;
       }
@@ -52,7 +54,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (hName === 'Not Assigned' && branch) {
-    const { data: hods } = await supabase.from('users').select('name, hod_profiles(department)').eq('role', 'hod');
+    const { data: hods } = await supabase.from('users').select('id, name, hod_profiles(department)').eq('role', 'hod');
     const matchedHod = (hods || []).find((h: any) => {
       const d = h.hod_profiles?.[0]?.department;
       if (!d) return false;
@@ -74,7 +76,8 @@ export async function POST(request: NextRequest) {
       return false;
     });
     if (matchedHod) hName = matchedHod.name;
+    if (matchedHod) hId = matchedHod.id;
   }
 
-  return NextResponse.json({ success: true, mName, hName });
+  return NextResponse.json({ success: true, mName, hName, hId });
 }

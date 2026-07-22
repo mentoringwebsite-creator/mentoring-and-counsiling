@@ -95,6 +95,9 @@ create table if not exists queries (
   student_id uuid references students(id) on delete cascade,
   type text not null,
   subject text not null,
+  raised_by_role text not null default 'Student',
+  raised_to_role text not null default 'Faculty',
+  target_hod_id uuid references users(id) on delete set null,
   description text,
   status text default 'Pending',
   created_at timestamp with time zone default now()

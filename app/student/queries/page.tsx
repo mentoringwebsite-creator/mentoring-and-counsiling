@@ -38,6 +38,7 @@ export default function QueriesPage() {
   const [newQueryType, setNewQueryType] = useState('Academic');
   const [newQueryRaisedTo, setNewQueryRaisedTo] = useState('Faculty');
   const [newQueryRaisedBy, setNewQueryRaisedBy] = useState('Student');
+  const [targetHodId, setTargetHodId] = useState<string | null>(null);
   const [newQuerySubject, setNewQuerySubject] = useState('');
   const [newQueryDescription, setNewQueryDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -100,6 +101,42 @@ export default function QueriesPage() {
   }, []);
 
   useEffect(() => {
+    const loadRecipientContext = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const userId = sessionData?.session?.user?.id;
+        if (!userId) return;
+
+        const { data: profileData } = await supabase
+          .from('student_profiles')
+          .select('branch, mentor_id')
+          .eq('user_id', userId)
+          .single();
+
+        const response = await fetch('/api/student/mentor-info', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            mentorId: profileData?.mentor_id || null,
+            branch: profileData?.branch || ''
+          })
+        });
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (data.success) {
+          setTargetHodId(data.hId || null);
+        }
+      } catch (err) {
+        console.error('Error resolving HOD recipient:', err);
+      }
+    };
+
+    loadRecipientContext();
+  }, []);
+
+  useEffect(() => {
     if (selectedQuery) {
       fetchMessages(selectedQuery.id);
       
@@ -147,6 +184,9 @@ export default function QueriesPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id;
       if (!userId) throw new Error('You must be logged in to raise a query.');
+      if (newQueryRaisedTo === 'HOD' && !targetHodId) {
+        throw new Error('HOD recipient is still loading. Please try again in a moment.');
+      }
 
       const { data, error } = await supabase
         .from('queries')
@@ -155,7 +195,10 @@ export default function QueriesPage() {
             student_id: userId,
             type: newQueryType,
             subject: newQuerySubject.trim(),
-            description: `Raised By: ${newQueryRaisedBy}\nRaised To: ${newQueryRaisedTo}\n\n${newQueryDescription.trim()}`,
+            raised_by_role: newQueryRaisedBy,
+            raised_to_role: newQueryRaisedTo,
+            target_hod_id: newQueryRaisedTo === 'HOD' ? targetHodId : null,
+            description: newQueryDescription.trim(),
             status: 'Pending',
           }
         ])
@@ -284,6 +327,8 @@ export default function QueriesPage() {
                         ) : null}
                         {queries.map((query) => {
                           const { raisedBy, raisedTo } = parseQueryMetadata(query.description);
+                          const effectiveRaisedBy = query.raised_by_role || raisedBy;
+                          const effectiveRaisedTo = query.raised_to_role || raisedTo;
                           return (
                           <tr 
                             key={query.id} 
@@ -301,13 +346,13 @@ export default function QueriesPage() {
                             <td className="p-4">
                               <div className="flex items-center gap-1.5 text-slate-600">
                                 <UserCheck className="h-3.5 w-3.5 text-sky-600" />
-                                <span className="text-xs font-semibold">{raisedTo}</span>
+                                <span className="text-xs font-semibold">{effectiveRaisedTo}</span>
                               </div>
                             </td>
                             <td className="p-4">
                               <div className="flex items-center gap-1.5 text-slate-600">
                                 <User className="h-3.5 w-3.5 text-slate-400" />
-                                <span className="text-xs">{raisedBy}</span>
+                                <span className="text-xs">{effectiveRaisedBy}</span>
                               </div>
                             </td>
                             <td className="p-4">
@@ -458,7 +503,7 @@ export default function QueriesPage() {
               </button>
 
               <h3 className="text-xl font-bold text-slate-900">Raise New Query</h3>
-              <p className="text-xs text-slate-500 mt-1">Submit your academic, personal, or administrative concern. Your mentor will be notified.</p>
+              <p className="text-xs text-slate-500 mt-1">Submit your academic, personal, or administrative concern. Your selected recipient will be notified.</p>
 
               <form onSubmit={handleCreateQuery} className="mt-4 space-y-4">
                 <div>

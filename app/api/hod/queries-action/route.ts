@@ -120,7 +120,10 @@ export async function POST(request: NextRequest) {
 
       const filteredQueries = (queriesData || []).filter((q: any) => {
         const { raisedTo } = parseQueryMetadata(q.description);
-        if (raisedTo !== 'HOD') return false;
+        const queryRaisedTo = q.raised_to_role || raisedTo;
+
+        if (queryRaisedTo !== 'HOD') return false;
+        if (q.target_hod_id) return q.target_hod_id === hodId;
 
         const studentData = studentDetails.find(s => s.id === q.student_id);
         const studentProfile = Array.isArray(studentData?.student_profiles) ? studentData?.student_profiles[0] : studentData?.student_profiles;

@@ -83,7 +83,7 @@ export default function FacultyQueriesPage() {
       // Filter out queries explicitly raised to HOD
       const filteredQueries = (queriesData || []).filter((q: any) => {
         const { raisedTo } = parseQueryMetadata(q.description);
-        return raisedTo !== 'HOD';
+        return (q.raised_to_role || raisedTo) !== 'HOD';
       });
       
       setQueries(filteredQueries);
@@ -271,6 +271,7 @@ export default function FacultyQueriesPage() {
                         ) : null}
                         {queries.map((query) => {
                           const { raisedBy } = parseQueryMetadata(query.description);
+                          const effectiveRaisedBy = query.raised_by_role || raisedBy;
                           return (
                           <tr 
                             key={query.id} 
@@ -292,7 +293,7 @@ export default function FacultyQueriesPage() {
                             <td className="p-4">
                               <div className="flex items-center gap-1.5 text-slate-600">
                                 <User className="h-3.5 w-3.5 text-emerald-700" />
-                                <span className="text-xs font-semibold">{raisedBy}</span>
+                                <span className="text-xs font-semibold">{effectiveRaisedBy}</span>
                               </div>
                             </td>
                             <td className="p-4">
