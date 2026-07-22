@@ -33,21 +33,34 @@ const parseQueryMetadata = (description: string) => {
 
 const isBranchInDepartment = (branch: string, department: string) => {
   if (!branch || !department) return false;
-  const b = branch.toLowerCase().trim();
-  const d = department.toLowerCase().trim();
   
-  if (b === d) return true;
-  if (b === 'ece' && (d.includes('electronics') || d.includes('ece'))) return true;
-  if (d.includes('electronics') && b.includes('ece')) return true;
-  if (b === 'cse' && (d.includes('computer science') || d.includes('cse'))) return true;
-  if (d.includes('computer science') && b.includes('cse')) return true;
-  if (b === 'it' && (d.includes('information technology') || d.includes('it'))) return true;
-  if (d.includes('information technology') && b.includes('it')) return true;
-  if (b === 'eee' && (d.includes('electrical') || d.includes('eee'))) return true;
-  if (d.includes('electrical') && b.includes('eee')) return true;
-  if ((b === 'me' || b === 'mech' || b.includes('mechanical')) && (d.includes('mechanical') || d.includes('mech') || d === 'me')) return true;
-  if ((b === 'ce' || b.includes('civil')) && (d.includes('civil') || d === 'ce')) return true;
-  return d.includes(b) || b.includes(d);
+  const b = branch.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const d = department.toLowerCase().replace(/[^a-z0-9]/g, '');
+  
+  if (b === d || d.includes(b) || b.includes(d)) return true;
+  
+  const bWords = branch.toLowerCase();
+  const dWords = department.toLowerCase();
+  
+  if (bWords.includes('ece') && (dWords.includes('electronic') || dWords.includes('ece'))) return true;
+  if (dWords.includes('electronic') && bWords.includes('ece')) return true;
+  if (bWords.includes('cse') && (dWords.includes('computer') || dWords.includes('cse'))) return true;
+  if (dWords.includes('computer') && bWords.includes('cse')) return true;
+  if (bWords.includes('it') && (dWords.includes('information') || dWords.includes('it'))) return true;
+  if (dWords.includes('information') && bWords.includes('it')) return true;
+  if (bWords.includes('eee') && (dWords.includes('electrical') || dWords.includes('eee'))) return true;
+  if (dWords.includes('electrical') && bWords.includes('eee')) return true;
+  if ((bWords.includes('me') || bWords.includes('mech')) && (dWords.includes('mechanic') || dWords.includes('mech') || dWords === 'me')) return true;
+  if (bWords.includes('ce') && dWords.includes('civil')) return true;
+  if (dWords.includes('civil') && bWords.includes('ce')) return true;
+
+  const bTokens = bWords.split(/\s+/).filter(t => t.length > 2);
+  const dTokens = dWords.split(/\s+/).filter(t => t.length > 2);
+  for (const bt of bTokens) {
+    if (dTokens.includes(bt)) return true;
+  }
+
+  return false;
 };
 
 export async function POST(request: NextRequest) {
@@ -78,13 +91,13 @@ export async function POST(request: NextRequest) {
         .eq('role', 'faculty');
       
       const deptFaculty = (facultyUsers || []).filter((f: any) => {
-        const fp = f.faculty_profiles?.[0];
+        const fp = Array.isArray(f.faculty_profiles) ? f.faculty_profiles[0] : f.faculty_profiles;
         if (fp?.hod_id === hodId) return true;
         const fDept = fp?.department;
         if (!dept || !fDept) return true;
         return isBranchInDepartment(fDept, dept);
       });
-      const facultyIds = deptFaculty.map(f => f.id);
+      const facultyIds = deptFaculty.map((f: any) => f.id);
 
       const { data: queriesData, error: queriesError } = await supabase
         .from('queries')
@@ -110,7 +123,7 @@ export async function POST(request: NextRequest) {
         if (raisedTo !== 'HOD') return false;
 
         const studentData = studentDetails.find(s => s.id === q.student_id);
-        const studentProfile = studentData?.student_profiles?.[0];
+        const studentProfile = Array.isArray(studentData?.student_profiles) ? studentData?.student_profiles[0] : studentData?.student_profiles;
         const studentBranch = studentProfile?.branch || '';
         const mentorId = studentProfile?.mentor_id;
 
