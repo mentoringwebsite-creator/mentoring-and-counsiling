@@ -78,10 +78,10 @@ export default function HodQueriesPage() {
       if (!hodId) return;
 
       try {
-        const res = await fetch('/api/hod/queries-fetch', {
+        const res = await fetch('/api/hod/queries-action', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ hodId })
+          body: JSON.stringify({ action: 'fetchQueries', hodId })
         });
         const data = await res.json();
         if (data.success) {
