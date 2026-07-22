@@ -223,6 +223,8 @@ export default function QueriesPage() {
     } catch (err: any) {
       console.error('Error closing query:', err);
     }
+  };
+
   const deleteQueryById = async (queryId: string) => {
     if (!window.confirm('Are you sure you want to delete this query completely? This action cannot be undone.')) return;
 
