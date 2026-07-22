@@ -178,6 +178,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === 'deleteQuery') {
+      const { queryId } = body;
+      const { error } = await supabase.from('queries').delete().eq('id', queryId);
+      if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
+
     if (action === 'fetchMessages') {
       const { queryId } = body;
       const { data, error } = await supabase

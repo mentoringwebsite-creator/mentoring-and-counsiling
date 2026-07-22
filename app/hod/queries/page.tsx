@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw, User, UserCheck } from 'lucide-react';
+import { Loader2, Send, MessageSquare, AlertCircle, RefreshCw, User, UserCheck, Trash2 } from 'lucide-react';
 
 const parseQueryMetadata = (description: string) => {
   let raisedBy = 'Student';
@@ -221,6 +221,35 @@ export default function HodQueriesPage() {
     }
   };
 
+  const handleDeleteQuery = async () => {
+    if (!selectedQuery) return;
+    if (!window.confirm('Are you sure you want to delete this query completely? This action cannot be undone.')) return;
+
+    try {
+      setUpdatingStatus(true);
+      setFeedback(null);
+      
+      const res = await fetch('/api/hod/queries-action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'deleteQuery', 
+          queryId: selectedQuery.id
+        })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message);
+      
+      setSelectedQuery(null);
+      setFeedback({ type: 'success', message: 'Query deleted successfully.' });
+      fetchQueries();
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to delete query.' });
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   return (
     <ProtectedRoute role="hod">
       <PageShell title="Student Queries" subtitle="Department query watchlist">
@@ -250,8 +279,8 @@ export default function HodQueriesPage() {
                   </div>
                 )}
 
-                <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm w-full min-w-0">
-                  <div className="overflow-x-auto w-full">
+                <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm w-full min-w-0 flex flex-col">
+                  <div className="overflow-x-auto overflow-y-auto w-full max-h-[600px]">
                     <table className="w-full border-collapse text-left text-sm min-w-[360px]">
                       <thead>
                         <tr className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600">
@@ -358,6 +387,14 @@ export default function HodQueriesPage() {
                           <option value="In Review">In Review</option>
                           <option value="Resolved">Resolved</option>
                         </select>
+                        <button
+                          onClick={handleDeleteQuery}
+                          disabled={updatingStatus}
+                          title="Delete Query"
+                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg ml-1 transition disabled:opacity-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
                     {selectedQuery.description && (
