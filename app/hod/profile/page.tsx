@@ -185,49 +185,60 @@ export default function HodProfilePage() {
                 </div>
               </div>
             ) : (
-              <div className="portal-card relative overflow-hidden">
-                <button 
-                  onClick={() => {
-                    setFormData(profile);
-                    setIsEditing(true);
-                  }} 
-                  className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 transition duration-200 shadow-sm border border-slate-200"
-                  title="Edit Profile"
-                >
-                  <Edit2 className="h-4 w-4" />
-                </button>
+                <div className="flex flex-col gap-6">
+                  {/* Premium Horizontal Profile Header */}
+                  <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm overflow-hidden relative">
+                    {/* Cover Background */}
+                    <div className="h-40 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800" />
+                    
+                    {/* Edit Button */}
+                    <button 
+                      onClick={() => {
+                        setFormData(profile);
+                        setIsEditing(true);
+                      }} 
+                      className="absolute right-6 top-6 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur-md transition duration-200 shadow-sm"
+                      title="Edit Profile"
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </button>
 
-                <div className="grid gap-8 md:grid-cols-[240px_1fr] lg:grid-cols-[260px_1fr]">
-                  
-                  {/* Left: Profile Photo Container */}
-                  <div className="rounded-3xl bg-[linear-gradient(180deg,#f0f6f3,#e7f0eb)] p-4 flex flex-col items-center justify-center shrink-0">
-                    <div className="relative aspect-square w-32 h-32 md:w-full md:h-auto overflow-hidden rounded-2xl bg-white shadow-inner flex items-center justify-center">
-                      {profile.photo ? (
-                        <img
-                          src={profile.photo}
-                          alt={profile.name}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(profile.name)}`;
-                          }}
-                        />
-                      ) : (
-                        <div className="flex h-full w-full flex-col items-center justify-center text-slate-455">
-                          <User className="h-10 w-10 md:h-16 md:w-16 text-emerald-800/40" />
-                          <span className="mt-2 text-[10px] md:text-xs font-semibold text-emerald-800/40 text-center">No photo</span>
+                    <div className="px-8 pb-8">
+                      <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end -mt-20 relative z-10">
+                        {/* Profile Picture */}
+                        <div className="h-40 w-40 min-h-[160px] max-h-[160px] min-w-[160px] max-w-[160px] rounded-[32px] overflow-hidden border-[6px] border-white shadow-xl bg-slate-100 flex items-center justify-center shrink-0">
+                          {profile.photo ? (
+                            <img
+                              src={profile.photo}
+                              alt={profile.name}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(profile.name)}`;
+                              }}
+                            />
+                          ) : (
+                            <User className="h-14 w-14 text-emerald-200" />
+                          )}
                         </div>
-                      )}
+
+                        {/* Basic Info */}
+                        <div className="flex-1 pb-2">
+                          <h2 className="text-2xl font-black text-slate-800 leading-tight">{profile.name}</h2>
+                          <div className="flex flex-wrap items-center gap-3 mt-2">
+                            <p className="text-sm font-bold text-slate-500 uppercase tracking-wider font-mono">{profile.designation}</p>
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                              <Briefcase className="h-3.5 w-3.5" />
+                              Head of Department
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Right: Static Profile Details */}
-                  <div className="flex flex-col justify-center text-portal-ink">
-                    <div className="mb-6">
-                      <h2 className="text-3xl font-bold tracking-tight">{profile.name}</h2>
-                      <p className="text-emerald-700 font-semibold text-sm tracking-wide mt-1 uppercase">{profile.designation}</p>
-                    </div>
-
-                    <div className="h-px bg-slate-200/80 mb-6" />
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col text-portal-ink">
 
                     <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 text-sm">
                       <div className="flex items-start gap-3">
@@ -293,9 +304,7 @@ export default function HodProfilePage() {
                     </div>
 
                   </div>
-
                 </div>
-              </div>
             )}
           </div>
         </div>

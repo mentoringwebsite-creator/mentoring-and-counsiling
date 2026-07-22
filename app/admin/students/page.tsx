@@ -204,15 +204,27 @@ export default function AdminStudentsPage() {
     }
   }, [selectedStudentForAcademic, academicSubjects]);
 
+  const [hodList, setHodList] = useState<any[]>([]);
+
   const fetchFaculty = async () => {
     try {
       const { data, error } = await supabase
         .from('users')
-        .select('id, name')
+        .select(`
+          id, name,
+          faculty_profiles!user_id(hod_id)
+        `)
         .eq('role', 'faculty')
         .eq('status', 'Approved');
       if (error) throw error;
       setFacultyList(data || []);
+
+      const { data: hodData } = await supabase
+        .from('users')
+        .select('id, name')
+        .eq('role', 'hod')
+        .eq('status', 'Approved');
+      setHodList(hodData || []);
     } catch (err: any) {
       console.error('Error fetching faculty list:', err);
     }
@@ -1303,7 +1315,7 @@ export default function AdminStudentsPage() {
                     <th className="px-5 py-4 font-semibold">Roll Number</th>
                     <th className="px-5 py-4 font-semibold">Branch & Section</th>
                     <th className="px-5 py-4 font-semibold">Contact Info</th>
-                    <th className="px-5 py-4 font-semibold">Assigned Mentor</th>
+                    <th className="px-5 py-4 font-semibold">Assigned Mentor & HOD</th>
                     <th className="px-5 py-4 font-semibold text-center">Actions</th>
                   </tr>
                 </thead>
@@ -1373,6 +1385,18 @@ export default function AdminStudentsPage() {
                               </option>
                             ))}
                           </select>
+                          {profile.mentor_id && (
+                            <div className="mt-1.5 text-[10px] font-medium text-slate-500 pl-1">
+                              HOD: {
+                                (() => {
+                                  const fac = facultyList.find(f => f.id === profile.mentor_id);
+                                  if (!fac || !fac.faculty_profiles || !fac.faculty_profiles[0]?.hod_id) return 'Unassigned';
+                                  const h = hodList.find(h => h.id === fac.faculty_profiles[0].hod_id);
+                                  return h ? h.name : 'Unassigned';
+                                })()
+                              }
+                            </div>
+                          )}
                         </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center justify-center gap-2">
