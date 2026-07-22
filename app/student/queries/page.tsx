@@ -5,7 +5,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Send, MessageSquare, AlertCircle, X, CheckCircle, User, UserCheck } from 'lucide-react';
+import { Loader2, Send, MessageSquare, AlertCircle, X, CheckCircle, User, UserCheck, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const parseQueryMetadata = (description: string) => {
   let raisedBy = 'Student';
@@ -32,6 +32,7 @@ export default function QueriesPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [chatCollapsed, setChatCollapsed] = useState(false);
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -222,7 +223,29 @@ export default function QueriesPage() {
     } catch (err: any) {
       console.error('Error closing query:', err);
     }
+  const deleteQueryById = async (queryId: string) => {
+    if (!window.confirm('Are you sure you want to delete this query completely? This action cannot be undone.')) return;
+
+    try {
+      const { error } = await supabase
+        .from('queries')
+        .delete()
+        .eq('id', queryId);
+
+      if (error) throw error;
+      
+      if (selectedQuery?.id === queryId) {
+        setSelectedQuery(null);
+      }
+      setFeedback({ type: 'success', message: 'Query deleted successfully.' });
+      fetchQueries();
+    } catch (err: any) {
+      console.error('Error deleting query:', err);
+      setFeedback({ type: 'error', message: err.message || 'Failed to delete query.' });
+    }
   };
+
+  const showChat = selectedQuery && !chatCollapsed;
 
   return (
     <ProtectedRoute role="student">
@@ -230,18 +253,30 @@ export default function QueriesPage() {
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/student/queries" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/performance', label: 'Performance' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
           
-          <div className={selectedQuery ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
+          <div className={showChat ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
             {/* Left side: Query List */}
-            <div className={`${selectedQuery ? 'hidden lg:block' : 'block'} space-y-6 w-full min-w-0`}>
+            <div className={`${showChat ? 'hidden lg:block' : 'block'} space-y-6 w-full min-w-0`}>
               <div className="portal-card">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <h2 className="text-2xl font-semibold">Recent Queries</h2>
-                  <button 
-                    onClick={() => setIsModalOpen(true)}
-                    className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-white transition shadow-sm"
-                  >
-                    + Raise Query
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {selectedQuery && chatCollapsed && (
+                      <button
+                        onClick={() => setChatCollapsed(false)}
+                        className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition shadow-sm"
+                        title="Expand Chat"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <span>Show Chat</span>
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => setIsModalOpen(true)}
+                      className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-white transition shadow-sm"
+                    >
+                      + Raise Query
+                    </button>
+                  </div>
                 </div>
 
                 {feedback && (
@@ -268,7 +303,7 @@ export default function QueriesPage() {
                       <tbody className="divide-y divide-slate-100">
                         {loading ? (
                           <tr>
-                            <td className="p-8 text-center text-slate-500" colSpan={4}>
+                            <td className="p-8 text-center text-slate-500" colSpan={6}>
                               <div className="flex items-center justify-center gap-2">
                                 <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
                                 <span>Loading queries...</span>
@@ -277,7 +312,7 @@ export default function QueriesPage() {
                           </tr>
                         ) : queries.length === 0 ? (
                           <tr>
-                            <td className="p-8 text-center text-slate-500" colSpan={4}>
+                            <td className="p-8 text-center text-slate-500" colSpan={6}>
                               You have not raised any queries yet.
                             </td>
                           </tr>
@@ -289,7 +324,10 @@ export default function QueriesPage() {
                           return (
                           <tr 
                             key={query.id} 
-                            onClick={() => setSelectedQuery(query)}
+                            onClick={() => {
+                              setSelectedQuery(query);
+                              setChatCollapsed(false);
+                            }}
                             className={`cursor-pointer hover:bg-slate-50/70 transition-colors ${
                               selectedQuery?.id === query.id ? 'bg-emerald-50/40 font-semibold' : ''
                             }`}
@@ -321,16 +359,25 @@ export default function QueriesPage() {
                                 {query.status}
                               </span>
                             </td>
-                            <td className="p-4 text-center">
-                              <button 
-                                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedQuery(query);
-                                }}
-                              >
-                                View Chat
-                              </button>
+                            <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-center gap-3">
+                                <button 
+                                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition hover:underline"
+                                  onClick={() => {
+                                    setSelectedQuery(query);
+                                    setChatCollapsed(false);
+                                  }}
+                                >
+                                  View Chat
+                                </button>
+                                <button
+                                  onClick={() => deleteQueryById(query.id)}
+                                  className="p-1.5 text-rose-500 hover:bg-rose-50 hover:text-rose-700 rounded-lg transition"
+                                  title="Delete Query"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         )})}
@@ -342,7 +389,7 @@ export default function QueriesPage() {
             </div>
 
             {/* Right side: Chat Window */}
-            <div className={selectedQuery ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden"}>
+            <div className={showChat ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white" : "hidden"}>
               {selectedQuery ? (
                 <>
                   {/* Chat Header */}
@@ -354,21 +401,39 @@ export default function QueriesPage() {
                     >
                       &larr; Back to Queries
                     </button>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{selectedQuery.type} Query</span>
-                        <h3 className="text-lg font-bold text-slate-900 leading-tight mt-0.5">{selectedQuery.subject}</h3>
-                      </div>
-                      {selectedQuery.status !== 'Resolved' && (
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleCloseQuery(selectedQuery.id)}
-                          className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl px-2.5 py-1.5 transition"
-                          title="Mark query as resolved"
+                          onClick={() => setChatCollapsed(true)}
+                          className="hidden lg:flex items-center justify-center p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition border border-slate-200 hover:text-slate-700 hover:border-slate-300"
+                          title="Collapse Chat"
                         >
-                          <CheckCircle className="h-3.5 w-3.5" />
-                          <span>Resolve</span>
+                          <ChevronRight className="h-4 w-4" />
                         </button>
-                      )}
+                        <div>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{selectedQuery.type} Query</span>
+                          <h3 className="text-lg font-bold text-slate-900 leading-tight mt-0.5">{selectedQuery.subject}</h3>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {selectedQuery.status !== 'Resolved' && (
+                          <button
+                            onClick={() => handleCloseQuery(selectedQuery.id)}
+                            className="flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl px-2.5 py-1.5 transition"
+                            title="Mark query as resolved"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            <span>Resolve</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteQueryById(selectedQuery.id)}
+                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                          title="Delete Query"
+                        >
+                          <Trash2 className="h-4.5 w-4.5" />
+                        </button>
+                      </div>
                     </div>
                     {selectedQuery.description && (
                       <p className="text-xs text-slate-500 mt-2 bg-slate-50 rounded-xl p-2.5 border border-slate-100 max-h-[80px] overflow-y-auto">
