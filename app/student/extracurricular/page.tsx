@@ -503,7 +503,7 @@ export default function ExtracurricularPage() {
                             href={item.link} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700 hover:underline"
+                            className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
                           >
                             <span>Verify credential link</span>
                             <ExternalLink className="h-3 w-3" />
@@ -554,9 +554,9 @@ export default function ExtracurricularPage() {
                   </div>
 
                   {/* Dreams Column */}
-                  <div className="rounded-3xl border border-white/80 bg-[linear-gradient(180deg,#f1f9ff,#e1f0ff)] p-5 shadow-sm">
-                    <div className="flex items-center gap-2 text-sky-800 mb-3">
-                      <Sparkles className="h-5 w-5 text-sky-800" />
+                  <div className="rounded-3xl border border-white/80 bg-[linear-gradient(180deg,#f0faf7,#e1f4ed)] p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-emerald-850 mb-3">
+                      <Sparkles className="h-5 w-5 text-emerald-800" />
                       <h3 className="font-bold text-base">My Biggest Dream</h3>
                     </div>
                     <p className="text-xs text-slate-700 font-medium whitespace-pre-wrap leading-relaxed">

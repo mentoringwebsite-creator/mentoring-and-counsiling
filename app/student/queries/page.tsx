@@ -238,7 +238,7 @@ export default function QueriesPage() {
                   <h2 className="text-2xl font-semibold">Recent Queries</h2>
                   <button 
                     onClick={() => setIsModalOpen(true)}
-                    className="rounded-2xl bg-sky-600 hover:bg-sky-700 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-white transition shadow-sm"
+                    className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold text-white transition shadow-sm"
                   >
                     + Raise Query
                   </button>
@@ -270,7 +270,7 @@ export default function QueriesPage() {
                           <tr>
                             <td className="p-8 text-center text-slate-500" colSpan={4}>
                               <div className="flex items-center justify-center gap-2">
-                                <Loader2 className="h-4 w-4 animate-spin text-sky-600" />
+                                <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
                                 <span>Loading queries...</span>
                               </div>
                             </td>
@@ -291,7 +291,7 @@ export default function QueriesPage() {
                             key={query.id} 
                             onClick={() => setSelectedQuery(query)}
                             className={`cursor-pointer hover:bg-slate-50/70 transition-colors ${
-                              selectedQuery?.id === query.id ? 'bg-sky-50/40 font-semibold' : ''
+                              selectedQuery?.id === query.id ? 'bg-emerald-50/40 font-semibold' : ''
                             }`}
                           >
                             <td className="p-4">
@@ -302,7 +302,7 @@ export default function QueriesPage() {
                             <td className="p-4 text-slate-900 max-w-[200px] truncate">{query.subject}</td>
                             <td className="p-4">
                               <div className="flex items-center gap-1.5 text-slate-600">
-                                <UserCheck className="h-3.5 w-3.5 text-sky-600" />
+                                <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
                                 <span className="text-xs font-semibold">{effectiveRaisedTo}</span>
                               </div>
                             </td>
@@ -323,7 +323,7 @@ export default function QueriesPage() {
                             </td>
                             <td className="p-4 text-center">
                               <button 
-                                className="text-xs font-semibold text-sky-600 hover:text-sky-700 hover:underline"
+                                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedQuery(query);
@@ -350,7 +350,7 @@ export default function QueriesPage() {
                     {/* Back Button (Mobile Only) */}
                     <button
                       onClick={() => setSelectedQuery(null)}
-                      className="mb-3 flex lg:hidden items-center gap-1 text-xs font-bold text-sky-600 hover:text-sky-700"
+                      className="mb-3 flex lg:hidden items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700"
                     >
                       &larr; Back to Queries
                     </button>
@@ -381,7 +381,7 @@ export default function QueriesPage() {
                   <div className="flex-1 overflow-y-auto py-4 space-y-3 pr-1">
                     {loadingMessages ? (
                       <div className="flex items-center justify-center h-full text-slate-500 text-xs">
-                        <Loader2 className="h-4 w-4 animate-spin text-sky-600 mr-1" />
+                        <Loader2 className="h-4 w-4 animate-spin text-emerald-600 mr-1" />
                         <span>Loading messages...</span>
                       </div>
                     ) : messages.length === 0 ? (
@@ -404,7 +404,7 @@ export default function QueriesPage() {
                             </div>
                             <div className={`max-w-[85%] rounded-[20px] px-3.5 py-2.5 text-xs shadow-sm leading-relaxed ${
                               isMe 
-                                ? 'bg-sky-600 text-white rounded-tr-none' 
+                                ? 'bg-emerald-600 text-white rounded-tr-none' 
                                 : 'bg-slate-100 text-slate-800 rounded-tl-none border border-slate-200'
                             }`}>
                               {msg.message}
@@ -429,13 +429,13 @@ export default function QueriesPage() {
                           type="text"
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Type a message..."
-                          className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs focus:border-sky-500 focus:bg-white focus:outline-none"
+                          placeholder="Type a response to join the discussion..."
+                          className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs focus:border-emerald-500 focus:bg-white focus:outline-none"
                         />
                         <button
                           type="submit"
-                          className="rounded-2xl bg-sky-600 hover:bg-sky-700 p-2.5 text-white transition flex items-center justify-center shrink-0"
                           disabled={!newMessage.trim()}
+                          className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 p-2.5 text-white transition flex items-center justify-center shrink-0"
                         >
                           <Send className="h-4 w-4" />
                         </button>
@@ -468,7 +468,7 @@ export default function QueriesPage() {
                   <select
                     value={newQueryType}
                     onChange={(e) => setNewQueryType(e.target.value)}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-sky-500 focus:bg-white focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-emerald-500 focus:bg-white focus:outline-none"
                   >
                     <option value="Academic">Academic</option>
                     <option value="Financial">Financial</option>
@@ -484,7 +484,7 @@ export default function QueriesPage() {
                     <select
                       value={newQueryRaisedTo}
                       onChange={(e) => setNewQueryRaisedTo(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-sky-500 focus:bg-white focus:outline-none"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-emerald-500 focus:bg-white focus:outline-none"
                     >
                       <option value="Faculty">Faculty</option>
                       <option value="HOD">HOD</option>
@@ -495,7 +495,7 @@ export default function QueriesPage() {
                     <select
                       value={newQueryRaisedBy}
                       onChange={(e) => setNewQueryRaisedBy(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-sky-500 focus:bg-white focus:outline-none"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-emerald-500 focus:bg-white focus:outline-none"
                     >
                       <option value="Student">Student</option>
                       <option value="Parent">Parent</option>
@@ -512,7 +512,7 @@ export default function QueriesPage() {
                     placeholder="Short summary of the issue (e.g. Scholarship Delay)"
                     maxLength={100}
                     required
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-sky-500 focus:bg-white focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-emerald-500 focus:bg-white focus:outline-none"
                   />
                 </div>
 
@@ -523,7 +523,7 @@ export default function QueriesPage() {
                     onChange={(e) => setNewQueryDescription(e.target.value)}
                     placeholder="Describe your issue in detail so your mentor can help you..."
                     rows={4}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-sky-500 focus:bg-white focus:outline-none resize-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-emerald-500 focus:bg-white focus:outline-none resize-none"
                   />
                 </div>
 
@@ -538,7 +538,7 @@ export default function QueriesPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="rounded-2xl bg-sky-600 hover:bg-sky-700 px-5 py-2.5 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-sm"
+                    className="rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2.5 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-sm"
                   >
                     {submitting && <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />}
                     <span>Submit Query</span>

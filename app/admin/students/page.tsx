@@ -1407,7 +1407,7 @@ export default function AdminStudentsPage() {
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => openAcademicModal(student)}
-                              className="inline-flex items-center gap-1 rounded-2xl border border-sky-300 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-800 hover:bg-sky-100 transition"
+                              className="inline-flex items-center gap-1 rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition"
                               title="Manage Academic profile, subjects and marks"
                             >
                               <GraduationCap className="h-3.5 w-3.5" />
@@ -1846,7 +1846,7 @@ export default function AdminStudentsPage() {
                                 <td colSpan={3} className="p-3 text-right font-bold text-slate-500 uppercase tracking-wider">
                                   {academicSelectedSem === 'All' ? 'Cumulative Summary' : 'Semester Summary'}
                                 </td>
-                                <td className="p-3 text-center text-sky-850 font-extrabold bg-sky-50/20">
+                                <td className="p-3 text-center text-emerald-850 font-extrabold bg-emerald-50/20">
                                   {filteredAcademicSubjects.reduce((acc, s) => {
                                     if (s.result === 'P' || s.result === 'PASS') {
                                       return acc + (parseFloat(s.credits) || 0);

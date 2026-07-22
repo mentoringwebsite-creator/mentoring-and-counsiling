@@ -520,7 +520,7 @@ export default function StudentProfilePage() {
                       {/* Professional Links & Resume */}
                       <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm flex flex-col">
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600 border border-sky-100">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
                             <Linkedin className="h-5 w-5" />
                           </div>
                           <h3 className="text-base font-extrabold text-slate-800">Professional</h3>
@@ -530,7 +530,7 @@ export default function StudentProfilePage() {
                           <div>
                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">LinkedIn Profile</div>
                             {profileData.linkedin_url ? (
-                              <a href={profileData.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-sky-600 hover:underline truncate block">View LinkedIn Profile ↗</a>
+                              <a href={profileData.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-emerald-600 hover:underline truncate block">View LinkedIn Profile ↗</a>
                             ) : (
                               <span className="text-sm font-bold text-slate-400">Not provided</span>
                             )}
