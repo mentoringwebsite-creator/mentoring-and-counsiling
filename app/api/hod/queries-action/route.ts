@@ -101,7 +101,19 @@ export async function POST(request: NextRequest) {
 
       const { data: queriesData, error: queriesError } = await supabase
         .from('queries')
-        .select('*')
+        .select(`
+          id,
+          type,
+          subject,
+          description,
+          status,
+          created_at,
+          student_id,
+          student:student_id (
+            name,
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (queriesError) throw queriesError;
@@ -152,7 +164,7 @@ export async function POST(request: NextRequest) {
         const studentData = studentDetails.find(s => s.id === q.student_id);
         return {
           ...q,
-          student: studentData || null
+          student: q.student || studentData || null
         };
       });
 
