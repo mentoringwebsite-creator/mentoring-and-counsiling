@@ -125,16 +125,7 @@ export async function POST(request: NextRequest) {
         if (queryRaisedTo !== 'HOD') return false;
         if (q.target_hod_id) return q.target_hod_id === hodId;
 
-        const studentData = studentDetails.find(s => s.id === q.student_id);
-        const studentProfile = Array.isArray(studentData?.student_profiles) ? studentData?.student_profiles[0] : studentData?.student_profiles;
-        const studentBranch = studentProfile?.branch || '';
-        const mentorId = studentProfile?.mentor_id;
-
-        const branchMatches = studentBranch && dept && isBranchInDepartment(studentBranch, dept);
-        const mentorInDept = mentorId && facultyIds.includes(mentorId);
-
-        if (!dept) return true;
-        return branchMatches || mentorInDept;
+        return true;
       });
 
       const formattedQueries = filteredQueries.map((q: any) => {
