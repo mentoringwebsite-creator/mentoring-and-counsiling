@@ -85,6 +85,7 @@ export default function StudentDetailsPage() {
   const router = useRouter();
   const studentUserId = params.studentId as string;
 
+  const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars'>('academics');
@@ -117,6 +118,10 @@ export default function StudentDetailsPage() {
   } else if (rawInterests.trim() !== '') {
     parsedSkills = [];
   }
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Trigger default selection to highest sem
   useEffect(() => {
@@ -343,6 +348,30 @@ export default function StudentDetailsPage() {
   const clubs = profile.clubs || DEFAULT_CLUBS;
   const certifications = profile.certifications || DEFAULT_CERTS;
 
+  if (!mounted) {
+    return (
+      <ProtectedRoute role="faculty">
+        <PageShell title="Student Details" subtitle="Student profile and academic insights">
+          <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
+            <Sidebar active="/faculty/students" items={facultySidebarItems} />
+            <div className="space-y-6 w-full min-w-0">
+              <button 
+                onClick={() => router.back()} 
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 hover:text-emerald-900 transition select-none"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back to My Students</span>
+              </button>
+              <div className="portal-card flex h-[350px] items-center justify-center">
+                <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
+              </div>
+            </div>
+          </div>
+        </PageShell>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute role="faculty">
       <PageShell title="Student Details" subtitle="Student profile and academic insights">
@@ -372,6 +401,12 @@ export default function StudentDetailsPage() {
                 <p className="font-bold text-lg">Error Loading Profile</p>
                 <p className="text-sm mt-1 text-rose-600 max-w-md">{error}</p>
               </div>
+            ) : !student ? (
+              <div className="portal-card flex flex-col items-center justify-center text-slate-500 p-8 text-center">
+                <User className="h-12 w-12 text-slate-350 mb-3" />
+                <p className="font-bold text-lg">Student Not Found</p>
+                <p className="text-sm mt-1 text-slate-500">The requested student could not be located.</p>
+              </div>
             ) : (
               <div className="space-y-6">
                 
@@ -387,10 +422,10 @@ export default function StudentDetailsPage() {
                         {profile.profile_photo ? (
                           <img
                             src={profile.profile_photo}
-                            alt={student.name}
+                            alt={student?.name || 'Student'}
                             className="h-full w-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(student.name)}`;
+                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(student?.name || 'Student')}`;
                             }}
                           />
                         ) : (
@@ -401,7 +436,7 @@ export default function StudentDetailsPage() {
                       {/* Header Info Details - Grid structure to reduce height */}
                       <div className="flex-1 w-full text-center md:text-left pb-1">
                         <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
-                          <h2 className="text-2xl lg:text-3xl font-black text-slate-800 leading-tight">{student.name}</h2>
+                          <h2 className="text-2xl lg:text-3xl font-black text-slate-800 leading-tight">{student?.name}</h2>
                           <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${
                             risk === 'High' ? 'bg-rose-100 text-rose-800 border-rose-200' :
                             risk === 'Medium' ? 'bg-amber-100 text-amber-800 border-amber-200' :
@@ -539,7 +574,7 @@ export default function StudentDetailsPage() {
                             </div>
                             <div className="min-w-0">
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Official Email</div>
-                              <a href={`mailto:${student.email}`} className="text-xs font-semibold text-slate-800 hover:text-emerald-700 break-all block">{student.email}</a>
+                              <a href={student?.email ? `mailto:${student.email}` : '#'} className="text-xs font-semibold text-slate-800 hover:text-emerald-700 break-all block">{student?.email || 'N/A'}</a>
                             </div>
                           </div>
                           <div className="rounded-2xl border border-slate-150 p-4 flex items-center gap-3">
