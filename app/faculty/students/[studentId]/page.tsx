@@ -461,12 +461,12 @@ export default function StudentDetailsPage() {
                 {/* Redesigned Premium Profile Header */}
                 <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm overflow-hidden relative">
                   {/* Cover Banner */}
-                  <div className="h-28 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800" />
+                  <div className="h-32 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800" />
                   
                   <div className="px-6 pb-6">
-                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-16 sm:-mt-20 lg:-mt-24 relative z-10">
+                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-16 md:-mt-20 relative z-10">
                       {/* Enlarged circular image with boundary rules */}
-                      <div className="h-[115px] w-[115px] sm:h-[125px] sm:w-[125px] md:h-[145px] md:w-[145px] lg:h-[175px] lg:w-[175px] rounded-full overflow-hidden border-4 md:border-[6px] border-white shadow-2xl bg-slate-100 flex items-center justify-center shrink-0">
+                      <div className="h-[120px] w-[120px] md:h-[140px] md:w-[140px] lg:h-[155px] lg:w-[155px] rounded-full overflow-hidden border-4 md:border-[6px] border-white shadow-2xl bg-slate-100 flex items-center justify-center shrink-0">
                         {profile.profile_photo ? (
                           <img
                             src={profile.profile_photo}
@@ -477,53 +477,75 @@ export default function StudentDetailsPage() {
                             }}
                           />
                         ) : (
-                          <User className="h-16 w-16 text-emerald-200" />
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-slate-100 to-slate-200 text-slate-400">
+                            <User className="h-16 w-16 md:h-20 md:w-20 text-slate-350" />
+                          </div>
                         )}
                       </div>
 
-                      {/* Header Info Details - Grid structure to reduce height */}
+                      {/* Header Info Details - Structured metadata columns */}
                       <div className="flex-1 w-full text-center md:text-left pb-1">
-                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-2">
-                          <h2 className="text-2xl lg:text-3xl font-black text-slate-800 leading-tight">{student?.name}</h2>
+                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
+                          <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight leading-tight">{student?.name}</h2>
                           <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${
-                            risk === 'High' ? 'bg-rose-100 text-rose-800 border-rose-200' :
-                            risk === 'Medium' ? 'bg-amber-100 text-amber-800 border-amber-200' :
-                            'bg-emerald-100 text-emerald-800 border-emerald-200'
+                            risk === 'High' ? 'bg-rose-50 text-rose-700 border-rose-100' :
+                            risk === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                            'bg-emerald-50 text-emerald-700 border-emerald-100'
                           }`}>
                             {risk} Risk Status
                           </span>
                         </div>
 
-                        {/* Demographics Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-2 mt-3 text-left">
-                          <div>
-                            <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Roll Number</span>
-                            <span className="font-mono text-xs font-bold text-slate-800 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60 inline-block mt-0.5">{profile.roll_number || 'N/A'}</span>
+                        {/* Demographics Grid with elegant partitioned columns */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 border-t border-slate-100/80">
+                          
+                          {/* Column 1: Academic details */}
+                          <div className="space-y-2 text-left">
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50 pb-1">
+                              <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">Roll Number</span>
+                              <span className="font-mono font-bold text-slate-700">{profile.roll_number || 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50 pb-1">
+                              <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">Department</span>
+                              <span className="font-bold text-slate-800 uppercase">{profile.branch || 'N/A'}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">Section & Year</span>
+                              <span className="font-bold text-slate-800">
+                                Sec {profile.section || '-'} • <span className="text-emerald-800">{getStudentBTechYear(profile.roll_number, profile.academic_year)}</span>
+                              </span>
+                            </div>
                           </div>
-                          <div>
-                            <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Department</span>
-                            <span className="text-xs font-bold text-slate-800 uppercase mt-0.5 block">{profile.branch || 'N/A'}</span>
-                          </div>
-                          <div>
-                            <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Section & Year</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">
-                              Sec: {profile.section || '-'} | <span className="text-emerald-800">{getStudentBTechYear(profile.roll_number, profile.academic_year)}</span>
-                            </span>
-                          </div>
-                          <div>
-                            <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Cumulative GPA</span>
-                            <span className="text-xs font-bold text-emerald-805 mt-0.5 block">{cgpaVal.toFixed(2)} / 10.00</span>
-                          </div>
-                          <div className="col-span-2">
-                            <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Assigned Mentor</span>
-                            <span className="text-xs font-bold text-slate-850 mt-0.5 truncate block" title={mentorName}>{mentorName}</span>
-                          </div>
-                          <div className="col-span-2 sm:col-span-1 lg:col-span-2">
-                            <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Assigned HOD</span>
-                            <span className="text-xs font-bold text-slate-850 mt-0.5 truncate block" title={hodName}>{hodName}</span>
-                          </div>
-                        </div>
 
+                          {/* Column 2: GPA & Standing */}
+                          <div className="space-y-2 text-left">
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50 pb-1">
+                              <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">Cumulative GPA</span>
+                              <span className="font-black text-emerald-850">{cgpaVal.toFixed(2)} / 10.00</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50 pb-1">
+                              <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">Standing</span>
+                              <span className="font-bold text-slate-700">{cgpaVal >= 8.0 ? 'Excellent' : cgpaVal >= 7.0 ? 'Good' : 'Needs Support'}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">Active Backlogs</span>
+                              <span className={`font-bold ${backlogsVal > 0 ? 'text-rose-600' : 'text-emerald-700'}`}>{backlogsVal}</span>
+                            </div>
+                          </div>
+
+                          {/* Column 3: Mentoring */}
+                          <div className="space-y-2 text-left">
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50 pb-1">
+                              <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">Assigned Mentor</span>
+                              <span className="font-bold text-slate-700 truncate max-w-[150px] inline-block" title={mentorName}>{mentorName}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-400 uppercase tracking-widest text-[9px]">Assigned HOD</span>
+                              <span className="font-bold text-slate-700 truncate max-w-[150px] inline-block" title={hodName}>{hodName}</span>
+                            </div>
+                          </div>
+
+                        </div>
                       </div>
                     </div>
                   </div>
