@@ -118,7 +118,7 @@ export function Header({
         )}
         
         <Link href="/" className="flex items-center shrink-0">
-          <div className="relative h-9 w-[180px] sm:w-[200px]">
+          <div className="relative h-12 w-[220px] sm:w-[250px]">
             <Image 
               src="/assets/sreenidhi-logo.png" 
               alt="Sreenidhi logo" 
