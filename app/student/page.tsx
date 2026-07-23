@@ -399,7 +399,7 @@ export default function StudentProfilePage() {
                     {/* Premium Horizontal Profile Header */}
                     <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm overflow-hidden relative">
                       {/* Cover Background */}
-                      <div className="h-40 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800" />
+                      <div className="h-24 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800" />
                       
                       {/* Edit Button */}
                       <button 
@@ -407,16 +407,16 @@ export default function StudentProfilePage() {
                           setFormData(profileData);
                           setIsEditing(true);
                         }} 
-                        className="absolute right-6 top-6 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur-md transition duration-200 shadow-sm"
+                        className="absolute right-5 top-5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur-md transition duration-200 shadow-sm"
                         title="Edit Profile"
                       >
-                        <Edit2 className="h-5 w-5" />
+                        <Edit2 className="h-4 w-4" />
                       </button>
 
-                      <div className="px-8 pb-8">
-                        <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end -mt-20 relative z-10">
+                      <div className="px-6 pb-5">
+                        <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-end -mt-14 relative z-10">
                           {/* Profile Picture */}
-                          <div className="h-40 w-40 min-h-[160px] max-h-[160px] min-w-[160px] max-w-[160px] rounded-[32px] overflow-hidden border-[6px] border-white shadow-xl bg-slate-100 flex items-center justify-center shrink-0">
+                          <div className="h-28 w-28 min-h-[112px] max-h-[112px] min-w-[112px] max-w-[112px] rounded-[24px] overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
                             {profileData.profile_photo ? (
                               <img
                                 src={profileData.profile_photo}
@@ -427,18 +427,18 @@ export default function StudentProfilePage() {
                                 }}
                               />
                             ) : (
-                              <User className="h-14 w-14 text-emerald-200" />
+                              <User className="h-10 w-10 text-emerald-200" />
                             )}
                           </div>
 
                           {/* Basic Info */}
-                          <div className="flex-1 pb-2">
-                            <h2 className="text-2xl font-black text-slate-800 leading-tight">{profileData.name || 'N/A'}</h2>
-                            <div className="flex flex-wrap items-center gap-3 mt-2">
-                              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider font-mono">{profileData.rollNumber || 'N/A'}</p>
-                              <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
-                              <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
-                                <GraduationCap className="h-3.5 w-3.5" />
+                          <div className="flex-1 pb-1">
+                            <h2 className="text-xl font-black text-slate-800 leading-tight">{profileData.name || 'N/A'}</h2>
+                            <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">{profileData.rollNumber || 'N/A'}</p>
+                              <div className="w-1 h-1 rounded-full bg-slate-300" />
+                              <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-50 border border-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                <GraduationCap className="h-3 w-3" />
                                 {bTechYear || 'N/A'}
                               </span>
                             </div>
