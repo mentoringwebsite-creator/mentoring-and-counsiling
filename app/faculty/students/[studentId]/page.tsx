@@ -299,7 +299,8 @@ export default function StudentDetailsPage() {
       .filter((s: any) => parseInt(s.semester) === semNum)
       .map((s: any) => {
         const marksVal = parseInt(s.marks);
-        const nameClean = s.subject_name.length > 10 ? s.subject_code || s.subject_name.substring(0, 10) : s.subject_name;
+        const subjectName = String(s.subject_name || s.subject_code || 'Unknown Subject');
+        const nameClean = subjectName.length > 10 ? s.subject_code || subjectName.substring(0, 10) : subjectName;
         return {
           name: nameClean,
           Marks: isNaN(marksVal) ? 0 : marksVal
