@@ -1,6 +1,7 @@
 import { BadgeCheck, BriefcaseBusiness, GraduationCap, Headphones, ShieldCheck } from 'lucide-react';
-import { Brand } from '@/components/brand';
 import { PortalButton } from '@/components/portal-button';
+import { Header } from '@/components/header';
+import { Brand } from '@/components/brand';
 
 export default function HomePage() {
   return (
@@ -8,29 +9,25 @@ export default function HomePage() {
       <div className="w-full overflow-hidden">
         
         {/* Navigation */}
-        <header className="fixed top-0 z-50 w-full border-b border-border bg-white/90 backdrop-blur-md transition-all">
-          <div className="mx-auto flex h-20 max-w-[1280px] items-center justify-between px-6 md:px-12">
-            <div className="flex items-center gap-4">
-              <Brand />
-              <div className="hidden border-l-2 border-slate-200 pl-4 md:block">
-                <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-800 leading-tight">Sreenidhi</div>
-                <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-slate-500">Institute of Science & Technology</div>
-              </div>
-            </div>
-
-            <nav className="hidden items-center gap-8 text-[13px] font-bold uppercase tracking-wider text-slate-600 md:flex">
-              <a className="hover:text-emerald-600 transition-colors" href="#home">Home</a>
-              <a className="hover:text-emerald-600 transition-colors" href="#features">Features</a>
-              <a className="hover:text-emerald-600 transition-colors" href="#about">About</a>
-              <PortalButton href="/login" className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 transition-all transform hover:-translate-y-0.5">
-                Login / Portal
-              </PortalButton>
-            </nav>
-          </div>
-        </header>
+        <div className="fixed top-0 left-0 right-0 z-50 w-full">
+          <Header 
+            showBackButton={false} 
+            showUserMenu={false} 
+            rightElement={
+              <nav className="hidden items-center gap-8 text-[13px] font-bold uppercase tracking-wider text-slate-600 md:flex">
+                <a className="hover:text-emerald-600 transition-colors" href="#home">Home</a>
+                <a className="hover:text-emerald-600 transition-colors" href="#features">Features</a>
+                <a className="hover:text-emerald-600 transition-colors" href="#about">About</a>
+                <PortalButton href="/login" className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 transition-all transform hover:-translate-y-0.5">
+                  Login / Portal
+                </PortalButton>
+              </nav>
+            }
+          />
+        </div>
 
         {/* Hero Section with Horizontal Banner */}
-        <section id="home" className="pt-[80px] w-full">
+        <section id="home" className="pt-[72px] w-full">
           {/* Full Width Horizontal College Image */}
           <div className="w-full relative bg-slate-100 shadow-md">
             <img 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { GraduationCap, BriefcaseBusiness, Landmark, Settings2, ArrowLeft } from 'lucide-react';
-import { Brand } from '@/components/brand';
+import { Header } from '@/components/header';
 
 const roles = [
   { label: 'Student / Parent Login', href: '/student/login', description: 'View academic progress, attendance, and mentoring details.', icon: GraduationCap },
@@ -16,22 +16,13 @@ export default function LoginPage() {
     <main className="min-h-screen bg-slate-50">
       <div className="min-h-screen flex flex-col">
         {/* Header */}
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4 md:px-8 md:py-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Brand compact />
-            <Link 
-              href="/"
-              className="flex items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition shadow-sm active:scale-95 shrink-0"
-              aria-label="Go Back"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-            <div className="hidden border-l border-slate-200 pl-4 md:block">
-              <div className="text-[1.02rem] font-semibold uppercase tracking-[0.12em] text-slate-800">Student Enhancement &amp; Counselling Portal</div>
-              <div className="text-sm text-slate-500">Sreenidhi Institute of Science and Technology</div>
-            </div>
-          </div>
-        </header>
+        <Header 
+          title="Enhancement & Counselling"
+          subtitle="Sreenidhi Institute of Science & Technology"
+          showBackButton={true}
+          backHref="/"
+          showUserMenu={false}
+        />
 
         {/* Content */}
         <section className="flex-1 flex flex-col justify-center px-5 py-10 md:px-8 md:py-14 animate-fade-in">
