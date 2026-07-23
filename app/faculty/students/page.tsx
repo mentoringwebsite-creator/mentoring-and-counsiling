@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PageShell } from '@/components/page-shell';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 import { supabase } from '@/lib/supabase';
 import { getRiskLevel } from '@/lib/risk';
 import { Loader2, Search, UserCheck, UserPlus, UserMinus } from 'lucide-react';
-import { StudentDetailsModal } from '@/components/student-details-modal';
 
 const facultySidebarItems = [
   { href: '/faculty', label: 'Faculty Dashboard' },
@@ -18,12 +18,12 @@ const facultySidebarItems = [
 ];
 
 export default function FacultyStudentsPage() {
+  const router = useRouter();
   const [facultyId, setFacultyId] = useState<string | null>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'my-students' | 'unassigned' | 'all'>('my-students');
-  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const getStudentBTechYear = (profile: any) => {
@@ -250,7 +250,7 @@ export default function FacultyStudentsPage() {
                         <td className="px-5 py-4 font-mono font-semibold text-slate-700">{profile.roll_number || '-'}</td>
                         <td className="px-5 py-4 font-semibold text-slate-900">
                           <button 
-                            onClick={() => setSelectedStudentId(student.id)}
+                            onClick={() => router.push(`/faculty/students/${student.id}` as any)}
                             className="hover:underline hover:text-emerald-700 text-left font-semibold focus:outline-none"
                           >
                             {student.name}
@@ -305,11 +305,6 @@ export default function FacultyStudentsPage() {
           </div>
         </div>
 
-        <StudentDetailsModal 
-          studentUserId={selectedStudentId}
-          isOpen={selectedStudentId !== null}
-          onClose={() => setSelectedStudentId(null)}
-        />
       </PageShell>
     </ProtectedRoute>
   );
