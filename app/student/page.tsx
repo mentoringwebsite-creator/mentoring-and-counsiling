@@ -413,10 +413,10 @@ export default function StudentProfilePage() {
                         <Edit2 className="h-4 w-4" />
                       </button>
 
-                      <div className="px-6 pb-5">
-                        <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-end -mt-14 relative z-10">
+                      <div className="px-4 sm:px-6 pb-5">
+                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center sm:items-end -mt-18 relative z-10">
                           {/* Profile Picture */}
-                          <div className="h-28 w-28 min-h-[112px] max-h-[112px] min-w-[112px] max-w-[112px] rounded-[24px] overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
+                          <div className="h-36 w-36 min-h-[144px] max-h-[144px] min-w-[144px] max-w-[144px] rounded-[24px] overflow-hidden border-[6px] border-white shadow-xl bg-slate-100 flex items-center justify-center shrink-0">
                             {profileData.profile_photo ? (
                               <img
                                 src={profileData.profile_photo}
@@ -427,7 +427,7 @@ export default function StudentProfilePage() {
                                 }}
                               />
                             ) : (
-                              <User className="h-10 w-10 text-emerald-200" />
+                              <User className="h-12 w-12 text-emerald-200" />
                             )}
                           </div>
 

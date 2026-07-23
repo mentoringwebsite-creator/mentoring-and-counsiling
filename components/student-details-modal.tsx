@@ -706,14 +706,14 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
         ) : (
           <>
             {/* Header / Demographics Banner */}
-            <div className="border-b border-slate-200/60 bg-gradient-to-r from-emerald-50/50 via-white/50 to-orange-50/20 px-6 py-6 md:px-8">
-              <div className="flex flex-col gap-5 md:flex-row md:items-center">
+            <div className="border-b border-slate-200/60 bg-gradient-to-r from-emerald-50/50 via-white/50 to-orange-50/20 px-4 sm:px-6 py-5 md:px-8">
+              <div className="flex flex-col gap-4 sm:gap-6 md:flex-row md:items-center">
                 {/* Photo */}
-                <div className="h-20 w-20 rounded-[24px] border-2 border-white bg-white shadow-md overflow-hidden flex items-center justify-center shrink-0">
+                <div className="h-24 w-24 rounded-[24px] border-2 border-white bg-white shadow-md overflow-hidden flex items-center justify-center shrink-0">
                   {profile.profile_photo ? (
                     <img src={profile.profile_photo} alt={student.name} className="h-full w-full object-cover" />
                   ) : (
-                    <User className="h-10 w-10 text-emerald-800/60" />
+                    <User className="h-12 w-12 text-emerald-800/60" />
                   )}
                 </div>
 
