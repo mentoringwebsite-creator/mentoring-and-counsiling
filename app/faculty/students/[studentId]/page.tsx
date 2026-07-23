@@ -13,7 +13,7 @@ import {
   Award, Users, ExternalLink, Image as ImageIcon, 
   GraduationCap, AlertTriangle, ShieldCheck, Zap, 
   ArrowUpRight, ArrowDownRight, Trophy, Activity, MessageSquare,
-  ArrowLeft, Laptop, ShieldAlert
+  ArrowLeft, Laptop, ShieldAlert, Briefcase, CheckCircle2, XCircle, AlertCircle
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -425,6 +425,144 @@ export default function StudentDetailsPage() {
   const backlogData = getSemesterBacklogsData();
   const extracurricularData = getExtracurricularData();
 
+  const getPlacementEligibility = () => {
+    const minCgpa = 6.5;
+    const maxBacklogs = 0;
+    const minAttendance = 75;
+
+    const hasCgpaOk = cgpaVal >= minCgpa;
+    const hasBacklogsOk = backlogsVal <= maxBacklogs;
+    const hasAttendanceOk = attendanceVal >= minAttendance;
+
+    let status: 'Eligible' | 'Conditional' | 'Ineligible' = 'Eligible';
+    let statusColor = 'text-emerald-700 bg-emerald-50/50 border-emerald-200';
+    let statusText = 'Eligible for Campus Placements';
+    let reason = 'Meets all academic, attendance, and backlog clearance criteria.';
+
+    if (!hasCgpaOk && !hasBacklogsOk) {
+      status = 'Ineligible';
+      statusColor = 'text-rose-700 bg-rose-50/50 border-rose-200';
+      statusText = 'Currently Ineligible';
+      reason = 'Does not meet CGPA criteria and has active backlogs.';
+    } else if (!hasBacklogsOk) {
+      if (backlogsVal <= 2) {
+        status = 'Conditional';
+        statusColor = 'text-amber-700 bg-amber-50/50 border-amber-205';
+        statusText = 'Conditional Eligibility';
+        reason = 'Eligible for select companies. Must clear active backlogs.';
+      } else {
+        status = 'Ineligible';
+        statusColor = 'text-rose-700 bg-rose-50/50 border-rose-200';
+        statusText = 'Currently Ineligible';
+        reason = 'Ineligible due to multiple (>2) active backlogs.';
+      }
+    } else if (!hasCgpaOk) {
+      if (cgpaVal >= 6.0) {
+        status = 'Conditional';
+        statusColor = 'text-amber-700 bg-amber-50/50 border-amber-205';
+        statusText = 'Conditional Eligibility';
+        reason = 'Eligible for mass recruiters. Needs to improve CGPA to >= 6.5.';
+      } else {
+        status = 'Ineligible';
+        statusColor = 'text-rose-700 bg-rose-50/50 border-rose-200';
+        statusText = 'Currently Ineligible';
+        reason = 'CGPA is below the minimum placement threshold of 6.0.';
+      }
+    } else if (!hasAttendanceOk) {
+      status = 'Conditional';
+      statusColor = 'text-amber-700 bg-amber-50/50 border-amber-205';
+      statusText = 'Conditional Eligibility';
+      reason = 'Attendance is below 75%. Subject to Department approval.';
+    }
+
+    return {
+      status,
+      statusColor,
+      statusText,
+      reason,
+      checks: [
+        { label: `CGPA Metric (Min ${minCgpa})`, value: `${cgpaVal.toFixed(2)}`, passed: hasCgpaOk, warning: !hasCgpaOk && cgpaVal >= 6.0 },
+        { label: 'Active Backlogs (Max 0)', value: `${backlogsVal}`, passed: hasBacklogsOk, warning: !hasBacklogsOk && backlogsVal <= 2 },
+        { label: `Class Attendance (Min ${minAttendance}%)`, value: `${attendanceVal}%`, passed: hasAttendanceOk, warning: !hasAttendanceOk && attendanceVal >= 65 }
+      ]
+    };
+  };
+
+  const getRecommendedRoles = () => {
+    const branch = (profile.branch || 'CSE').toUpperCase();
+    const isHighPerformer = cgpaVal >= 8.0;
+    const isMediumPerformer = cgpaVal >= 7.0;
+
+    let roles: { title: string; match: number; type: string; skills: string[] }[] = [];
+
+    if (branch.includes('CSE') || branch.includes('CS') || branch.includes('IT') || branch.includes('INF')) {
+      if (isHighPerformer) {
+        roles = [
+          { title: 'Software Development Engineer (SDE)', match: 95, type: 'Technical / Core', skills: ['Data Structures', 'System Design', 'Algorithms'] },
+          { title: 'AI / Machine Learning Engineer', match: 88, type: 'Specialized', skills: ['Python', 'PyTorch', 'Model Training'] },
+          { title: 'Full Stack Web Developer', match: 90, type: 'Technical', skills: ['Next.js', 'PostgreSQL', 'Node.js'] }
+        ];
+      } else if (isMediumPerformer) {
+        roles = [
+          { title: 'Full Stack Web Developer', match: 85, type: 'Technical', skills: ['React', 'Node.js', 'SQL'] },
+          { title: 'DevOps & Systems Engineer', match: 78, type: 'Infrastructure', skills: ['Docker', 'Linux', 'CI/CD'] },
+          { title: 'QA / Automation Engineer', match: 82, type: 'Testing', skills: ['Selenium', 'Java', 'Unit Testing'] }
+        ];
+      } else {
+        roles = [
+          { title: 'Frontend Developer', match: 72, type: 'Technical', skills: ['HTML/CSS', 'JavaScript', 'React'] },
+          { title: 'Technical Support Associate', match: 80, type: 'Services', skills: ['Troubleshooting', 'SQL', 'Networks'] },
+          { title: 'QA / Automation Engineer', match: 70, type: 'Testing', skills: ['Manual Testing', 'Python Scripting'] }
+        ];
+      }
+    } else if (branch.includes('ECE') || branch.includes('ETC') || branch.includes('EEE') || branch.includes('EE')) {
+      if (isHighPerformer) {
+        roles = [
+          { title: 'VLSI Design Engineer', match: 92, type: 'Core Electronics', skills: ['Verilog', 'Digital Design', 'CMOS'] },
+          { title: 'Embedded Software Engineer', match: 90, type: 'Core Electronics', skills: ['Embedded C', 'RTOS', 'Microcontrollers'] },
+          { title: 'Software Developer (SDE)', match: 85, type: 'IT / Software', skills: ['C++', 'DBMS', 'Algorithms'] }
+        ];
+      } else if (isMediumPerformer) {
+        roles = [
+          { title: 'Embedded Systems Engineer', match: 84, type: 'Core Electronics', skills: ['Microcontrollers', 'C Coding', 'I2C/SPI'] },
+          { title: 'IoT Solutions Associate', match: 80, type: 'Specialized', skills: ['Sensors', 'Arduino', 'Python'] },
+          { title: 'Network Security Analyst', match: 75, type: 'IT Infrastructure', skills: ['CCNA', 'TCP/IP', 'Routing'] }
+        ];
+      } else {
+        roles = [
+          { title: 'Hardware Testing Technician', match: 78, type: 'Core Electronics', skills: ['Oscilloscope', 'Multimeter', 'PCB Debugging'] },
+          { title: 'Technical Sales Consultant', match: 75, type: 'Services', skills: ['Communication', 'Product Demo', 'Basic Tech'] },
+          { title: 'Systems Support Engineer', match: 70, type: 'IT Infrastructure', skills: ['OS Installation', 'Basic Networking'] }
+        ];
+      }
+    } else {
+      if (isHighPerformer) {
+        roles = [
+          { title: 'CAD / FEA Design Engineer', match: 90, type: 'Core Engineering', skills: ['SolidWorks', 'ANSYS', 'Product Design'] },
+          { title: 'Graduate Engineer Trainee (GET)', match: 94, type: 'Management & Core', skills: ['Project Planning', 'Process Optimization'] },
+          { title: 'Robotics & Automation Specialist', match: 82, type: 'Specialized', skills: ['ROS', 'MATLAB', 'Python'] }
+        ];
+      } else if (isMediumPerformer) {
+        roles = [
+          { title: 'CAD Designer / Draftsman', match: 85, type: 'Core Engineering', skills: ['AutoCAD', 'SolidWorks', 'GD&T'] },
+          { title: 'Quality Assurance Inspector', match: 80, type: 'Operations', skills: ['Six Sigma', 'Precision Tools', 'ISO Standards'] },
+          { title: 'Operations & Maintenance Supervisor', match: 78, type: 'Operations', skills: ['Machine Repair', 'HVAC', 'Safety Protocol'] }
+        ];
+      } else {
+        roles = [
+          { title: 'Quality Inspector', match: 75, type: 'Operations', skills: ['Visual Inspection', 'Quality Reports'] },
+          { title: 'Technical Sales Engineer', match: 82, type: 'Services', skills: ['Communication', 'Client Relations', 'Product Spec'] },
+          { title: 'Production Assistant', match: 80, type: 'Manufacturing', skills: ['Assembly Line', 'Inventory Check'] }
+        ];
+      }
+    }
+
+    return roles;
+  };
+
+  const placementEligibility = getPlacementEligibility();
+  const recommendedRoles = getRecommendedRoles();
+
   const clubs = profile.clubs || DEFAULT_CLUBS;
   const certifications = profile.certifications || DEFAULT_CERTS;
 
@@ -786,7 +924,110 @@ export default function StudentDetailsPage() {
 
                   {/* Tab 2: Academics */}
                   {activeTab === 'academics' && (
-                    <div className="grid gap-5 md:grid-cols-2">
+                    <div className="space-y-5">
+                      
+                      {/* Placement Eligibility & Recommendations */}
+                      <div className="grid gap-5 md:grid-cols-2">
+                        
+                        {/* Placement Eligibility Card */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col hover:shadow-md transition duration-200 justify-between">
+                          <div>
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-4">
+                              <h4 className="text-xs font-black text-slate-805 flex items-center gap-1.5">
+                                <Briefcase className="h-4 w-4 text-emerald-805" />
+                                <span>Placement Eligibility Status</span>
+                              </h4>
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide border shadow-sm ${
+                                placementEligibility.status === 'Eligible' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
+                                placementEligibility.status === 'Conditional' ? 'bg-amber-50 border-amber-205 text-amber-700' :
+                                'bg-rose-50 border-rose-200 text-rose-700'
+                              }`}>
+                                {placementEligibility.status === 'Eligible' && <CheckCircle2 className="h-3 w-3" />}
+                                {placementEligibility.status === 'Conditional' && <AlertCircle className="h-3 w-3" />}
+                                {placementEligibility.status === 'Ineligible' && <XCircle className="h-3 w-3" />}
+                                <span>{placementEligibility.statusText}</span>
+                              </span>
+                            </div>
+                            
+                            <p className="text-xs text-slate-500 font-semibold leading-relaxed mb-4">
+                              {placementEligibility.reason}
+                            </p>
+                          </div>
+
+                          <div className="space-y-2 border-t border-slate-50 pt-3">
+                            {placementEligibility.checks.map((check, i) => (
+                              <div key={i} className="flex items-center justify-between text-xs py-1">
+                                <div className="flex items-center gap-2 text-slate-650">
+                                  {check.passed ? (
+                                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                                  ) : check.warning ? (
+                                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                                  )}
+                                  <span className="font-bold">{check.label}</span>
+                                </div>
+                                <span className={`font-mono font-bold ${
+                                  check.passed ? 'text-emerald-700' :
+                                  check.warning ? 'text-amber-750' :
+                                  'text-rose-600'
+                                }`}>{check.value}</span>
+                              </div>
+                            ))}
+                            <div className="flex items-center justify-between text-xs py-1 border-t border-slate-50 pt-2">
+                              <div className="flex items-center gap-2 text-slate-650">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                                <span className="font-bold">T&P Training Registration</span>
+                              </div>
+                              <span className="font-bold text-emerald-700">Active</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Recommended Job Roles Card */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col hover:shadow-md transition duration-200">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-4">
+                            <h4 className="text-xs font-black text-slate-805 flex items-center gap-1.5">
+                              <Laptop className="h-4 w-4 text-emerald-805" />
+                              <span>AI Career Role Recommendations</span>
+                            </h4>
+                            <span className="text-[9px] font-bold text-slate-400 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded">
+                              Dept Profile Fit
+                            </span>
+                          </div>
+
+                          <div className="space-y-3">
+                            {recommendedRoles.map((role, i) => (
+                              <div key={i} className="rounded-xl border border-slate-100 p-2.5 bg-slate-50/50 hover:bg-slate-50 transition duration-150">
+                                <div className="flex items-center justify-between gap-2 mb-1.5">
+                                  <div>
+                                    <div className="font-bold text-xs text-slate-800">{role.title}</div>
+                                    <div className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">{role.type}</div>
+                                  </div>
+                                  <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-extrabold border ${
+                                    role.match >= 90 ? 'bg-emerald-50 text-emerald-705 border-emerald-100' :
+                                    role.match >= 80 ? 'bg-blue-50 text-blue-705 border-blue-100' :
+                                    'bg-slate-100 text-slate-655 border-slate-150'
+                                  }`}>
+                                    {role.match}% Match
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {role.skills.map((skill, si) => (
+                                    <span key={si} className="text-[8px] font-bold bg-white border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded shadow-xs">
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Charts Grid */}
+                      <div className="grid gap-5 md:grid-cols-2">
                       
                       {/* SGPA Semester Trend */}
                       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
@@ -949,7 +1190,8 @@ export default function StudentDetailsPage() {
                       </div>
 
                     </div>
-                  )}
+                  </div>
+                )}
 
                   {/* Tab 3: Extracurriculars */}
                   {activeTab === 'extracurriculars' && (
