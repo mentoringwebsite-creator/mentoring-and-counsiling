@@ -24,8 +24,7 @@ import {
 const facultySidebarItems = [
   { href: '/faculty', label: 'My Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
-  { href: '/faculty/queries', label: 'Student Queries' },
-  { href: '/faculty/notes', label: 'Mentor Notes' }
+  { href: '/faculty/queries', label: 'Student Queries' }
 ];
 
 const getStudentBTechYear = (roll: string, acYear: string) => {

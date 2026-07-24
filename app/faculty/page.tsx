@@ -22,8 +22,7 @@ import {
 const facultySidebarItems = [
   { href: '/faculty', label: 'My Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
-  { href: '/faculty/queries', label: 'Student Queries' },
-  { href: '/faculty/notes', label: 'Mentor Notes' }
+  { href: '/faculty/queries', label: 'Student Queries' }
 ];
 
 export default function FacultyDashboardPage() {
@@ -617,24 +616,6 @@ export default function FacultyDashboardPage() {
                     )}
                   </div>
 
-                  {/* Monthly Sessions Statistics */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
-                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
-                      <Calendar className="h-4 w-4 text-emerald-700" />
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Mentoring Session Statistics</h4>
-                    </div>
-                    <div className="flex-1 h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={sessionHistoryData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                          <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} fontWeight="bold" />
-                          <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" allowDecimals={false} />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="Sessions" stroke="#0f766e" strokeWidth={3} dot={{ r: 4 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
 
                 </div>
               </>
