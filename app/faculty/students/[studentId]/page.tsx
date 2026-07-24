@@ -22,8 +22,7 @@ import {
 } from 'recharts';
 
 const facultySidebarItems = [
-  { href: '/faculty', label: 'Faculty Dashboard' },
-  { href: '/faculty/profile', label: 'Profile' },
+  { href: '/faculty', label: 'My Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
   { href: '/faculty/queries', label: 'Student Queries' },
   { href: '/faculty/notes', label: 'Mentor Notes' }

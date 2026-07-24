@@ -11,6 +11,7 @@ const getIcon = (label: string) => {
     case 'hod dashboard':
     case 'overview':
     case 'dashboard':
+    case 'my dashboard':
       return <Home className="h-5 w-5 mr-3 shrink-0" />;
     case 'profile':
       return <User className="h-5 w-5 mr-3 shrink-0" />;

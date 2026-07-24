@@ -244,7 +244,7 @@ export default function FacultyQueriesPage() {
     <ProtectedRoute role="faculty">
       <PageShell title="Student Queries" subtitle="Mentor response queue">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
-          <Sidebar active="/faculty/queries" items={[{ href: '/faculty', label: 'Faculty Dashboard' }, { href: '/faculty/profile', label: 'Profile' }, { href: '/faculty/students', label: 'My Students' }, { href: '/faculty/queries', label: 'Student Queries' }, { href: '/faculty/notes', label: 'Mentor Notes' }]} />
+          <Sidebar active="/faculty/queries" items={[{ href: '/faculty', label: 'My Dashboard' }, { href: '/faculty/students', label: 'My Students' }, { href: '/faculty/queries', label: 'Student Queries' }, { href: '/faculty/notes', label: 'Mentor Notes' }]} />
           
           <div className={showChat ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
             {/* Left Column: Queries List */}
