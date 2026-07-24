@@ -2,8 +2,11 @@ import { LoginForm } from '@/components/auth/forms';
 
 export default function AdminLoginPage() {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,rgba(247,251,248,0.94),rgba(232,242,236,0.98))] py-16">
-      <div className="mx-auto w-full max-w-5xl px-5">
+    <main className="relative min-h-screen overflow-hidden bg-transparent text-slate-900">
+      <img src="/assets/college-bg-3.png" alt="Campus background" className="pointer-events-none absolute inset-0 h-full w-full object-cover filter brightness-105" />
+      <div className="pointer-events-none absolute inset-0 bg-white/18 backdrop-blur-sm" />
+
+      <div className="mx-auto w-full max-w-5xl px-5 py-16 relative z-10">
         <LoginForm role="admin" redirectTo="/admin" showRegisterLink={false} />
       </div>
     </main>
