@@ -12,13 +12,13 @@ const roles = [
 
 export default function LoginPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-900">
+    <main className="relative min-h-screen overflow-hidden bg-transparent text-slate-900">
       <img
         src="/assets/college-bg-3.png"
         alt="Campus background"
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover filter brightness-105"
       />
-      <div className="pointer-events-none absolute inset-0 bg-slate-950/55 backdrop-blur-sm" />
+      <div className="pointer-events-none absolute inset-0 bg-white/18 backdrop-blur-sm" />
       <div className="pointer-events-none absolute left-[-4rem] top-[10%] h-80 w-80 rounded-full bg-emerald-400/15 blur-3xl" />
       <div className="pointer-events-none absolute right-[-4rem] top-[40%] h-80 w-80 rounded-full bg-cyan-400/15 blur-3xl" />
 
