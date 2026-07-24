@@ -461,17 +461,7 @@ export default function FacultyDashboardPage() {
                   </div>
                 </div>
 
-                {/* 2. OVERVIEW CARDS */}
-                <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                  <StatCard title="Assigned Students" value={assignedCount.toString()} tone="neutral" />
-                  <StatCard title="Open Queries" value={openQueriesCount.toString()} tone="orange" />
-                  <StatCard title="Pending Sessions" value={pendingSessionsCount.toString()} tone="orange" />
-                  <StatCard title="Completed Sessions" value={completedSessionsCount.toString()} tone="green" />
-                  <StatCard title="Average CGPA" value={avgCgpa} tone="green" />
-                  <StatCard title="High Risk Students" value={highRiskCount.toString()} tone="red" />
-                  <StatCard title="Mentor Notes" value={notesCount.toString()} tone="neutral" />
-                  <StatCard title="Notifications" value={notificationsCount.toString()} tone="orange" />
-                </div>
+
 
 
 
