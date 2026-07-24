@@ -423,10 +423,11 @@ export default function FacultyDashboardPage() {
 
                       {/* Header Basic Details */}
                       <div className="flex-1 w-full text-center md:text-left pb-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 pb-3 border-b border-slate-100/90">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                           <div>
                             <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight leading-none mb-1.5">{profile.name}</h2>
-                            <p className="text-xs text-slate-400 font-bold tracking-wide uppercase font-mono">Employee ID: {profile.faculty_id}</p>
+                            <p className="text-xs text-emerald-800 font-extrabold tracking-wide uppercase mb-1.5">{profile.designation} — Dept. of {profile.department}</p>
+                            <p className="text-[10px] text-slate-400 font-bold tracking-wide uppercase font-mono">Employee ID: {profile.faculty_id}</p>
                           </div>
                           
                           <div className="flex justify-center sm:justify-start">
@@ -434,26 +435,6 @@ export default function FacultyDashboardPage() {
                               <Sparkles className="h-3 w-3" />
                               Faculty Mentor
                             </span>
-                          </div>
-                        </div>
-
-                        {/* Extra Details */}
-                        <div className="grid gap-y-1.5 text-left text-xs max-w-xl">
-                          <div className="flex justify-between sm:justify-start gap-4">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px] w-24">Designation:</span>
-                            <span className="font-semibold text-slate-700">{profile.designation}</span>
-                          </div>
-                          <div className="flex justify-between sm:justify-start gap-4">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px] w-24">Department:</span>
-                            <span className="font-semibold text-slate-700">{profile.department}</span>
-                          </div>
-                          <div className="flex justify-between sm:justify-start gap-4">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px] w-24">Email:</span>
-                            <span className="font-semibold text-slate-700">{profile.email}</span>
-                          </div>
-                          <div className="flex justify-between sm:justify-start gap-4">
-                            <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px] w-24">Phone:</span>
-                            <span className="font-semibold text-slate-700">{profile.contact}</span>
                           </div>
                         </div>
                       </div>
