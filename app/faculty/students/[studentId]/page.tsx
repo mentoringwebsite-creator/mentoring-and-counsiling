@@ -634,7 +634,7 @@ export default function StudentDetailsPage() {
                   <div className="h-24 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-855" />
                   
                   <div className="px-6 pb-6 pt-0">
-                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-20 md:-mt-24 lg:-mt-28 relative z-10">
+                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-12 md:-mt-16 relative z-10">
                       {/* Avatar container */}
                       <div className="h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] md:h-[185px] md:w-[185px] lg:h-[210px] lg:w-[210px] xl:h-[230px] xl:w-[230px] rounded-[32px] overflow-hidden border-[5px] border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
                         {profile.profile_photo ? (
