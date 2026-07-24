@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { GraduationCap, BriefcaseBusiness, Landmark, Settings2, ArrowLeft } from 'lucide-react';
-import { Header } from '@/components/header';
 
 const roles = [
   { label: 'Student / Parent Login', href: '/student/login', description: 'View academic progress, attendance, and mentoring details.', icon: GraduationCap },
@@ -24,27 +23,15 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute right-[-4rem] top-[40%] h-80 w-80 rounded-full bg-cyan-400/15 blur-3xl" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        {/* Header */}
-        <Header 
-          title="Enhancement & Counselling"
-          subtitle="Sreenidhi Institute of Science & Technology"
-          showBackButton={true}
-          backHref="/"
-          showUserMenu={false}
-        />
-
-        {/* Content */}
-        <section className="flex-1 flex items-center justify-center px-4 py-8 md:px-8 md:py-10">
-          <div className="w-full max-w-[1000px] rounded-[32px] border border-white/20 bg-white/85 p-6 shadow-[0_40px_120px_rgba(15,23,42,0.22)] backdrop-blur-xl md:p-8">
-            <div className="mx-auto max-w-3xl text-center">
-              <div className="mb-4 inline-flex items-center rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-emerald-700 shadow-sm">
-                Secure access portal
-              </div>
+        {/* Centered hero-style login tiles */}
+        <section className="flex-1 flex items-center justify-center px-4 py-12 md:px-8">
+          <div className="w-full max-w-[980px]">
+            <div className="mx-auto text-center mb-8">
               <h1 className="text-3xl font-black tracking-tight text-slate-900 md:text-4xl">Select Your Login Type</h1>
-              <p className="mt-3 text-sm leading-7 text-slate-600 md:text-base">Choose the best option to access your dashboard and institutional tools.</p>
+              <p className="mt-2 text-sm text-slate-700">Choose the best option to access your dashboard and institutional tools.</p>
             </div>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-5">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {roles.map((role) => {
                 const Icon = role.icon;
 
@@ -52,13 +39,13 @@ export default function LoginPage() {
                   <Link
                     key={role.label}
                     href={role.href as never}
-                    className="group flex min-h-[190px] flex-col items-center justify-center rounded-[24px] border border-slate-200 bg-white px-6 py-7 text-center shadow-sm transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-md"
+                    className="group flex min-h-[150px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white/95 px-6 py-6 text-center shadow-lg transition-transform duration-200 hover:-translate-y-1 hover:shadow-2xl"
                   >
-                    <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 transition duration-300 group-hover:scale-110 group-hover:bg-emerald-100 md:h-20 md:w-20">
+                    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 transition duration-300 group-hover:scale-105 md:h-18 md:w-18">
                       <Icon className="h-8 w-8 md:h-10 md:w-10" />
                     </div>
-                    <h2 className="text-lg font-bold text-slate-900">{role.label}</h2>
-                    <p className="mt-2 max-w-[280px] text-sm leading-relaxed text-slate-600">{role.description}</p>
+                    <h2 className="text-xl font-bold text-slate-900">{role.label}</h2>
+                    <p className="mt-2 max-w-[300px] text-sm leading-relaxed text-slate-600">{role.description}</p>
                   </Link>
                 );
               })}
