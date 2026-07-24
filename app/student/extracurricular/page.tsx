@@ -41,9 +41,12 @@ export default function ExtracurricularPage() {
   // Data lists
   const [clubs, setClubs] = useState<any[]>([]);
   const [certifications, setCertifications] = useState<any[]>([]);
-  const [skills, setSkills] = useState<{ name: string; level: number }[]>([]);
+  const [skills, setSkills] = useState<{ name: string; level: number; proofType?: string; proofValue?: string }[]>([]);
   const [newSkillText, setNewSkillText] = useState('');
   const [newSkillLevel, setNewSkillLevel] = useState(80);
+  const [newSkillProofType, setNewSkillProofType] = useState<'certificate' | 'btech' | 'self' | 'youtube'>('certificate');
+  const [newSkillProofValue, setNewSkillProofValue] = useState('');
+  const [newSkillCertImage, setNewSkillCertImage] = useState('');
   
   // Aspirations states
   const [interests, setInterests] = useState('');
@@ -98,21 +101,25 @@ export default function ExtracurricularPage() {
       
       const rawInterests = data.interests || '';
       let parsedInterests = rawInterests;
-      let parsedSkills = DEFAULT_SKILLS;
+      let parsedSkills: any[] = [];
       if (rawInterests.includes('||skills:')) {
         const parts = rawInterests.split('||skills:');
         parsedInterests = parts[0];
         const skillStr = parts[1];
-        parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => {
-          const item = s.trim();
-          if (item.includes(':')) {
-            const [name, lvl] = item.split(':');
-            return { name: name.trim(), level: parseInt(lvl) || 80 };
+        if (skillStr.trim()) {
+          try {
+            parsedSkills = JSON.parse(skillStr);
+          } catch {
+            parsedSkills = skillStr.split(',').map((s: string) => {
+              const item = s.trim();
+              if (item.includes(':')) {
+                const [name, lvl] = item.split(':');
+                return { name: name.trim(), level: parseInt(lvl) || 80 };
+              }
+              return { name: item, level: 80 };
+            }).filter((item: any) => item.name);
           }
-          return { name: item, level: 80 };
-        }).filter((item: any) => item.name) : [];
-      } else if (rawInterests.trim() !== '') {
-        parsedSkills = [];
+        }
       }
       
       setInterests(parsedInterests);
@@ -150,7 +157,8 @@ export default function ExtracurricularPage() {
 
       const finalInterestsVal = updatedInterests !== undefined ? updatedInterests : interests;
       const finalSkillsVal = updatedSkills !== undefined ? updatedSkills : skills;
-      payload.interests = finalInterestsVal + '||skills:' + finalSkillsVal.map(s => `${s.name}:${s.level}`).join(',');
+      const interestsPrefix = finalInterestsVal?.trim() ? `${finalInterestsVal}||skills:` : '||skills:';
+      payload.interests = interestsPrefix + JSON.stringify(finalSkillsVal);
 
       if (updatedDreams !== undefined) payload.dreams = updatedDreams;
       if (updatedGoals !== undefined) payload.career_goals = updatedGoals;
@@ -341,22 +349,45 @@ export default function ExtracurricularPage() {
     const cleanSkill = newSkillText.trim();
     if (!cleanSkill) return;
 
-    const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
-    if (currentSkills.some(s => s.name.toLowerCase() === cleanSkill.toLowerCase())) {
+    if (newSkillProofType === 'certificate' && !newSkillCertImage) {
+      alert('Please upload a certificate image for certificate proof.');
+      return;
+    }
+
+    if (newSkillProofType === 'youtube' && !newSkillProofValue.trim()) {
+      alert('Please add the YouTube course link.');
+      return;
+    }
+
+    if ((newSkillProofType === 'btech' || newSkillProofType === 'self') && !newSkillProofValue.trim()) {
+      alert('Please add a short description for the proof of this skill.');
+      return;
+    }
+
+    if (skills.some(s => s.name.toLowerCase() === cleanSkill.toLowerCase())) {
       alert('Skill already exists.');
       return;
     }
 
-    const updatedSkills = [...currentSkills, { name: cleanSkill, level: newSkillLevel }];
+    const newSkill = {
+      name: cleanSkill,
+      level: newSkillLevel,
+      proofType: newSkillProofType,
+      proofValue: newSkillProofType === 'certificate' ? newSkillCertImage : newSkillProofValue.trim(),
+    };
+
+    const updatedSkills = [...skills, newSkill];
     setSkills(updatedSkills);
     setNewSkillText('');
     setNewSkillLevel(80);
+    setNewSkillProofType('certificate');
+    setNewSkillProofValue('');
+    setNewSkillCertImage('');
     await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
   };
 
   const handleRemoveSkill = async (skillName: string) => {
-    const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
-    const updatedSkills = currentSkills.filter(s => s.name !== skillName);
+    const updatedSkills = skills.filter(s => s.name !== skillName);
     setSkills(updatedSkills);
     await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
   };
@@ -595,19 +626,37 @@ export default function ExtracurricularPage() {
               ) : (
                 <div className="space-y-6">
                   {/* Skill tags container */}
-                  <div className="flex flex-wrap gap-2.5">
-                    {(skills.length > 0 ? skills : DEFAULT_SKILLS).map((skill, index) => (
-                      <span 
-                        key={index}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-[#1c5644]/10 text-emerald-850 border border-[#1c5644]/20 group/tag hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition duration-200 cursor-pointer"
-                        onClick={() => handleRemoveSkill(skill.name)}
-                        title="Click to remove skill"
-                      >
-                        <span>{skill.name} - {skill.level}%</span>
-                        <X className="h-3 w-3 text-slate-400 group-hover/tag:text-rose-500 transition" />
-                      </span>
-                    ))}
-                  </div>
+                  {skills.length === 0 ? (
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                      No skills added yet. Add a skill with proof type to save your expertise.
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2.5">
+                      {skills.map((skill, index) => {
+                        const proofLabel = skill.proofType === 'certificate'
+                          ? 'Certificate'
+                          : skill.proofType === 'youtube'
+                            ? 'YouTube'
+                            : skill.proofType === 'btech'
+                              ? 'B.Tech Subject'
+                              : skill.proofType === 'self'
+                                ? 'Self Learn'
+                                : '';
+
+                        return (
+                          <span 
+                            key={index}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#1c5644]/20 bg-[#1c5644]/10 px-3 py-1.5 text-xs font-bold text-emerald-850 transition duration-200 cursor-pointer hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                            onClick={() => handleRemoveSkill(skill.name)}
+                            title="Click to remove skill"
+                          >
+                            <span>{skill.name} - {skill.level}%{proofLabel ? ` • ${proofLabel}` : ''}</span>
+                            <X className="h-3 w-3 text-slate-400 transition" />
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Add skill input */}
                   <form onSubmit={handleAddSkill} className="flex flex-col sm:flex-row max-w-lg items-stretch sm:items-center gap-3">
@@ -632,6 +681,77 @@ export default function ExtracurricularPage() {
                       />
                       <span className="text-[10px] font-bold text-slate-700 w-8">{newSkillLevel}%</span>
                     </div>
+                  </form>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Proof Type</label>
+                      <select
+                        value={newSkillProofType}
+                        onChange={(e) => {
+                          setNewSkillProofType(e.target.value as any);
+                          setNewSkillProofValue('');
+                          setNewSkillCertImage('');
+                        }}
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs focus:border-emerald-600 focus:outline-none"
+                      >
+                        <option value="certificate">Certificate</option>
+                        <option value="btech">B.Tech Subject</option>
+                        <option value="self">Self Learn</option>
+                        <option value="youtube">YouTube</option>
+                      </select>
+                    </div>
+
+                    {newSkillProofType === 'certificate' ? (
+                      <div className="sm:col-span-2">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Certificate Image</label>
+                        <div className="mt-1 flex items-center gap-3">
+                          {newSkillCertImage && (
+                            <div className="h-12 w-12 overflow-hidden rounded-xl border border-slate-200">
+                              <img src={newSkillCertImage} alt="Certificate preview" className="h-full w-full object-cover" />
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) compressImage(file, 600, setNewSkillCertImage);
+                            }}
+                            className="block w-full text-xs text-slate-500
+                              file:mr-3 file:py-2 file:px-3
+                              file:rounded-xl file:border-0
+                              file:text-xs file:font-semibold
+                              file:bg-emerald-50 file:text-emerald-700
+                              hover:file:bg-emerald-100 transition"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="sm:col-span-2">
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                          {newSkillProofType === 'youtube'
+                            ? 'YouTube Course Link'
+                            : newSkillProofType === 'btech'
+                              ? 'B.Tech Subject / Course'
+                              : 'Self-Learning Proof'}
+                        </label>
+                        <input
+                          type="text"
+                          value={newSkillProofValue}
+                          onChange={(e) => setNewSkillProofValue(e.target.value)}
+                          placeholder={
+                            newSkillProofType === 'youtube'
+                              ? 'https://youtube.com/...' 
+                              : newSkillProofType === 'btech'
+                                ? 'e.g. Database Management Systems'
+                                : 'e.g. Built a personal project using React'
+                          }
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none"
+                        />
+                      </div>
+                    )}
+                  </div>
 
                     <button 
                       type="submit"

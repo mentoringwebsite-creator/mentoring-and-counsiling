@@ -326,31 +326,42 @@ export default function StudentProfilePage() {
         resume_url: formData.resume_url
       };
 
-      let profileError = null;
+      let profileError: any = null;
       let alternatePhoneMissing = false;
+      let updatedProfile: any = null;
 
-      const { error: primaryError } = await supabase
+      const { data: primaryData, error: primaryError } = await supabase
         .from('student_profiles')
         .update(updatePayload)
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .select('*')
+        .single();
 
       if (primaryError) {
-        // If column alternate_phone, linkedin_url or resume_url does not exist, retry without them
+        // If a schema column is missing, retry without the new fields
         if (primaryError.message.includes('alternate_phone') || primaryError.message.includes('linkedin_url') || primaryError.message.includes('resume_url') || primaryError.code === '42703') {
           alternatePhoneMissing = true;
           delete updatePayload.alternate_phone;
           delete updatePayload.linkedin_url;
           delete updatePayload.resume_url;
-          const { error: retryError } = await supabase
+
+          const { data: retryData, error: retryError } = await supabase
             .from('student_profiles')
             .update(updatePayload)
-            .eq('user_id', userId);
+            .eq('user_id', userId)
+            .select('*')
+            .single();
+
           if (retryError) {
             profileError = retryError;
+          } else {
+            updatedProfile = retryData;
           }
         } else {
           profileError = primaryError;
         }
+      } else {
+        updatedProfile = primaryData;
       }
 
       if (profileError) throw profileError;
@@ -361,7 +372,31 @@ export default function StudentProfilePage() {
         setSaveMessage('Profile updated successfully!');
       }
 
-      await loadProfile();
+      if (updatedProfile) {
+        const parsedUpdated = parseAcademicYear(updatedProfile.academic_year || '');
+        const inferredBTechYear = parsedUpdated.btechYear || getStudentBTechYear(updatedProfile.roll_number, parsedUpdated.batch);
+        const refreshedProfile = {
+          name: formData.name,
+          rollNumber: updatedProfile.roll_number || formData.rollNumber,
+          dob: updatedProfile.dob || formData.dob || '',
+          phone: updatedProfile.phone || formData.phone || '',
+          alternate_phone: updatedProfile.alternate_phone || formData.alternate_phone || '',
+          branch: updatedProfile.branch || formData.branch || '',
+          section: updatedProfile.section || formData.section || '',
+          academic_year: parsedUpdated.batch,
+          btech_year: inferredBTechYear,
+          email: formData.email,
+          profile_photo: updatedProfile.profile_photo || formData.profile_photo || '',
+          linkedin_url: updatedProfile.linkedin_url || formData.linkedin_url || '',
+          resume_url: updatedProfile.resume_url || formData.resume_url || ''
+        };
+
+        setProfile(refreshedProfile);
+        setFormData(refreshedProfile);
+      } else {
+        await loadProfile();
+      }
+
       setTimeout(() => {
         setIsEditing(false);
         setSaveMessage(null);
