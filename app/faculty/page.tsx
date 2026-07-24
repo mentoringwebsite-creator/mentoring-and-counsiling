@@ -465,114 +465,62 @@ export default function FacultyDashboardPage() {
                     </button>
                   </div>
 
-                  <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 md:grid-cols-3 text-sm">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <User className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Name</div>
-                        <div className="font-semibold text-slate-800 mt-0.5">{profile.name}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Briefcase className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Employee ID</div>
-                        <div className="font-semibold text-slate-805 font-mono mt-0.5">{profile.faculty_id}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Layers className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Department</div>
-                        <div className="font-semibold text-slate-800 mt-0.5">{profile.department}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Award className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider font-mono">Designation</div>
-                        <div className="font-semibold text-slate-805 mt-0.5">{profile.designation}</div>
+                  <div className="grid gap-8 md:grid-cols-2 text-sm">
+                    {/* Left Column: Academic & Professional Details */}
+                    <div>
+                      <h4 className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest mb-3 pb-1 border-b border-emerald-100/50">Academic & Professional</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Full Name</span>
+                          <span className="font-semibold text-slate-800">{profile.name}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Employee ID</span>
+                          <span className="font-mono font-bold text-slate-800">{profile.faculty_id}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Designation</span>
+                          <span className="font-semibold text-slate-800 uppercase">{profile.designation}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Department</span>
+                          <span className="font-semibold text-slate-800 uppercase">{profile.department}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Highest Qualification</span>
+                          <span className="font-semibold text-slate-800 uppercase">{profile.qualification}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Subjects Handled</span>
+                          <span className="font-semibold text-slate-800">{profile.subjects}</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Award className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Qualification</div>
-                        <div className="font-semibold text-slate-800 mt-0.5">{profile.qualification}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Calendar className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Joining Year</div>
-                        <div className="font-semibold text-slate-808 mt-0.5">{profile.yearJoined}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Award className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Experience</div>
-                        <div className="font-semibold text-slate-808 mt-0.5">{calculatedExperience} Years</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <BookOpen className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Subjects Handling</div>
-                        <div className="font-semibold text-slate-800 mt-0.5">{profile.subjects}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Mail className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Office Email</div>
-                        <div className="font-semibold text-emerald-800 underline break-all mt-0.5">{profile.email}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Phone className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Contact Number</div>
-                        <div className="font-semibold text-slate-808 mt-0.5">{profile.contact}</div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
-                        <Layers className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-slate-400 font-medium text-xs uppercase tracking-wider">Office Room</div>
-                        <div className="font-semibold text-slate-808 mt-0.5">Block III - Room 305</div>
+                    {/* Right Column: Tenure & Contact Details */}
+                    <div>
+                      <h4 className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest mb-3 pb-1 border-b border-emerald-100/50">Tenure & Communication</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Joining Year</span>
+                          <span className="font-semibold text-slate-800">{profile.yearJoined}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Total Experience</span>
+                          <span className="font-semibold text-slate-808">{calculatedExperience} Years</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Office Room / Location</span>
+                          <span className="font-semibold text-slate-808">Block III - Room 305</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Official Email</span>
+                          <span className="font-semibold text-emerald-700 underline break-all">{profile.email}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-1.5">
+                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Contact Number</span>
+                          <span className="font-mono font-semibold text-slate-800">{profile.contact}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
