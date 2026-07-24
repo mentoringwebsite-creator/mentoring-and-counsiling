@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { GraduationCap, BriefcaseBusiness, Landmark, Settings2, ArrowLeft } from 'lucide-react';
+import { Header } from '@/components/header';
 
 const roles = [
   { label: 'Student / Parent Login', href: '/student/login', description: 'View academic progress, attendance, and mentoring details.', icon: GraduationCap },
@@ -23,6 +24,15 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute right-[-4rem] top-[40%] h-80 w-80 rounded-full bg-cyan-400/15 blur-3xl" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
+        {/* Header */}
+        <Header
+          title="Enhancement & Counselling"
+          subtitle="Sreenidhi Institute of Science & Technology"
+          showBackButton={true}
+          backHref="/"
+          showUserMenu={false}
+        />
+
         {/* Centered hero-style login tiles */}
         <section className="flex-1 flex items-center justify-center px-4 py-12 md:px-8">
           <div className="w-full max-w-[980px]">
