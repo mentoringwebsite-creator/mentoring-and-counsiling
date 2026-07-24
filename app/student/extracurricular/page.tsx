@@ -681,7 +681,6 @@ export default function ExtracurricularPage() {
                       />
                       <span className="text-[10px] font-bold text-slate-700 w-8">{newSkillLevel}%</span>
                     </div>
-                  </form>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div>
