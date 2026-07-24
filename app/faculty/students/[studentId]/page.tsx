@@ -927,100 +927,57 @@ export default function StudentDetailsPage() {
                     <div className="space-y-5">
                       
                       {/* Placement Eligibility & Recommendations */}
-                      <div className="grid gap-5 md:grid-cols-2">
+                      <div className="grid gap-4 sm:grid-cols-2">
                         
-                        {/* Placement Eligibility Card */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col hover:shadow-md transition duration-200 justify-between">
-                          <div>
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-4">
-                              <h4 className="text-xs font-black text-slate-805 flex items-center gap-1.5">
-                                <Briefcase className="h-4 w-4 text-emerald-805" />
-                                <span>Placement Eligibility Status</span>
-                              </h4>
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide border shadow-sm ${
-                                placementEligibility.status === 'Eligible' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
-                                placementEligibility.status === 'Conditional' ? 'bg-amber-50 border-amber-205 text-amber-700' :
-                                'bg-rose-50 border-rose-200 text-rose-700'
-                              }`}>
-                                {placementEligibility.status === 'Eligible' && <CheckCircle2 className="h-3 w-3" />}
-                                {placementEligibility.status === 'Conditional' && <AlertCircle className="h-3 w-3" />}
-                                {placementEligibility.status === 'Ineligible' && <XCircle className="h-3 w-3" />}
-                                <span>{placementEligibility.statusText}</span>
-                              </span>
-                            </div>
-                            
-                            <p className="text-xs text-slate-500 font-semibold leading-relaxed mb-4">
-                              {placementEligibility.reason}
-                            </p>
+                        {/* Placement Eligibility Small Box */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow transition duration-200 flex items-center gap-4">
+                          <div className={`flex h-12 w-12 items-center justify-center rounded-xl shrink-0 ${
+                            placementEligibility.status === 'Eligible' ? 'bg-emerald-50 text-emerald-800' :
+                            placementEligibility.status === 'Conditional' ? 'bg-amber-50 text-amber-800' :
+                            'bg-rose-50 text-rose-800'
+                          }`}>
+                            <Briefcase className="h-5 w-5" />
                           </div>
-
-                          <div className="space-y-2 border-t border-slate-50 pt-3">
-                            {placementEligibility.checks.map((check, i) => (
-                              <div key={i} className="flex items-center justify-between text-xs py-1">
-                                <div className="flex items-center gap-2 text-slate-650">
-                                  {check.passed ? (
-                                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                                  ) : check.warning ? (
-                                    <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-                                  ) : (
-                                    <XCircle className="h-4 w-4 text-rose-500 shrink-0" />
-                                  )}
-                                  <span className="font-bold">{check.label}</span>
-                                </div>
-                                <span className={`font-mono font-bold ${
-                                  check.passed ? 'text-emerald-700' :
-                                  check.warning ? 'text-amber-750' :
-                                  'text-rose-600'
-                                }`}>{check.value}</span>
-                              </div>
-                            ))}
-                            <div className="flex items-center justify-between text-xs py-1 border-t border-slate-50 pt-2">
-                              <div className="flex items-center gap-2 text-slate-650">
-                                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                                <span className="font-bold">T&P Training Registration</span>
-                              </div>
-                              <span className="font-bold text-emerald-700">Active</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Placement Eligibility</div>
+                            <div className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
+                              <span>{placementEligibility.status === 'Eligible' ? 'Eligible for Campus Placements' : placementEligibility.status === 'Conditional' ? 'Conditional Placement Eligibility' : 'Currently Ineligible'}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[9px] text-slate-500 font-bold">
+                              <span className="flex items-center gap-1">
+                                <span className={placementEligibility.checks[0].passed ? "text-emerald-600" : "text-rose-500"}>●</span>
+                                CGPA {cgpaVal.toFixed(2)}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className={placementEligibility.checks[1].passed ? "text-emerald-600" : "text-rose-500"}>●</span>
+                                Backlogs {backlogsVal}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className={placementEligibility.checks[2].passed ? "text-emerald-600" : "text-rose-500"}>●</span>
+                                Attendance {attendanceVal}%
+                              </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Recommended Job Roles Card */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col hover:shadow-md transition duration-200">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-4">
-                            <h4 className="text-xs font-black text-slate-805 flex items-center gap-1.5">
-                              <Laptop className="h-4 w-4 text-emerald-805" />
-                              <span>AI Career Role Recommendations</span>
-                            </h4>
-                            <span className="text-[9px] font-bold text-slate-400 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded">
-                              Dept Profile Fit
-                            </span>
+                        {/* Career Roles Small Box */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow transition duration-200 flex items-center gap-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-800 shrink-0">
+                            <Laptop className="h-5 w-5" />
                           </div>
-
-                          <div className="space-y-3">
-                            {recommendedRoles.map((role, i) => (
-                              <div key={i} className="rounded-xl border border-slate-100 p-2.5 bg-slate-50/50 hover:bg-slate-50 transition duration-150">
-                                <div className="flex items-center justify-between gap-2 mb-1.5">
-                                  <div>
-                                    <div className="font-bold text-xs text-slate-800">{role.title}</div>
-                                    <div className="text-[8px] text-slate-400 font-bold uppercase tracking-wider">{role.type}</div>
-                                  </div>
-                                  <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] font-extrabold border ${
-                                    role.match >= 90 ? 'bg-emerald-50 text-emerald-705 border-emerald-100' :
-                                    role.match >= 80 ? 'bg-blue-50 text-blue-705 border-blue-100' :
-                                    'bg-slate-100 text-slate-655 border-slate-150'
-                                  }`}>
-                                    {role.match}% Match
-                                  </span>
-                                </div>
-                                <div className="flex flex-wrap gap-1">
-                                  {role.skills.map((skill, si) => (
-                                    <span key={si} className="text-[8px] font-bold bg-white border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded shadow-xs">
-                                      {skill}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            ))}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AI Career Fit Recommendations</div>
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {recommendedRoles.slice(0, 2).map((role, i) => (
+                                <span key={i} className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[9px] font-extrabold border ${
+                                  role.match >= 90 ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
+                                  'bg-blue-50 border-blue-100 text-blue-700'
+                                }`}>
+                                  <span>{role.title}</span>
+                                  <span className="opacity-80">({role.match}%)</span>
+                                </span>
+                              ))}
+                            </div>
                           </div>
                         </div>
 
