@@ -390,16 +390,7 @@ export default function FacultyDashboardPage() {
                 <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm overflow-hidden relative">
                   <div className="h-32 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800" />
                   
-                  <button 
-                    onClick={() => {
-                      setFormData(profile);
-                      setIsEditing(true);
-                    }} 
-                    className="absolute right-6 top-6 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 backdrop-blur-md transition duration-200 shadow-sm"
-                    title="Edit Profile"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </button>
+
 
                   <div className="px-6 pb-6 pt-0">
                     <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-16 md:-mt-20 relative z-10">
