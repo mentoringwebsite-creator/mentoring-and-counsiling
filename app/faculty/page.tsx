@@ -578,23 +578,7 @@ export default function FacultyDashboardPage() {
 
                 </div>
 
-                {/* 5. RECENT ACTIVITY - LATEST MENTOR NOTES */}
-                <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-3">
-                    <FileText className="h-4 w-4 text-emerald-700" />
-                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Latest Mentor Notes</h4>
-                  </div>
-                  <div className="space-y-2 text-xs text-slate-600 font-semibold">
-                    <div className="border-l-2 border-emerald-500 pl-2.5">
-                      "Student needs extra support in DBMS and attendance monitoring."
-                    </div>
-                    <div className="border-l-2 border-emerald-500 pl-2.5">
-                      "Discussed internship options and resume review in last meeting."
-                    </div>
-                  </div>
-                </div>
-
-                {/* 6. FACULTY INFORMATION (MY PROFILE) */}
+                {/* 5. FACULTY INFORMATION (MY PROFILE) */}
                 <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
                     <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
