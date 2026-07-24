@@ -44,7 +44,8 @@ export default function FacultyDashboardPage() {
     email: '',
     contact: '+91 9876543210',
     photo: '',
-    faculty_id: 'N/A'
+    faculty_id: 'N/A',
+    officeRoom: 'Block III - Room 305'
   });
 
   const [formData, setFormData] = useState<any>({
@@ -54,7 +55,11 @@ export default function FacultyDashboardPage() {
     department: '',
     subjects: '',
     contact: '',
-    photo: ''
+    photo: '',
+    faculty_id: '',
+    yearJoined: '',
+    officeRoom: '',
+    email: ''
   });
 
   // Dashboard Stats States
@@ -107,6 +112,11 @@ export default function FacultyDashboardPage() {
         joinYear = new Date(facultyDb.created_at).getFullYear().toString();
       }
 
+      let savedRoom = 'Block III - Room 305';
+      if (typeof window !== 'undefined') {
+        savedRoom = localStorage.getItem(`faculty_office_room_${userId}`) || 'Block III - Room 305';
+      }
+
       const facultyDetails = {
         name: userDb?.name || session.user.user_metadata?.name || 'Dr. Suresh Kumar',
         designation: facultyDb?.designation || 'Associate Professor',
@@ -117,7 +127,8 @@ export default function FacultyDashboardPage() {
         email: email,
         contact: facultyDb?.contact_number || '+91 9876543210',
         photo: facultyDb?.profile_photo || '',
-        faculty_id: facultyDb?.faculty_id || 'EMP-ECE-4021'
+        faculty_id: facultyDb?.faculty_id || 'EMP-ECE-4021',
+        officeRoom: savedRoom
       };
 
       setProfile(facultyDetails);
@@ -282,16 +293,23 @@ export default function FacultyDashboardPage() {
       const { error: profileError } = await supabase
         .from('faculty_profiles')
         .update({
+          faculty_id: formData.faculty_id,
           designation: formData.designation,
           qualification: formData.qualification,
           department: formData.department,
           subjects: formData.subjects,
           contact_number: formData.contact,
-          profile_photo: formData.photo
+          profile_photo: formData.photo,
+          created_at: new Date(`${formData.yearJoined}-01-01T00:00:00Z`).toISOString()
         })
         .eq('user_id', userId);
 
       if (profileError) throw profileError;
+
+      // 3. Save Office Location to local storage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`faculty_office_room_${userId}`, formData.officeRoom);
+      }
 
       setSaveMessage('Profile updated successfully!');
       await loadAllDashboardData();
@@ -502,7 +520,7 @@ export default function FacultyDashboardPage() {
                         </div>
                         <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
                           <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Office Room / Location</span>
-                          <span className="font-semibold text-slate-808">Block III - Room 305</span>
+                          <span className="font-semibold text-slate-808">{profile.officeRoom}</span>
                         </div>
                         <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
                           <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Official Email</span>
@@ -655,11 +673,35 @@ export default function FacultyDashboardPage() {
                   </div>
 
                   <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Employee ID</label>
+                    <input
+                      type="text"
+                      name="faculty_id"
+                      value={formData.faculty_id}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Designation</label>
                     <input
                       type="text"
                       name="designation"
                       value={formData.designation}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Department</label>
+                    <input
+                      type="text"
+                      name="department"
+                      value={formData.department}
                       onChange={handleChange}
                       required
                       className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
@@ -679,23 +721,23 @@ export default function FacultyDashboardPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Department</label>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Joining Year</label>
                     <input
                       type="text"
-                      name="department"
-                      value={formData.department}
+                      name="yearJoined"
+                      value={formData.yearJoined}
                       onChange={handleChange}
                       required
                       className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
                     />
                   </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Subjects Taught</label>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Office Room / Location</label>
                     <input
                       type="text"
-                      name="subjects"
-                      value={formData.subjects}
+                      name="officeRoom"
+                      value={formData.officeRoom}
                       onChange={handleChange}
                       required
                       className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
@@ -711,6 +753,29 @@ export default function FacultyDashboardPage() {
                       onChange={handleChange}
                       required
                       className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Subjects Handling</label>
+                    <input
+                      type="text"
+                      name="subjects"
+                      value={formData.subjects}
+                      onChange={handleChange}
+                      required
+                      className="w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Office Email (Account ID - Readonly)</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      disabled
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-sm text-slate-500 cursor-not-allowed focus:outline-none"
                     />
                   </div>
 
