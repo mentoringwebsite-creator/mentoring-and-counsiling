@@ -473,44 +473,7 @@ export default function FacultyDashboardPage() {
                   <StatCard title="Notifications" value={notificationsCount.toString()} tone="orange" />
                 </div>
 
-                {/* 3. QUICK ACTIONS */}
-                <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Actions</h3>
-                  <div className="flex flex-wrap gap-3">
-                    <Link href="/faculty/students">
-                      <span className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-xs">
-                        <Users className="h-4 w-4 text-slate-500" />
-                        <span>View My Students</span>
-                      </span>
-                    </Link>
-                    <Link href="/faculty/queries">
-                      <span className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-xs">
-                        <MessageSquare className="h-4 w-4 text-orange-500" />
-                        <span>Student Queries</span>
-                      </span>
-                    </Link>
-                    <Link href="/faculty/notes">
-                      <span className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-xs">
-                        <FileText className="h-4 w-4 text-emerald-500" />
-                        <span>Mentor Notes</span>
-                      </span>
-                    </Link>
-                    <button 
-                      onClick={() => alert(' Mentoring Session Schedule dialog launched (simulation).')}
-                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 border border-emerald-805 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-800 transition shadow-xs"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Schedule Session</span>
-                    </button>
-                    <button 
-                      onClick={downloadReport}
-                      className="inline-flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition shadow-xs"
-                    >
-                      <Download className="h-4 w-4 text-slate-500" />
-                      <span>Download Reports</span>
-                    </button>
-                  </div>
-                </div>
+
 
                 {/* 4. ANALYTICS */}
                 <div className="grid gap-6 md:grid-cols-2">
@@ -615,90 +578,20 @@ export default function FacultyDashboardPage() {
 
                 </div>
 
-                {/* 5. RECENT ACTIVITY */}
-                <div className="grid gap-6 md:grid-cols-2">
-                  
-                  {/* Latest Student Queries */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4">
-                        <MessageSquare className="h-4 w-4 text-emerald-700" />
-                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Latest Student Queries</h4>
-                      </div>
-                      
-                      {recentQueries.length === 0 ? (
-                        <div className="py-6 text-center text-xs text-slate-400 font-bold">No student queries found.</div>
-                      ) : (
-                        <div className="space-y-3">
-                          {recentQueries.map((q) => (
-                            <div key={q.id} className="rounded-xl border border-slate-100 p-3 bg-slate-50/50 hover:bg-slate-50 transition">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-bold text-xs text-slate-800">{q.student?.name}</span>
-                                <span className={`inline-flex rounded-full px-2 py-0.5 text-[8px] font-extrabold uppercase tracking-wide border shadow-xs ${
-                                  q.status === 'Pending' ? 'bg-amber-50 border-amber-200 text-amber-700' :
-                                  q.status === 'In Review' ? 'bg-blue-50 border-blue-200 text-blue-700' :
-                                  'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                }`}>
-                                  {q.status}
-                                </span>
-                              </div>
-                              <div className="text-[10px] font-semibold text-slate-500 truncate">{q.subject}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {recentQueries.length > 0 && (
-                      <Link href="/faculty/queries">
-                        <span className="cursor-pointer text-[10px] font-extrabold text-emerald-700 hover:text-emerald-800 flex items-center justify-end gap-0.5 mt-4">
-                          <span>View all queries</span>
-                          <ChevronRight className="h-3 w-3" />
-                        </span>
-                      </Link>
-                    )}
+                {/* 5. RECENT ACTIVITY - LATEST MENTOR NOTES */}
+                <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-3">
+                    <FileText className="h-4 w-4 text-emerald-700" />
+                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Latest Mentor Notes</h4>
                   </div>
-
-                  {/* Recently Completed Sessions & Latest Notes */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm space-y-5">
-                    <div>
-                      <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-3">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-700" />
-                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Recently Completed Sessions</h4>
-                      </div>
-                      <div className="space-y-2.5 text-xs">
-                        <div className="flex items-start gap-2.5">
-                          <Clock className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
-                          <div>
-                            <div className="font-bold text-slate-700">Mentoring session with Afif (23311A04X2)</div>
-                            <div className="text-[10px] text-slate-400 font-semibold mt-0.5">Completed on July 20, 2026 • Backlog clearance plan</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-2.5">
-                          <Clock className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
-                          <div>
-                            <div className="font-bold text-slate-700">Academic prep session with Sneha (23311A04Y1)</div>
-                            <div className="text-[10px] text-slate-400 font-semibold mt-0.5">Completed on July 18, 2026 • Mid-semester evaluation</div>
-                          </div>
-                        </div>
-                      </div>
+                  <div className="space-y-2 text-xs text-slate-600 font-semibold">
+                    <div className="border-l-2 border-emerald-500 pl-2.5">
+                      "Student needs extra support in DBMS and attendance monitoring."
                     </div>
-
-                    <div>
-                      <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-3">
-                        <FileText className="h-4 w-4 text-emerald-700" />
-                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Latest Mentor Notes</h4>
-                      </div>
-                      <div className="space-y-2 text-xs text-slate-600 font-semibold">
-                        <div className="border-l-2 border-emerald-500 pl-2.5">
-                          "Student needs extra support in DBMS and attendance monitoring."
-                        </div>
-                        <div className="border-l-2 border-emerald-500 pl-2.5">
-                          "Discussed internship options and resume review in last meeting."
-                        </div>
-                      </div>
+                    <div className="border-l-2 border-emerald-500 pl-2.5">
+                      "Discussed internship options and resume review in last meeting."
                     </div>
                   </div>
-
                 </div>
 
                 {/* 6. FACULTY INFORMATION (MY PROFILE) */}
