@@ -89,46 +89,48 @@ export default function ExtracurricularPage() {
 
       if (error) throw error;
 
-      if (data) {
-        setProfileId(data.id);
-        setClubs(data.clubs || []);
-        setCertifications(data.certifications || []);
-
-        const rawInterests = data.interests || '';
-        let parsedInterests = rawInterests;
-        let parsedSkills: any[] = [];
-        if (rawInterests.includes('||skills:')) {
-          const parts = rawInterests.split('||skills:');
-          parsedInterests = parts[0];
-          const skillStr = parts[1];
-          if (skillStr.trim()) {
-            try {
-              parsedSkills = JSON.parse(skillStr);
-            } catch {
-              parsedSkills = skillStr.split(',').map((s: string) => {
-                const item = s.trim();
-                if (item.includes(':')) {
-                  const [name, lvl] = item.split(':');
-                  return { name: name.trim(), level: parseInt(lvl) || 80 };
-                }
-                return { name: item, level: 80 };
-              }).filter((item: any) => item.name);
-            }
-          }
-        }
-
-        setInterests(parsedInterests);
-        setSkills(parsedSkills);
-        setDreams(data.dreams || '');
-        setCareerGoals(data.career_goals || '');
-      } else {
+      if (!data) {
+        setProfileId(null);
         setClubs([]);
         setCertifications([]);
         setInterests('');
         setSkills([]);
         setDreams('');
         setCareerGoals('');
+        return;
       }
+
+      setProfileId(data.id);
+      setClubs(data.clubs || []);
+      setCertifications(data.certifications || []);
+      
+      const rawInterests = data.interests || '';
+      let parsedInterests = rawInterests;
+      let parsedSkills: any[] = [];
+      if (rawInterests.includes('||skills:')) {
+        const parts = rawInterests.split('||skills:');
+        parsedInterests = parts[0];
+        const skillStr = parts[1];
+        if (skillStr.trim()) {
+          try {
+            parsedSkills = JSON.parse(skillStr);
+          } catch {
+            parsedSkills = skillStr.split(',').map((s: string) => {
+              const item = s.trim();
+              if (item.includes(':')) {
+                const [name, lvl] = item.split(':');
+                return { name: name.trim(), level: parseInt(lvl) || 80 };
+              }
+              return { name: item, level: 80 };
+            }).filter((item: any) => item.name);
+          }
+        }
+      }
+      
+      setInterests(parsedInterests);
+      setSkills(parsedSkills);
+      setDreams(data.dreams || '');
+      setCareerGoals(data.career_goals || '');
     } catch (err: any) {
       console.error('Error loading extracurriculars:', err);
       setFeedback({ type: 'error', message: 'Failed to load activities. Make sure SQL migration is run.' });
@@ -148,11 +150,11 @@ export default function ExtracurricularPage() {
     updatedDreams?: string, 
     updatedGoals?: string,
     updatedSkills?: { name: string; level: number }[]
-  ) => {
+  ): Promise<boolean> => {
     try {
       setSaving(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
       if (!userId) throw new Error('You must be logged in to save changes.');
 
       let currentProfileId = profileId;
@@ -168,9 +170,18 @@ export default function ExtracurricularPage() {
           currentProfileId = profileRow.id;
           setProfileId(currentProfileId);
         } else {
+          const newEntry: any = {
+            user_id: userId,
+            clubs: updatedClubs,
+            certifications: updatedCerts,
+            interests: `${updatedInterests ?? interests}||skills:${JSON.stringify(updatedSkills ?? skills)}`,
+            dreams: updatedDreams ?? dreams,
+            career_goals: updatedGoals ?? careerGoals
+          };
+
           const { data: insertRow, error: insertError } = await supabase
             .from('student_profiles')
-            .insert({ user_id: userId, clubs: updatedClubs, certifications: updatedCerts, interests: `${updatedInterests || ''}||skills:${JSON.stringify(updatedSkills || skills)}`, dreams: updatedDreams, career_goals: updatedGoals })
+            .insert(newEntry)
             .select('id')
             .maybeSingle();
 
@@ -197,15 +208,15 @@ export default function ExtracurricularPage() {
       const { error } = await supabase
         .from('student_profiles')
         .update(payload)
-        .eq('id', currentProfileId)
-        .eq('user_id', userId);
+        .eq('id', profileId);
 
       if (error) throw error;
-
       setFeedback({ type: 'success', message: 'Profile updated successfully!' });
+      return true;
     } catch (err: any) {
       console.error('Error saving profile data:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to save changes.' });
+      return false;
     } finally {
       setSaving(false);
       setTimeout(() => setFeedback(null), 4000);
@@ -296,7 +307,10 @@ export default function ExtracurricularPage() {
 
     setClubs(updatedClubs);
     setClubModalOpen(false);
-    await saveToDatabase(updatedClubs, certifications);
+    const success = await saveToDatabase(updatedClubs, certifications);
+    if (success) {
+      await loadExtracurriculars();
+    }
   };
 
   const handleClubDelete = async (index: number) => {
@@ -305,7 +319,10 @@ export default function ExtracurricularPage() {
     const currentClubs = clubs.length > 0 ? clubs : DEFAULT_CLUBS;
     const updatedClubs = currentClubs.filter((_, i) => i !== index);
     setClubs(updatedClubs);
-    await saveToDatabase(updatedClubs, certifications);
+    const success = await saveToDatabase(updatedClubs, certifications);
+    if (success) {
+      await loadExtracurriculars();
+    }
   };
 
   // Certification Operations
@@ -346,7 +363,10 @@ export default function ExtracurricularPage() {
 
     setCertifications(updatedCerts);
     setCertModalOpen(false);
-    await saveToDatabase(clubs, updatedCerts);
+    const success = await saveToDatabase(clubs, updatedCerts);
+    if (success) {
+      await loadExtracurriculars();
+    }
   };
 
   const handleCertDelete = async (index: number) => {
@@ -354,7 +374,10 @@ export default function ExtracurricularPage() {
 
     const updatedCerts = certifications.filter((_, i) => i !== index);
     setCertifications(updatedCerts);
-    await saveToDatabase(clubs, updatedCerts);
+    const success = await saveToDatabase(clubs, updatedCerts);
+    if (success) {
+      await loadExtracurriculars();
+    }
   };
 
   // Aspirations Operations
@@ -371,7 +394,10 @@ export default function ExtracurricularPage() {
     setDreams(formDreams);
     setCareerGoals(formCareerGoals);
     setAspirationModalOpen(false);
-    await saveToDatabase(clubs, certifications, formInterests, formDreams, formCareerGoals);
+    const success = await saveToDatabase(clubs, certifications, formInterests, formDreams, formCareerGoals);
+    if (success) {
+      await loadExtracurriculars();
+    }
   };
 
   // Skills Operations
@@ -413,13 +439,19 @@ export default function ExtracurricularPage() {
     setNewSkillProofType('certificate');
     setNewSkillProofValue('');
     setNewSkillCertImage('');
-    await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
+    const success = await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
+    if (success) {
+      await loadExtracurriculars();
+    }
   };
 
   const handleRemoveSkill = async (skillName: string) => {
     const updatedSkills = skills.filter(s => s.name !== skillName);
     setSkills(updatedSkills);
-    await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
+    const success = await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
+    if (success) {
+      await loadExtracurriculars();
+    }
   };
 
   return (

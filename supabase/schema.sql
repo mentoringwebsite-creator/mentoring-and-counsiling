@@ -109,6 +109,13 @@ alter table subjects enable row level security;
 alter table student_marks enable row level security;
 alter table queries enable row level security;
 
+create policy "Allow delete queries" on queries
+  for delete
+  using (
+    auth.uid() = student_id
+    or (auth.jwt() -> 'user_metadata' ->> 'role') in ('admin', 'faculty', 'hod')
+  );
+
 alter table users enable row level security;
 alter table student_profiles enable row level security;
 alter table faculty_profiles enable row level security;

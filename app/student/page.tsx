@@ -81,34 +81,33 @@ export default function StudentProfilePage() {
         .single();
 
       // Get student profile
-      const { data: profileDb } = await supabase
+      const { data: profileDb, error: profileError } = await supabase
         .from('student_profiles')
         .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
+      if (profileError) {
+        console.error('Error reading student profile:', profileError);
+      }
+
       const parsed = parseAcademicYear(profileDb?.academic_year || '');
       const inferredBTechYear = parsed.btechYear || getStudentBTechYear(profileDb?.roll_number, parsed.batch);
-
-      // Get student profile fallback values from localStorage
-      const localAlternatePhone = typeof window !== 'undefined' ? localStorage.getItem(`student_alternate_phone_${userId}`) : '';
-      const localLinkedinUrl = typeof window !== 'undefined' ? localStorage.getItem(`student_linkedin_url_${userId}`) : '';
-      const localResumeUrl = typeof window !== 'undefined' ? localStorage.getItem(`student_resume_url_${userId}`) : '';
 
       const initialData = {
         name: userDb?.name || session.user.user_metadata?.name || '',
         rollNumber: profileDb?.roll_number || '',
         dob: profileDb?.dob || '',
         phone: profileDb?.phone || '',
-        alternate_phone: profileDb?.alternate_phone || localAlternatePhone || '',
+        alternate_phone: profileDb?.alternate_phone || '',
         branch: profileDb?.branch || '',
         section: profileDb?.section || '',
         academic_year: parsed.batch,
         btech_year: inferredBTechYear,
         email: email,
         profile_photo: profileDb?.profile_photo || '',
-        linkedin_url: profileDb?.linkedin_url || localLinkedinUrl || '',
-        resume_url: profileDb?.resume_url || localResumeUrl || ''
+        linkedin_url: profileDb?.linkedin_url || '',
+        resume_url: profileDb?.resume_url || ''
       };
 
       let mName = 'Not Assigned';
@@ -267,11 +266,6 @@ export default function StudentProfilePage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) throw new Error('No active user session.');
         
-        // Save to localStorage as a fallback
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(`student_resume_url_${session.user.id}`, base64Pdf);
-        }
-        
         const { error } = await supabase
           .from('student_profiles')
           .update({ resume_url: base64Pdf })
@@ -279,8 +273,7 @@ export default function StudentProfilePage() {
 
         if (error) {
           if (error.code === '42703' || error.message.includes('resume_url')) {
-            alert('Database missing resume column. Saved to local storage fallback.');
-            await loadProfile();
+            alert('Database missing resume column. Ask admin to run SQL.');
           } else {
             throw error;
           }
@@ -309,13 +302,6 @@ export default function StudentProfilePage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('No active user session.');
       const userId = session.user.id;
-
-      // Save custom fields locally in case Supabase schema lacks the columns
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(`student_alternate_phone_${userId}`, formData.alternate_phone || '');
-        localStorage.setItem(`student_linkedin_url_${userId}`, formData.linkedin_url || '');
-        localStorage.setItem(`student_resume_url_${userId}`, formData.resume_url || '');
-      }
 
       // 1. Update user display name in users table
       const { error: userError } = await supabase
@@ -353,7 +339,7 @@ export default function StudentProfilePage() {
         .update(updatePayload)
         .eq('user_id', userId)
         .select('*')
-        .maybeSingle();
+        .single();
 
       if (primaryError) {
         // If a schema column is missing, retry without the new fields
@@ -368,32 +354,18 @@ export default function StudentProfilePage() {
             .update(updatePayload)
             .eq('user_id', userId)
             .select('*')
-            .maybeSingle();
+            .single();
 
           if (retryError) {
             profileError = retryError;
           } else {
-            updatedProfile = retryData || null;
+            updatedProfile = retryData;
           }
         } else {
           profileError = primaryError;
         }
       } else {
-        updatedProfile = primaryData || null;
-      }
-
-      if (!updatedProfile && !profileError) {
-        const { data: insertData, error: insertError } = await supabase
-          .from('student_profiles')
-          .insert({ user_id: userId, ...updatePayload })
-          .select('*')
-          .maybeSingle();
-
-        if (insertError) {
-          profileError = insertError;
-        } else {
-          updatedProfile = insertData;
-        }
+        updatedProfile = primaryData;
       }
 
       if (profileError) throw profileError;
@@ -428,6 +400,8 @@ export default function StudentProfilePage() {
       } else {
         await loadProfile();
       }
+
+      await loadProfile();
 
       setTimeout(() => {
         setIsEditing(false);

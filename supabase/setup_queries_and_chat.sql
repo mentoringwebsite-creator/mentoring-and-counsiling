@@ -65,6 +65,14 @@ CREATE POLICY "Allow update queries" ON queries
     OR (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'faculty', 'hod')
   );
 
+-- Students can delete their own queries; faculty, HODs, and admins can delete any query.
+CREATE POLICY "Allow delete queries" ON queries
+  FOR DELETE
+  USING (
+    auth.uid() = student_id
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'faculty', 'hod')
+  );
+
 -- =========================================================================
 -- 6. Create Security Policies for query_messages
 -- =========================================================================
