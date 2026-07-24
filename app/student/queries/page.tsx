@@ -229,18 +229,23 @@ export default function QueriesPage() {
     if (!window.confirm('Are you sure you want to delete this query completely? This action cannot be undone.')) return;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) throw new Error('You must be logged in to delete a query.');
+
       const { error } = await supabase
         .from('queries')
         .delete()
-        .eq('id', queryId);
+        .eq('id', queryId)
+        .eq('student_id', userId);
 
       if (error) throw error;
-      
+
       if (selectedQuery?.id === queryId) {
         setSelectedQuery(null);
       }
+      setQueries((prev) => prev.filter((query) => query.id !== queryId));
       setFeedback({ type: 'success', message: 'Query deleted successfully.' });
-      fetchQueries();
     } catch (err: any) {
       console.error('Error deleting query:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to delete query.' });

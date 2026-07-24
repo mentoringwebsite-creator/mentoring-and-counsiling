@@ -12,11 +12,6 @@ const DEFAULT_CLUBS = [
   { name: "Coding & Algorithms Club", role: "Core Member", joined: "2023", logo: "" }
 ];
 
-const DEFAULT_CERTS = [
-  { name: "AWS Certified Cloud Practitioner", link: "https://aws.amazon.com", image: "" },
-  { name: "Meta Front-End Developer Specialization", link: "https://www.coursera.org", image: "" }
-];
-
 const DEFAULT_INTERESTS = "Web Development, Machine Learning, UI/UX Design, Open Source Contributions";
 const DEFAULT_DREAMS = "To become a software architect designing scalable and high-impact distributed applications.";
 const DEFAULT_CAREER_GOALS = "Secure a Software Engineering role at a leading tech company and mentor aspiring developers.";
@@ -90,13 +85,50 @@ export default function ExtracurricularPage() {
         .from('student_profiles')
         .select('id, clubs, certifications, interests, dreams, career_goals')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
-      setProfileId(data.id);
-      setClubs(data.clubs || []);
-      setCertifications(data.certifications || []);
+      if (data) {
+        setProfileId(data.id);
+        setClubs(data.clubs || []);
+        setCertifications(data.certifications || []);
+
+        const rawInterests = data.interests || '';
+        let parsedInterests = rawInterests;
+        let parsedSkills: any[] = [];
+        if (rawInterests.includes('||skills:')) {
+          const parts = rawInterests.split('||skills:');
+          parsedInterests = parts[0];
+          const skillStr = parts[1];
+          if (skillStr.trim()) {
+            try {
+              parsedSkills = JSON.parse(skillStr);
+            } catch {
+              parsedSkills = skillStr.split(',').map((s: string) => {
+                const item = s.trim();
+                if (item.includes(':')) {
+                  const [name, lvl] = item.split(':');
+                  return { name: name.trim(), level: parseInt(lvl) || 80 };
+                }
+                return { name: item, level: 80 };
+              }).filter((item: any) => item.name);
+            }
+          }
+        }
+
+        setInterests(parsedInterests);
+        setSkills(parsedSkills);
+        setDreams(data.dreams || '');
+        setCareerGoals(data.career_goals || '');
+      } else {
+        setClubs([]);
+        setCertifications([]);
+        setInterests('');
+        setSkills([]);
+        setDreams('');
+        setCareerGoals('');
+      }
       
       const rawInterests = data.interests || '';
       let parsedInterests = rawInterests;
@@ -145,10 +177,38 @@ export default function ExtracurricularPage() {
     updatedGoals?: string,
     updatedSkills?: { name: string; level: number }[]
   ) => {
-    if (!profileId) return;
-
     try {
       setSaving(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) throw new Error('You must be logged in to save changes.');
+
+      let currentProfileId = profileId;
+      if (!currentProfileId) {
+        const { data: profileRow, error: profileError } = await supabase
+          .from('student_profiles')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (profileError) throw profileError;
+        if (profileRow?.id) {
+          currentProfileId = profileRow.id;
+          setProfileId(currentProfileId);
+        } else {
+          const { data: insertRow, error: insertError } = await supabase
+            .from('student_profiles')
+            .insert({ user_id: userId, clubs: updatedClubs, certifications: updatedCerts, interests: `${updatedInterests || ''}||skills:${JSON.stringify(updatedSkills || skills)}`, dreams: updatedDreams, career_goals: updatedGoals })
+            .select('id')
+            .maybeSingle();
+
+          if (insertError) throw insertError;
+          if (!insertRow?.id) throw new Error('Failed to create student profile record.');
+          currentProfileId = insertRow.id;
+          setProfileId(currentProfileId);
+        }
+      }
+
       const payload: any = {
         clubs: updatedClubs,
         certifications: updatedCerts,
@@ -165,9 +225,11 @@ export default function ExtracurricularPage() {
       const { error } = await supabase
         .from('student_profiles')
         .update(payload)
-        .eq('id', profileId);
+        .eq('id', currentProfileId)
+        .eq('user_id', userId);
 
       if (error) throw error;
+
       setFeedback({ type: 'success', message: 'Profile updated successfully!' });
     } catch (err: any) {
       console.error('Error saving profile data:', err);
@@ -284,8 +346,8 @@ export default function ExtracurricularPage() {
   };
 
   const openEditCertModal = (index: number) => {
-    const currentCerts = certifications.length > 0 ? certifications : DEFAULT_CERTS;
-    const cert = currentCerts[index];
+    const cert = certifications[index];
+    if (!cert) return;
     setEditingCertIndex(index);
     setCertName(cert.name || '');
     setCertLink(cert.link || '');
@@ -303,8 +365,7 @@ export default function ExtracurricularPage() {
       image: certImage,
     };
 
-    const currentCerts = certifications.length > 0 ? certifications : DEFAULT_CERTS;
-    let updatedCerts = [...currentCerts];
+    let updatedCerts = [...certifications];
     if (editingCertIndex !== null) {
       updatedCerts[editingCertIndex] = newCert;
     } else {
@@ -319,8 +380,7 @@ export default function ExtracurricularPage() {
   const handleCertDelete = async (index: number) => {
     if (!confirm('Are you sure you want to remove this certification?')) return;
 
-    const currentCerts = certifications.length > 0 ? certifications : DEFAULT_CERTS;
-    const updatedCerts = currentCerts.filter((_, i) => i !== index);
+    const updatedCerts = certifications.filter((_, i) => i !== index);
     setCertifications(updatedCerts);
     await saveToDatabase(clubs, updatedCerts);
   };
@@ -486,9 +546,13 @@ export default function ExtracurricularPage() {
                   <Loader2 className="h-5 w-5 animate-spin text-[#1c5644] mr-2" />
                   <span>Loading certifications...</span>
                 </div>
+              ) : certifications.length === 0 ? (
+                <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+                  No certifications added yet. Click "Add Certificate" to register your achievements.
+                </div>
               ) : (
                 <div className="mt-6 grid gap-4 md:grid-cols-3">
-                  {(certifications.length > 0 ? certifications : DEFAULT_CERTS).map((item, index) => (
+                  {certifications.map((item, index) => (
                     <div key={index} className="group relative rounded-3xl border border-portal-line bg-white p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-soft flex flex-col justify-between min-h-[140px]">
                       {/* Action buttons (hover overlay) */}
                       <div className="absolute right-3 top-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">

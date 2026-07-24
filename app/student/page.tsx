@@ -85,7 +85,7 @@ export default function StudentProfilePage() {
         .from('student_profiles')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       const parsed = parseAcademicYear(profileDb?.academic_year || '');
       const inferredBTechYear = parsed.btechYear || getStudentBTechYear(profileDb?.roll_number, parsed.batch);
@@ -335,7 +335,7 @@ export default function StudentProfilePage() {
         .update(updatePayload)
         .eq('user_id', userId)
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (primaryError) {
         // If a schema column is missing, retry without the new fields
@@ -350,18 +350,32 @@ export default function StudentProfilePage() {
             .update(updatePayload)
             .eq('user_id', userId)
             .select('*')
-            .single();
+            .maybeSingle();
 
           if (retryError) {
             profileError = retryError;
           } else {
-            updatedProfile = retryData;
+            updatedProfile = retryData || null;
           }
         } else {
           profileError = primaryError;
         }
       } else {
-        updatedProfile = primaryData;
+        updatedProfile = primaryData || null;
+      }
+
+      if (!updatedProfile && !profileError) {
+        const { data: insertData, error: insertError } = await supabase
+          .from('student_profiles')
+          .insert({ user_id: userId, ...updatePayload })
+          .select('*')
+          .maybeSingle();
+
+        if (insertError) {
+          profileError = insertError;
+        } else {
+          updatedProfile = insertData;
+        }
       }
 
       if (profileError) throw profileError;
