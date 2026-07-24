@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { BadgeCheck, ShieldCheck } from 'lucide-react';
 import { PortalButton } from '@/components/portal-button';
@@ -74,7 +74,7 @@ export default function HomePage() {
         </section>
 
         <section id="about" className="bg-slate-50 py-24 px-6 md:px-12">
-          <div className="mx-auto grid max-w-[1300px] gap-12 lg:grid-cols-[1.2fr_0.8fr] items-center">
+          <div className="mx-auto grid max-w-[1300px] gap-12 lg:grid-cols-2 items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm">
                 <BadgeCheck className="h-4 w-4 text-emerald-700" />
@@ -97,7 +97,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_20px_80px_rgba(15,23,42,0.08)]">
+            <div className="relative overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-[0_20px_80px_rgba(15,23,42,0.08)] h-[350px] md:h-[480px]">
               <img
                 src={aboutImage}
                 alt="SNIST campus"
