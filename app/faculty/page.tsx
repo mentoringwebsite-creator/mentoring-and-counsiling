@@ -465,7 +465,7 @@ export default function FacultyDashboardPage() {
                     </button>
                   </div>
 
-                  <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 text-sm">
+                  <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 md:grid-cols-3 text-sm">
                     <div className="flex items-start gap-3">
                       <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
                         <User className="h-4 w-4" />
@@ -506,7 +506,7 @@ export default function FacultyDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 sm:col-span-2">
+                    <div className="flex items-start gap-3">
                       <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
                         <Award className="h-4 w-4" />
                       </div>
@@ -536,7 +536,7 @@ export default function FacultyDashboardPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-3 sm:col-span-2">
+                    <div className="flex items-start gap-3">
                       <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 shrink-0">
                         <BookOpen className="h-4 w-4" />
                       </div>
