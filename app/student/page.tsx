@@ -90,20 +90,25 @@ export default function StudentProfilePage() {
       const parsed = parseAcademicYear(profileDb?.academic_year || '');
       const inferredBTechYear = parsed.btechYear || getStudentBTechYear(profileDb?.roll_number, parsed.batch);
 
+      // Get student profile fallback values from localStorage
+      const localAlternatePhone = typeof window !== 'undefined' ? localStorage.getItem(`student_alternate_phone_${userId}`) : '';
+      const localLinkedinUrl = typeof window !== 'undefined' ? localStorage.getItem(`student_linkedin_url_${userId}`) : '';
+      const localResumeUrl = typeof window !== 'undefined' ? localStorage.getItem(`student_resume_url_${userId}`) : '';
+
       const initialData = {
         name: userDb?.name || session.user.user_metadata?.name || '',
         rollNumber: profileDb?.roll_number || '',
         dob: profileDb?.dob || '',
         phone: profileDb?.phone || '',
-        alternate_phone: profileDb?.alternate_phone || '',
+        alternate_phone: profileDb?.alternate_phone || localAlternatePhone || '',
         branch: profileDb?.branch || '',
         section: profileDb?.section || '',
         academic_year: parsed.batch,
         btech_year: inferredBTechYear,
         email: email,
         profile_photo: profileDb?.profile_photo || '',
-        linkedin_url: profileDb?.linkedin_url || '',
-        resume_url: profileDb?.resume_url || ''
+        linkedin_url: profileDb?.linkedin_url || localLinkedinUrl || '',
+        resume_url: profileDb?.resume_url || localResumeUrl || ''
       };
 
       let mName = 'Not Assigned';
@@ -262,6 +267,11 @@ export default function StudentProfilePage() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) throw new Error('No active user session.');
         
+        // Save to localStorage as a fallback
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`student_resume_url_${session.user.id}`, base64Pdf);
+        }
+        
         const { error } = await supabase
           .from('student_profiles')
           .update({ resume_url: base64Pdf })
@@ -269,7 +279,8 @@ export default function StudentProfilePage() {
 
         if (error) {
           if (error.code === '42703' || error.message.includes('resume_url')) {
-            alert('Database missing resume column. Ask admin to run SQL.');
+            alert('Database missing resume column. Saved to local storage fallback.');
+            await loadProfile();
           } else {
             throw error;
           }
@@ -298,6 +309,13 @@ export default function StudentProfilePage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error('No active user session.');
       const userId = session.user.id;
+
+      // Save custom fields locally in case Supabase schema lacks the columns
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`student_alternate_phone_${userId}`, formData.alternate_phone || '');
+        localStorage.setItem(`student_linkedin_url_${userId}`, formData.linkedin_url || '');
+        localStorage.setItem(`student_resume_url_${userId}`, formData.resume_url || '');
+      }
 
       // 1. Update user display name in users table
       const { error: userError } = await supabase

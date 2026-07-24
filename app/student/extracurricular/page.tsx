@@ -129,34 +129,6 @@ export default function ExtracurricularPage() {
         setDreams('');
         setCareerGoals('');
       }
-      
-      const rawInterests = data.interests || '';
-      let parsedInterests = rawInterests;
-      let parsedSkills: any[] = [];
-      if (rawInterests.includes('||skills:')) {
-        const parts = rawInterests.split('||skills:');
-        parsedInterests = parts[0];
-        const skillStr = parts[1];
-        if (skillStr.trim()) {
-          try {
-            parsedSkills = JSON.parse(skillStr);
-          } catch {
-            parsedSkills = skillStr.split(',').map((s: string) => {
-              const item = s.trim();
-              if (item.includes(':')) {
-                const [name, lvl] = item.split(':');
-                return { name: name.trim(), level: parseInt(lvl) || 80 };
-              }
-              return { name: item, level: 80 };
-            }).filter((item: any) => item.name);
-          }
-        }
-      }
-      
-      setInterests(parsedInterests);
-      setSkills(parsedSkills);
-      setDreams(data.dreams || '');
-      setCareerGoals(data.career_goals || '');
     } catch (err: any) {
       console.error('Error loading extracurriculars:', err);
       setFeedback({ type: 'error', message: 'Failed to load activities. Make sure SQL migration is run.' });
