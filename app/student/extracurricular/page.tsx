@@ -43,7 +43,6 @@ export default function ExtracurricularPage() {
   const [certifications, setCertifications] = useState<any[]>([]);
   const [skills, setSkills] = useState<{ name: string; level: number; proofType?: string; proofValue?: string }[]>([]);
   const [newSkillText, setNewSkillText] = useState('');
-  const [newSkillLevel, setNewSkillLevel] = useState(80);
   const [newSkillProofType, setNewSkillProofType] = useState<'certificate' | 'btech' | 'self' | 'youtube'>('certificate');
   const [newSkillProofValue, setNewSkillProofValue] = useState('');
   const [newSkillCertImage, setNewSkillCertImage] = useState('');
@@ -371,7 +370,7 @@ export default function ExtracurricularPage() {
 
     const newSkill = {
       name: cleanSkill,
-      level: newSkillLevel,
+      level: 80,
       proofType: newSkillProofType,
       proofValue: newSkillProofType === 'certificate' ? newSkillCertImage : newSkillProofValue.trim(),
     };
@@ -379,7 +378,6 @@ export default function ExtracurricularPage() {
     const updatedSkills = [...skills, newSkill];
     setSkills(updatedSkills);
     setNewSkillText('');
-    setNewSkillLevel(80);
     setNewSkillProofType('certificate');
     setNewSkillProofValue('');
     setNewSkillCertImage('');
@@ -646,11 +644,12 @@ export default function ExtracurricularPage() {
                         return (
                           <span 
                             key={index}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-[#1c5644]/20 bg-[#1c5644]/10 px-3 py-1.5 text-xs font-bold text-emerald-850 transition duration-200 cursor-pointer hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200"
+                            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm transition duration-200 hover:border-slate-300 hover:bg-slate-50"
                             onClick={() => handleRemoveSkill(skill.name)}
                             title="Click to remove skill"
                           >
-                            <span>{skill.name} - {skill.level}%{proofLabel ? ` • ${proofLabel}` : ''}</span>
+                            <span className="font-semibold text-slate-900">{skill.name}</span>
+                            {proofLabel ? <span className="text-xs uppercase tracking-[0.22em] text-slate-500">{proofLabel}</span> : null}
                             <X className="h-3 w-3 text-slate-400 transition" />
                           </span>
                         );
@@ -659,107 +658,93 @@ export default function ExtracurricularPage() {
                   )}
 
                   {/* Add skill input */}
-                  <form onSubmit={handleAddSkill} className="flex flex-col sm:flex-row max-w-lg items-stretch sm:items-center gap-3">
-                    <input 
-                      type="text" 
-                      placeholder="Add a new skill (e.g. Python, React)"
-                      value={newSkillText}
-                      onChange={(e) => setNewSkillText(e.target.value)}
-                      className="flex-1 min-w-0 rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs font-semibold focus:border-[#1c5644] focus:bg-white focus:outline-none transition"
-                    />
-                    
-                    <div className="flex items-center gap-2 shrink-0">
-                      <span className="text-[10px] font-bold text-slate-500">Level:</span>
-                      <input 
-                        type="range" 
-                        min="20" 
-                        max="100" 
-                        step="5"
-                        value={newSkillLevel}
-                        onChange={(e) => setNewSkillLevel(parseInt(e.target.value) || 80)}
-                        className="w-24 accent-[#1c5644] h-1 bg-slate-200 rounded-lg cursor-pointer"
-                      />
-                      <span className="text-[10px] font-bold text-slate-700 w-8">{newSkillLevel}%</span>
-                    </div>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Proof Type</label>
-                      <select
-                        value={newSkillProofType}
-                        onChange={(e) => {
-                          setNewSkillProofType(e.target.value as any);
-                          setNewSkillProofValue('');
-                          setNewSkillCertImage('');
-                        }}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs focus:border-emerald-600 focus:outline-none"
-                      >
-                        <option value="certificate">Certificate</option>
-                        <option value="btech">B.Tech Subject</option>
-                        <option value="self">Self Learn</option>
-                        <option value="youtube">YouTube</option>
-                      </select>
-                    </div>
-
-                    {newSkillProofType === 'certificate' ? (
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Certificate Image</label>
-                        <div className="mt-1 flex items-center gap-3">
-                          {newSkillCertImage && (
-                            <div className="h-12 w-12 overflow-hidden rounded-xl border border-slate-200">
-                              <img src={newSkillCertImage} alt="Certificate preview" className="h-full w-full object-cover" />
-                            </div>
-                          )}
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) compressImage(file, 600, setNewSkillCertImage);
-                            }}
-                            className="block w-full text-xs text-slate-500
-                              file:mr-3 file:py-2 file:px-3
-                              file:rounded-xl file:border-0
-                              file:text-xs file:font-semibold
-                              file:bg-emerald-50 file:text-emerald-700
-                              hover:file:bg-emerald-100 transition"
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                          {newSkillProofType === 'youtube'
-                            ? 'YouTube Course Link'
-                            : newSkillProofType === 'btech'
-                              ? 'B.Tech Subject / Course'
-                              : 'Self-Learning Proof'}
-                        </label>
-                        <input
-                          type="text"
-                          value={newSkillProofValue}
-                          onChange={(e) => setNewSkillProofValue(e.target.value)}
-                          placeholder={
-                            newSkillProofType === 'youtube'
-                              ? 'https://youtube.com/...' 
-                              : newSkillProofType === 'btech'
-                                ? 'e.g. Database Management Systems'
-                                : 'e.g. Built a personal project using React'
-                          }
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-emerald-600 focus:bg-white focus:outline-none"
+                  <form onSubmit={handleAddSkill} className="space-y-4 max-w-lg">
+                    <div className="grid gap-3 sm:grid-cols-[1.8fr_0.9fr] items-end">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Skill</label>
+                        <input 
+                          type="text" 
+                          placeholder="Add a new skill (e.g. Python, React)"
+                          value={newSkillText}
+                          onChange={(e) => setNewSkillText(e.target.value)}
+                          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-[#1c5644] focus:bg-white focus:outline-none transition"
                         />
                       </div>
-                    )}
-                  </div>
 
-                    <button 
-                      type="submit"
-                      disabled={saving}
-                      className="rounded-xl bg-[#1c5644] hover:bg-[#154335] px-4 py-2 text-xs font-bold text-white transition flex items-center justify-center gap-1 shadow-sm shrink-0"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Add</span>
-                    </button>
+                      <button 
+                        type="submit"
+                        disabled={saving}
+                        className="h-12 rounded-2xl bg-[#1c5644] hover:bg-[#154335] px-6 text-sm font-semibold text-white transition shadow-sm"
+                      >
+                        <Plus className="-ml-1 mr-2 h-4 w-4" />
+                        Add skill
+                      </button>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Proof Type</label>
+                        <select
+                          value={newSkillProofType}
+                          onChange={(e) => {
+                            setNewSkillProofType(e.target.value as any);
+                            setNewSkillProofValue('');
+                            setNewSkillCertImage('');
+                          }}
+                          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-emerald-600 focus:outline-none"
+                        >
+                          <option value="certificate">Certificate</option>
+                          <option value="btech">B.Tech Subject</option>
+                          <option value="self">Self Learn</option>
+                          <option value="youtube">YouTube</option>
+                        </select>
+                      </div>
+
+                      {newSkillProofType === 'certificate' ? (
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Certificate Image</label>
+                          <div className="mt-1 flex items-center gap-3">
+                            {newSkillCertImage && (
+                              <div className="h-12 w-12 overflow-hidden rounded-xl border border-slate-200">
+                                <img src={newSkillCertImage} alt="Certificate preview" className="h-full w-full object-cover" />
+                              </div>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) compressImage(file, 600, setNewSkillCertImage);
+                              }}
+                              className="block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 transition"
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                            {newSkillProofType === 'youtube'
+                              ? 'YouTube Course Link'
+                              : newSkillProofType === 'btech'
+                                ? 'B.Tech Subject / Course'
+                                : 'Self-Learning Proof'}
+                          </label>
+                          <input
+                            type="text"
+                            value={newSkillProofValue}
+                            onChange={(e) => setNewSkillProofValue(e.target.value)}
+                            placeholder={
+                              newSkillProofType === 'youtube'
+                                ? 'https://youtube.com/...'
+                                : newSkillProofType === 'btech'
+                                  ? 'e.g. Database Management Systems'
+                                  : 'e.g. Built a personal project using React'
+                            }
+                            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-emerald-600 focus:bg-white focus:outline-none"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </form>
                 </div>
               )}
