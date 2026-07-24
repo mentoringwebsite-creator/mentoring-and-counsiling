@@ -994,49 +994,6 @@ export default function StudentDetailsPage() {
                         </div>
                       </div>
 
-                      {/* Subject Marks Breakdown */}
-                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0">
-                          <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                            <BookOpen className="h-4 w-4 text-emerald-805" />
-                            <span>Subject Marks Breakdown</span>
-                          </h4>
-                          <select
-                            value={chartSemester}
-                            onChange={(e) => setChartSemester(e.target.value)}
-                            className="rounded bg-slate-50 border border-slate-200 px-2 py-0.5 text-[9px] font-bold text-slate-700 focus:outline-none cursor-pointer"
-                          >
-                            <option value="1">1-1</option>
-                            <option value="2">1-2</option>
-                            <option value="3">2-1</option>
-                            <option value="4">2-2</option>
-                            <option value="5">3-1</option>
-                            <option value="6">3-2</option>
-                            <option value="7">4-1</option>
-                            <option value="8">4-2</option>
-                          </select>
-                        </div>
-                        <div className="flex-1 min-h-0 w-full">
-                          {subjectMarksData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={subjectMarksData} margin={{ top: 10, right: 5, left: -28, bottom: 2 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
-                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={7} fontWeight={600} />
-                                <YAxis stroke="#94a3b8" domain={[0, 100]} fontSize={8} fontWeight={600} />
-                                <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                                <Bar name="Marks" dataKey="Marks" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={10}>
-                                  <LabelList dataKey="Marks" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
-                                </Bar>
-                              </BarChart>
-                            </ResponsiveContainer>
-                          ) : (
-                            <div className="flex h-full items-center justify-center">
-                              <p className="text-xs text-slate-400 italic">No marks found for this semester</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
                       {/* Skills Breakdown */}
                       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0">
@@ -1087,12 +1044,12 @@ export default function StudentDetailsPage() {
                         </div>
                       </div>
 
-                      {/* Backlog Analysis & Review */}
+                      {/* Backlog Overview */}
                       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0">
                           <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
                             <ShieldAlert className="h-4 w-4 text-rose-605" />
-                            <span>Backlog Analysis & Review</span>
+                            <span>Backlog Overview</span>
                           </h4>
                           <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[9px] font-bold border ${
                             backlogsVal === 0 ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
