@@ -636,9 +636,9 @@ export default function StudentDetailsPage() {
                   <div className="h-24 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-855" />
                   
                   <div className="px-6 pb-6 pt-0">
-                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-16 md:-mt-20 relative z-10">
+                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-20 md:-mt-24 lg:-mt-28 relative z-10">
                       {/* Avatar container */}
-                      <div className="h-[110px] w-[110px] sm:h-[130px] sm:w-[130px] md:h-[145px] md:w-[145px] lg:h-[160px] lg:w-[160px] rounded-full overflow-hidden border-[5px] border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
+                      <div className="h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] md:h-[185px] md:w-[185px] lg:h-[210px] lg:w-[210px] xl:h-[230px] xl:w-[230px] rounded-full overflow-hidden border-[5px] border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
                         {profile.profile_photo ? (
                           <img
                             src={profile.profile_photo}
@@ -650,7 +650,7 @@ export default function StudentDetailsPage() {
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-slate-150 to-slate-200 text-slate-400">
-                            <User className="h-16 w-16 md:h-20 md:w-20 text-slate-355" />
+                            <User className="h-20 w-20 md:h-24 md:w-24 text-slate-355" />
                           </div>
                         )}
                       </div>
@@ -723,7 +723,7 @@ export default function StudentDetailsPage() {
                 </div>
 
                 {/* Quick Summary Widgets */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   
                   {/* Attendance */}
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow transition duration-200 flex items-center gap-3">
@@ -758,44 +758,22 @@ export default function StudentDetailsPage() {
                     </div>
                   </div>
 
-                  {/* Total Credits */}
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow transition duration-200 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-800 shrink-0">
-                      <Award className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Credits</div>
-                      <div className="text-base font-extrabold text-slate-800">{clearedCredits} / {totalCredits}</div>
-                    </div>
-                  </div>
-
-                  {/* Active Backlogs */}
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow transition duration-200 flex items-center gap-3">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${backlogsVal > 0 ? 'bg-rose-50 text-rose-800' : 'bg-slate-50 text-slate-400'}`}>
-                      <AlertTriangle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Backlogs</div>
-                      <div className={`text-base font-extrabold ${backlogsVal > 0 ? 'text-rose-700' : 'text-slate-800'}`}>{backlogsVal}</div>
-                    </div>
-                  </div>
-
-                  {/* Risk Level */}
+                  {/* Placement Eligibility */}
                   <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow transition duration-200 flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${
-                      risk === 'High' ? 'bg-rose-50 text-rose-800' :
-                      risk === 'Medium' ? 'bg-amber-50 text-amber-850' :
-                      'bg-emerald-50 text-emerald-800'
+                      placementEligibility.status === 'Eligible' ? 'bg-emerald-50 text-emerald-800' :
+                      placementEligibility.status === 'Conditional' ? 'bg-amber-50 text-amber-850' :
+                      'bg-rose-50 text-rose-800'
                     }`}>
-                      <Zap className="h-5 w-5" />
+                      <Briefcase className="h-5 w-5" />
                     </div>
                     <div>
-                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Standing</div>
-                      <div className={`text-xs font-extrabold uppercase ${
-                        risk === 'High' ? 'text-rose-700' :
-                        risk === 'Medium' ? 'text-amber-705' :
-                        'text-emerald-707'
-                      }`}>{risk}</div>
+                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Placement Eligibility</div>
+                      <div className={`text-base font-extrabold ${
+                        placementEligibility.status === 'Eligible' ? 'text-emerald-700' :
+                        placementEligibility.status === 'Conditional' ? 'text-amber-700' :
+                        'text-rose-700'
+                      }`}>{placementEligibility.status === 'Eligible' ? 'Eligible' : placementEligibility.status === 'Conditional' ? 'Cond. Eligible' : 'Ineligible'}</div>
                     </div>
                   </div>
 
