@@ -40,12 +40,12 @@ export default function HomePage() {
             showBackButton={false} 
             showUserMenu={false} 
             rightElement={
-              <nav className="hidden items-center gap-8 text-[13px] font-bold uppercase tracking-wider text-slate-600 md:flex">
-                <a className="hover:text-emerald-600 transition-colors" href="#home">Home</a>
-                <a className="hover:text-emerald-600 transition-colors" href="#features">Features</a>
-                <a className="hover:text-emerald-600 transition-colors" href="#about">About</a>
-                <PortalButton href="/login" className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 transition-all transform hover:-translate-y-0.5">
-                  Login / Portal
+              <nav className="hidden items-center gap-8 text-[13px] font-bold uppercase tracking-wider text-slate-700 md:flex">
+                <a className="hover:text-emerald-700 transition-colors" href="#home">HOME</a>
+                <a className="hover:text-emerald-700 transition-colors" href="#features">FEATURES</a>
+                <a className="hover:text-emerald-700 transition-colors" href="#about">ABOUT</a>
+                <PortalButton href="/login" className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-wider text-[11px] uppercase transition-all shadow-md">
+                  LOGIN / PORTAL
                 </PortalButton>
               </nav>
             }
@@ -55,7 +55,7 @@ export default function HomePage() {
         {/* Hero Section with Horizontal Banner */}
         <section id="home" className="pt-[72px] w-full">
           {/* Full Width Horizontal College Image Slideshow */}
-          <div className="w-full relative bg-slate-100 shadow-md group h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden select-none">
+          <div className="w-full relative bg-slate-100 shadow-md group h-[calc(100vh-72px)] overflow-hidden select-none">
             {bannerImages.map((img, idx) => (
               <div
                 key={idx}
@@ -91,7 +91,7 @@ export default function HomePage() {
             </button>
 
             {/* Indicator Dots */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-10">
               {bannerImages.map((_, idx) => (
                 <button
                   key={idx}
