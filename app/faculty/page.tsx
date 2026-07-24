@@ -465,110 +465,7 @@ export default function FacultyDashboardPage() {
 
 
 
-                {/* 4. ANALYTICS */}
-                <div className="grid gap-6 md:grid-cols-2">
-                  
-                  {/* Risk Distribution Pie Chart */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
-                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
-                      <PieIcon className="h-4 w-4 text-emerald-700" />
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Student Risk Distribution</h4>
-                    </div>
-                    {students.length === 0 ? (
-                      <div className="flex-1 flex items-center justify-center text-xs text-slate-400">No student records available</div>
-                    ) : (
-                      <div className="flex-1 flex flex-col justify-center h-48">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={riskData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={70}
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {riskData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip formatter={(value) => [`${value} Students`, 'Count']} />
-                            <Legend verticalAlign="bottom" height={36} iconSize={8} iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold' }} />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* CGPA Distribution Bar Chart */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
-                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
-                      <TrendingUp className="h-4 w-4 text-emerald-700" />
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Average CGPA Distribution</h4>
-                    </div>
-                    {students.length === 0 ? (
-                      <div className="flex-1 flex items-center justify-center text-xs text-slate-400">No student records available</div>
-                    ) : (
-                      <div className="flex-1 h-48">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={cgpaDistribution}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                            <XAxis dataKey="range" stroke="#94a3b8" fontSize={9} fontWeight="bold" />
-                            <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" allowDecimals={false} />
-                            <Tooltip />
-                            <Bar dataKey="count" name="Students count" fill="#10b981" radius={[6, 6, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Attendance Distribution */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
-                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
-                      <Activity className="h-4 w-4 text-emerald-700" />
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Attendance Overview</h4>
-                    </div>
-                    {students.length === 0 ? (
-                      <div className="flex-1 flex items-center justify-center text-xs text-slate-400">No student records available</div>
-                    ) : (
-                      <div className="flex-1 h-48">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={attendanceDistribution}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                            <XAxis dataKey="range" stroke="#94a3b8" fontSize={9} fontWeight="bold" />
-                            <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" allowDecimals={false} />
-                            <Tooltip />
-                            <Bar dataKey="count" name="Students count" fill="#f59e0b" radius={[6, 6, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Monthly Sessions Statistics */}
-                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
-                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
-                      <Calendar className="h-4 w-4 text-emerald-700" />
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Mentoring Session Statistics</h4>
-                    </div>
-                    <div className="flex-1 h-48">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={sessionHistoryData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                          <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} fontWeight="bold" />
-                          <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" allowDecimals={false} />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="Sessions" stroke="#0f766e" strokeWidth={3} dot={{ r: 4 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* 5. FACULTY INFORMATION (MY PROFILE) */}
+                {/* 2. FACULTY INFORMATION (MY PROFILE) */}
                 <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
                     <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -698,6 +595,109 @@ export default function FacultyDashboardPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* 3. ANALYTICS */}
+                <div className="grid gap-6 md:grid-cols-2">
+                  
+                  {/* Risk Distribution Pie Chart */}
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
+                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
+                      <PieIcon className="h-4 w-4 text-emerald-700" />
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Student Risk Distribution</h4>
+                    </div>
+                    {students.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center text-xs text-slate-400">No student records available</div>
+                    ) : (
+                      <div className="flex-1 flex flex-col justify-center h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={riskData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={50}
+                              outerRadius={70}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {riskData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => [`${value} Students`, 'Count']} />
+                            <Legend verticalAlign="bottom" height={36} iconSize={8} iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold' }} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CGPA Distribution Bar Chart */}
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
+                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
+                      <TrendingUp className="h-4 w-4 text-emerald-700" />
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Average CGPA Distribution</h4>
+                    </div>
+                    {students.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center text-xs text-slate-400">No student records available</div>
+                    ) : (
+                      <div className="flex-1 h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={cgpaDistribution}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis dataKey="range" stroke="#94a3b8" fontSize={9} fontWeight="bold" />
+                            <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="count" name="Students count" fill="#10b981" radius={[6, 6, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Attendance Distribution */}
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
+                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
+                      <Activity className="h-4 w-4 text-emerald-700" />
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Attendance Overview</h4>
+                    </div>
+                    {students.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center text-xs text-slate-400">No student records available</div>
+                    ) : (
+                      <div className="flex-1 h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={attendanceDistribution}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis dataKey="range" stroke="#94a3b8" fontSize={9} fontWeight="bold" />
+                            <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" allowDecimals={false} />
+                            <Tooltip />
+                            <Bar dataKey="count" name="Students count" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Monthly Sessions Statistics */}
+                  <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[300px]">
+                    <div className="flex items-center gap-1.5 border-b border-slate-100 pb-3.5 mb-4 shrink-0">
+                      <Calendar className="h-4 w-4 text-emerald-700" />
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">Mentoring Session Statistics</h4>
+                    </div>
+                    <div className="flex-1 h-48">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={sessionHistoryData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis dataKey="month" stroke="#94a3b8" fontSize={9} fontWeight="bold" />
+                          <YAxis stroke="#94a3b8" fontSize={9} fontWeight="bold" allowDecimals={false} />
+                          <Tooltip />
+                          <Line type="monotone" dataKey="Sessions" stroke="#0f766e" strokeWidth={3} dot={{ r: 4 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
                 </div>
               </>
             )}
