@@ -1,9 +1,35 @@
-import { BadgeCheck, BriefcaseBusiness, GraduationCap, Headphones, ShieldCheck } from 'lucide-react';
+'use client';
+
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, BadgeCheck, BriefcaseBusiness, GraduationCap, Headphones, ShieldCheck } from 'lucide-react';
 import { PortalButton } from '@/components/portal-button';
 import { Header } from '@/components/header';
 import { Brand } from '@/components/brand';
 
+const bannerImages = [
+  '/assets/college-bg-1 .png',
+  '/assets/college-bg-2 .png',
+  '/assets/college-bg-3 .png'
+];
+
 export default function HomePage() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % bannerImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => (prev - 1 + bannerImages.length) % bannerImages.length);
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % bannerImages.length);
+  };
+
   return (
     <main className="min-h-screen bg-background font-sans selection:bg-emerald-100 selection:text-emerald-900">
       <div className="w-full overflow-hidden">
@@ -28,13 +54,55 @@ export default function HomePage() {
 
         {/* Hero Section with Horizontal Banner */}
         <section id="home" className="pt-[72px] w-full">
-          {/* Full Width Horizontal College Image */}
-          <div className="w-full relative bg-slate-100 shadow-md">
-            <img 
-              src="/assets/college-bg.png" 
-              alt="Sreenidhi Institute Campus Banner" 
-              className="w-full h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] object-cover object-center"
-            />
+          {/* Full Width Horizontal College Image Slideshow */}
+          <div className="w-full relative bg-slate-100 shadow-md group h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] overflow-hidden select-none">
+            {bannerImages.map((img, idx) => (
+              <div
+                key={idx}
+                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                  idx === currentIndex ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+              >
+                <img 
+                  src={img} 
+                  alt={`Sreenidhi Institute Campus Banner ${idx + 1}`} 
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
+            ))}
+
+            {/* Subtle Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/15 via-transparent to-slate-950/15 pointer-events-none" />
+
+            {/* Navigation Arrows */}
+            <button
+              onClick={handlePrev}
+              className="absolute left-4 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/25 text-white hover:bg-black/45 hover:scale-105 active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 shadow-sm"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="absolute right-4 top-1/2 -translate-y-1/2 flex h-11 w-11 items-center justify-center rounded-full bg-black/25 text-white hover:bg-black/45 hover:scale-105 active:scale-95 opacity-0 group-hover:opacity-100 transition-all duration-300 z-10 shadow-sm"
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+
+            {/* Indicator Dots */}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+              {bannerImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    idx === currentIndex ? 'w-7 bg-emerald-600' : 'w-2 bg-white/70 hover:bg-white'
+                  }`}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Centered Hero Content Below Banner */}
