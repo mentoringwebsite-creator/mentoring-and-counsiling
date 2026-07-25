@@ -11,7 +11,7 @@ const adminSidebarItems = [
   { href: '/admin', label: 'Overview' },
   { href: '/admin/pending', label: 'Pending Approvals' },
   { href: '/admin/students', label: 'Manage Students' },
-  { href: '/admin/faculty', label: 'Manage Faculty' },
+  { href: '/admin/faculty', label: 'Manage Mentors' },
   { href: '/admin/hod', label: 'Manage HOD' },
   { href: '/admin/settings', label: 'Settings' }
 ];
@@ -119,14 +119,14 @@ export default function AdminFacultyPage() {
 
   return (
     <ProtectedRoute role="admin">
-      <PageShell title="Manage Faculty" subtitle="View and manage approved faculty accounts">
+      <PageShell title="Manage Mentors" subtitle="View and manage approved mentor accounts">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/admin/faculty" items={adminSidebarItems} />
 
           <div className="space-y-6 w-full min-w-0">
             <div className="portal-card">
-              <h2 className="text-2xl font-semibold">Approved Faculty</h2>
-              <p className="mt-2 text-slate-600">Review, suspend, or delete faculty profiles currently active in the system.</p>
+              <h2 className="text-2xl font-semibold">Approved Mentors</h2>
+              <p className="mt-2 text-slate-600">Review, suspend, or delete mentor profiles currently active in the system.</p>
             </div>
 
             {feedback && (
@@ -143,8 +143,8 @@ export default function AdminFacultyPage() {
               <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
                 <thead className="bg-slate-50 text-slate-700">
                   <tr>
-                    <th className="px-5 py-4 font-semibold">Faculty Name / Email</th>
-                    <th className="px-5 py-4 font-semibold">Faculty ID</th>
+                    <th className="px-5 py-4 font-semibold">Mentor Name / Email</th>
+                    <th className="px-5 py-4 font-semibold">Mentor ID</th>
                     <th className="px-5 py-4 font-semibold">Department & Designation</th>
                     <th className="px-5 py-4 font-semibold">Qualification & Subjects</th>
                     <th className="px-5 py-4 font-semibold">Assigned HOD</th>

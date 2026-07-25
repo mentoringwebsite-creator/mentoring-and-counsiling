@@ -29,7 +29,7 @@ export function Header({
   
   let portalRole = '';
   if (pathname.startsWith('/student')) portalRole = 'Student';
-  else if (pathname.startsWith('/faculty')) portalRole = 'Faculty';
+  else if (pathname.startsWith('/faculty')) portalRole = 'Mentor';
   else if (pathname.startsWith('/hod')) portalRole = 'HOD';
   else if (pathname.startsWith('/admin')) portalRole = 'Admin';
   const [userProfile, setUserProfile] = useState<{ name: string; email: string; photo: string } | null>(null);

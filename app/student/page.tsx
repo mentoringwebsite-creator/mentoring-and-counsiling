@@ -598,7 +598,7 @@ export default function StudentProfilePage() {
                           
                           <div className="pt-3 mt-3 border-t border-slate-100 grid grid-cols-2 gap-4">
                             <div>
-                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Faculty Mentor</div>
+                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mentor</div>
                               <div className="text-sm font-bold text-slate-800 truncate" title={mentorName}>{mentorName}</div>
                             </div>
                             <div>

@@ -553,7 +553,7 @@ export default function QueriesPage() {
                       onChange={(e) => setNewQueryRaisedTo(e.target.value)}
                       className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-xs focus:border-emerald-500 focus:bg-white focus:outline-none"
                     >
-                      <option value="Faculty">Faculty</option>
+                      <option value="Faculty">Mentor</option>
                       <option value="HOD">HOD</option>
                     </select>
                   </div>

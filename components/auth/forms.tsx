@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 
 const roleNames: Record<Role, string> = {
   student: 'Student',
-  faculty: 'Faculty',
+  faculty: 'Mentor',
   hod: 'HOD',
   admin: 'Admin'
 };
@@ -27,8 +27,8 @@ const studentFields = [
 
 const facultyFields = [
   { name: 'name', label: 'Name', type: 'text' },
-  { name: 'email', label: 'Faculty Email', type: 'email' },
-  { name: 'facultyId', label: 'Faculty ID', type: 'text' },
+  { name: 'email', label: 'Mentor Email', type: 'email' },
+  { name: 'facultyId', label: 'Mentor ID', type: 'text' },
   { name: 'designation', label: 'Designation', type: 'text' },
   { name: 'qualification', label: 'Qualification', type: 'text' },
   { name: 'department', label: 'Department', type: 'text' },

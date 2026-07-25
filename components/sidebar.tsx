@@ -45,7 +45,7 @@ const getIcon = (label: string) => {
 export function Sidebar({ items, active }: { items: Item[]; active: string }) {
   const getPortalTitle = () => {
     if (active.startsWith('/student')) return 'Student Portal';
-    if (active.startsWith('/faculty')) return 'Faculty Portal';
+    if (active.startsWith('/faculty')) return 'Mentor Portal';
     if (active.startsWith('/hod')) return 'HOD Portal';
     if (active.startsWith('/admin')) return 'Admin Portal';
     return 'Portal';

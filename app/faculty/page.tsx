@@ -389,7 +389,7 @@ export default function FacultyDashboardPage() {
 
   return (
     <ProtectedRoute role="faculty">
-      <PageShell title="My Dashboard" subtitle="Unified faculty monitoring, profile, and insights">
+      <PageShell title="My Dashboard" subtitle="Unified mentor monitoring, profile, and insights">
         <div className="grid gap-6 px-4 py-4 md:px-6 md:py-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/faculty" items={facultySidebarItems} />
           
@@ -441,7 +441,7 @@ export default function FacultyDashboardPage() {
                           <div className="flex justify-center sm:justify-start">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 px-3 py-0.5 text-[9px] font-extrabold uppercase tracking-widest shadow-sm">
                               <Sparkles className="h-3 w-3" />
-                              Faculty Mentor
+                              Mentor
                             </span>
                           </div>
                         </div>
@@ -454,12 +454,12 @@ export default function FacultyDashboardPage() {
 
 
 
-                {/* 2. FACULTY INFORMATION (MY PROFILE) */}
+                {/* 2. MENTOR INFORMATION (MY PROFILE) */}
                 <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
                     <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                       <User className="h-4 w-4 text-emerald-705" />
-                      <span>Faculty Information</span>
+                      <span>Mentor Information</span>
                     </h3>
                     <button 
                       onClick={() => {
@@ -629,7 +629,7 @@ export default function FacultyDashboardPage() {
             <div className="w-full max-w-2xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-lg animate-in fade-in zoom-in-95 duration-200">
               
               <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-6 py-4">
-                <h3 className="text-xl font-bold text-slate-850">Edit Faculty Profile</h3>
+                <h3 className="text-xl font-bold text-slate-850">Edit Mentor Profile</h3>
                 <button 
                   onClick={() => setIsEditing(false)}
                   className="rounded-full p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-705 transition"
