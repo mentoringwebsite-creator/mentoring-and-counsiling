@@ -29,3 +29,26 @@ CREATE POLICY "Allow users to update their own user record" ON users
   FOR UPDATE
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
+
+-- 6. Ensure delete policies for queries and query_messages are correctly established (enables cascading delete)
+DROP POLICY IF EXISTS "Allow delete queries" ON queries;
+CREATE POLICY "Allow delete queries" ON queries
+  FOR DELETE
+  USING (
+    auth.uid() = student_id
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'faculty', 'hod')
+  );
+
+DROP POLICY IF EXISTS "Allow delete query_messages" ON query_messages;
+CREATE POLICY "Allow delete query_messages" ON query_messages
+  FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM queries
+      WHERE queries.id = query_messages.query_id
+      AND (
+        queries.student_id = auth.uid()
+        OR (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'faculty', 'hod')
+      )
+    )
+  );

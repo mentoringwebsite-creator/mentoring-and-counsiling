@@ -105,3 +105,17 @@ CREATE POLICY "Allow insert query_messages" ON query_messages
       )
     )
   );
+
+-- Allow delete query_messages (needed for cascade delete when a query is deleted)
+CREATE POLICY "Allow delete query_messages" ON query_messages
+  FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM queries
+      WHERE queries.id = query_messages.query_id
+      AND (
+        queries.student_id = auth.uid()
+        OR (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'faculty', 'hod')
+      )
+    )
+  );
