@@ -136,21 +136,31 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
 
   const rawInterests = profile.interests || '';
   let parsedInterests = rawInterests;
-  let parsedSkills = DEFAULT_SKILLS;
+  let parsedSkills: any[] = [];
   if (rawInterests.includes('||skills:')) {
     const parts = rawInterests.split('||skills:');
     parsedInterests = parts[0];
-    const skillStr = parts[1];
-    parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => {
-      const item = s.trim();
-      if (item.includes(':')) {
-        const [name, lvl] = item.split(':');
-        return { name: name.trim(), level: parseInt(lvl) || 80 };
+    const skillStr = parts[1]?.trim();
+    if (skillStr) {
+      try {
+        const parsed = JSON.parse(skillStr);
+        if (Array.isArray(parsed)) {
+          parsedSkills = parsed.map((item: any) => {
+            if (typeof item === 'string') return { name: item, level: 80 };
+            return { name: item.name || '', level: item.level || 80 };
+          }).filter((item: any) => item.name);
+        }
+      } catch (e) {
+        parsedSkills = skillStr.split(',').map((s: string) => {
+          const item = s.trim();
+          if (item.includes(':')) {
+            const [name, lvl] = item.split(':');
+            return { name: name.trim(), level: parseInt(lvl) || 80 };
+          }
+          return { name: item, level: 80 };
+        }).filter((item: any) => item.name);
       }
-      return { name: item, level: 80 };
-    }).filter((item: any) => item.name) : [];
-  } else if (rawInterests.trim() !== '') {
-    parsedSkills = [];
+    }
   }
 
   // Semester filter state for Subject Marks Analysis Chart in Modal
@@ -523,16 +533,14 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
 
   const getExtracurricularData = () => {
     if (modalShowSkillsPie) {
-      const currentSkills = parsedSkills.length > 0 ? parsedSkills : DEFAULT_SKILLS;
-      const sortedSkills = [...currentSkills].sort((a, b) => b.level - a.level);
-      return sortedSkills.map(s => ({
+      return parsedSkills.map(s => ({
         name: s.name,
-        value: s.level
+        value: s.level || 80
       }));
     } else {
-      const clubsCount = clubsList.length > 0 ? clubsList.length : DEFAULT_CLUBS.length;
-      const certsCount = certificationsList.length > 0 ? certificationsList.length : DEFAULT_CERTS.length;
-      const skillsCount = parsedSkills.length > 0 ? parsedSkills.length : DEFAULT_SKILLS.length;
+      const clubsCount = clubsList.length;
+      const certsCount = certificationsList.length;
+      const skillsCount = parsedSkills.length;
 
       return [
         { name: 'Clubs Joined', value: clubsCount },
@@ -1035,8 +1043,7 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                   {/* Graph 6: Parent Dashboard */}
                   {(() => {
                     const getSuitableRoles = () => {
-                      const currentSkills = parsedSkills.length > 0 ? parsedSkills : DEFAULT_SKILLS;
-                      const sNames = currentSkills.map((s: any) => s.name.toLowerCase());
+                      const sNames = parsedSkills.map((s: any) => s.name.toLowerCase());
                       const roles = [];
                       const hasFront = sNames.some(n => n.includes('react') || n.includes('next') || n.includes('tailwind') || n.includes('javascript') || n.includes('typescript') || n.includes('html') || n.includes('css'));
                       const hasBack = sNames.some(n => n.includes('node') || n.includes('sql') || n.includes('python') || n.includes('database') || n.includes('mongo'));

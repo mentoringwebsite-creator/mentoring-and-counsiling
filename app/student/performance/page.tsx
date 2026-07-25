@@ -60,6 +60,32 @@ const DEFAULT_SKILLS = [
   { name: "Data Structures", level: 78 }
 ];
 
+const parseSkillsFromInterests = (rawInterests: string) => {
+  if (!rawInterests || !rawInterests.includes('||skills:')) return [];
+  const parts = rawInterests.split('||skills:');
+  const skillStr = parts[1]?.trim();
+  if (!skillStr) return [];
+  try {
+    const parsed = JSON.parse(skillStr);
+    if (Array.isArray(parsed)) {
+      return parsed.map((item: any) => {
+        if (typeof item === 'string') return { name: item, level: 80 };
+        return { name: item.name || '', level: item.level || 80 };
+      }).filter((item: any) => item.name);
+    }
+  } catch (e) {
+    return skillStr.split(',').map((s: string) => {
+      const item = s.trim();
+      if (item.includes(':')) {
+        const [name, lvl] = item.split(':');
+        return { name: name.trim(), level: parseInt(lvl) || 80 };
+      }
+      return { name: item, level: 80 };
+    }).filter((item: any) => item.name);
+  }
+  return [];
+};
+
 const PIE_COLORS = ['#1c5644', '#e88913', '#0284c7'];
 const SKILLS_COLORS = [
   '#1c5644', // Deep Green
@@ -125,21 +151,7 @@ export default function PerformancePage() {
       setRollNumber(profileDb.roll_number || '');
 
       const rawInterests = profileDb.interests || '';
-      let parsedSkills = DEFAULT_SKILLS;
-      if (rawInterests.includes('||skills:')) {
-        const parts = rawInterests.split('||skills:');
-        const skillStr = parts[1];
-        parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => {
-          const item = s.trim();
-          if (item.includes(':')) {
-            const [name, lvl] = item.split(':');
-            return { name: name.trim(), level: parseInt(lvl) || 80 };
-          }
-          return { name: item, level: 80 };
-        }).filter((item: any) => item.name) : [];
-      } else if (rawInterests.trim() !== '') {
-        parsedSkills = [];
-      }
+      const parsedSkills = parseSkillsFromInterests(rawInterests);
       setSkills(parsedSkills);
 
       // Compute dynamic CGPA/Backlog stats
@@ -288,21 +300,15 @@ export default function PerformancePage() {
 
   const getExtracurricularData = () => {
     if (showSkillsPie) {
-      const currentSkills = skills.length > 0 ? skills : DEFAULT_SKILLS;
-      const sortedSkills = [...currentSkills].sort((a, b) => b.level - a.level);
-      return sortedSkills.map(s => ({
+      return skills.map(s => ({
         name: s.name,
-        value: s.level
+        value: s.level || 80
       }));
     } else {
-      const clubsCount = clubs.length > 0 ? clubs.length : DEFAULT_CLUBS.length;
-      const certsCount = certifications.length > 0 ? certifications.length : DEFAULT_CERTS.length;
-      const skillsCount = skills.length > 0 ? skills.length : DEFAULT_SKILLS.length;
-
       return [
-        { name: 'Clubs Joined', value: clubsCount },
-        { name: 'Certifications', value: certsCount },
-        { name: 'Skills & Tech', value: skillsCount }
+        { name: 'Clubs Joined', value: clubs.length },
+        { name: 'Certifications', value: certifications.length },
+        { name: 'Skills & Tech', value: skills.length }
       ];
     }
   };
@@ -593,7 +599,7 @@ export default function PerformancePage() {
                   {/* Card 3: Parental Performance Summary & Feedback */}
                   {(() => {
                     const getSuitableRoles = () => {
-                      const sNames = (skills.length > 0 ? skills : DEFAULT_SKILLS).map(s => s.name.toLowerCase());
+                      const sNames = skills.map(s => s.name.toLowerCase());
                       const roles = [];
                       const hasFront = sNames.some(n => n.includes('react') || n.includes('next') || n.includes('tailwind') || n.includes('javascript') || n.includes('typescript') || n.includes('html') || n.includes('css'));
                       const hasBack = sNames.some(n => n.includes('node') || n.includes('sql') || n.includes('python') || n.includes('database') || n.includes('mongo'));

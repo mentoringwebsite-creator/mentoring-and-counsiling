@@ -121,21 +121,31 @@ export default function StudentDetailsPage() {
 
   const rawInterests = profile.interests || '';
   let parsedInterests = rawInterests;
-  let parsedSkills = DEFAULT_SKILLS;
+  let parsedSkills: any[] = [];
   if (rawInterests.includes('||skills:')) {
     const parts = rawInterests.split('||skills:');
     parsedInterests = parts[0];
-    const skillStr = parts[1];
-    parsedSkills = skillStr.trim() ? skillStr.split(',').map((s: string) => {
-      const item = s.trim();
-      if (item.includes(':')) {
-        const [name, lvl] = item.split(':');
-        return { name: name.trim(), level: parseInt(lvl) || 80 };
+    const skillStr = parts[1]?.trim();
+    if (skillStr) {
+      try {
+        const parsed = JSON.parse(skillStr);
+        if (Array.isArray(parsed)) {
+          parsedSkills = parsed.map((item: any) => {
+            if (typeof item === 'string') return { name: item, level: 80 };
+            return { name: item.name || '', level: item.level || 80 };
+          }).filter((item: any) => item.name);
+        }
+      } catch (e) {
+        parsedSkills = skillStr.split(',').map((s: string) => {
+          const item = s.trim();
+          if (item.includes(':')) {
+            const [name, lvl] = item.split(':');
+            return { name: name.trim(), level: parseInt(lvl) || 80 };
+          }
+          return { name: item, level: 80 };
+        }).filter((item: any) => item.name);
       }
-      return { name: item, level: 80 };
-    }).filter((item: any) => item.name) : [];
-  } else if (rawInterests.trim() !== '') {
-    parsedSkills = [];
+    }
   }
 
   useEffect(() => {
@@ -388,16 +398,14 @@ export default function StudentDetailsPage() {
 
   const getExtracurricularData = () => {
     if (showSkillsPie) {
-      const currentSkills = parsedSkills.length > 0 ? parsedSkills : DEFAULT_SKILLS;
-      const sortedSkills = [...currentSkills].sort((a, b) => b.level - a.level);
-      return sortedSkills.map(s => ({
+      return parsedSkills.map(s => ({
         name: s.name,
-        value: s.level
+        value: s.level || 80
       }));
     } else {
       const clubsCount = clubs.length;
       const certsCount = certifications.length;
-      const skillsCount = parsedSkills.length > 0 ? parsedSkills.length : DEFAULT_SKILLS.length;
+      const skillsCount = parsedSkills.length;
 
       return [
         { name: 'Clubs Joined', value: clubsCount },
