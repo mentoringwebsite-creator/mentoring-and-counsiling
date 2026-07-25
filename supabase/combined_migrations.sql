@@ -7,9 +7,12 @@
 ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS cgpa numeric(4,2) DEFAULT 8.00;
 ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS backlogs integer DEFAULT 0;
 
--- 2. Add clubs and certifications for Extracurricular Activities
+-- 2. Add clubs, certifications, and extracurricular profile fields
 ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS clubs jsonb DEFAULT '[]'::jsonb NOT NULL;
 ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS certifications jsonb DEFAULT '[]'::jsonb NOT NULL;
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS interests text DEFAULT '';
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS dreams text DEFAULT '';
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS career_goals text DEFAULT '';
 
 -- 3. Add sgpa and academic_subjects for Academic Profiles
 ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS sgpa numeric(4,2) DEFAULT 8.00;

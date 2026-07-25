@@ -42,8 +42,21 @@ create table if not exists student_profiles (
   section text,
   academic_year text,
   phone text,
+  alternate_phone text,
+  linkedin_url text,
+  resume_url text,
   dob date,
   profile_photo text,
+  cgpa numeric(4,2) default 0,
+  backlogs integer default 0,
+  sgpa numeric(4,2) default 0,
+  academic_subjects jsonb default '[]'::jsonb not null,
+  interests text default '',
+  dreams text default '',
+  career_goals text default '',
+  clubs jsonb default '[]'::jsonb not null,
+  certifications jsonb default '[]'::jsonb not null,
+  mentor_id uuid references users(id) on delete set null,
   created_at timestamp with time zone default now()
 );
 

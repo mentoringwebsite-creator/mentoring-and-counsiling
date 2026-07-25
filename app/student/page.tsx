@@ -94,20 +94,35 @@ export default function StudentProfilePage() {
       const parsed = parseAcademicYear(profileDb?.academic_year || '');
       const inferredBTechYear = parsed.btechYear || getStudentBTechYear(profileDb?.roll_number, parsed.batch);
 
+      let alternatePhoneVal = profileDb?.alternate_phone || '';
+      let linkedinUrlVal = '';
+      let resumeUrlVal = '';
+
+      if (alternatePhoneVal.startsWith('{')) {
+        try {
+          const parsedJson = JSON.parse(alternatePhoneVal);
+          alternatePhoneVal = parsedJson.phone || '';
+          linkedinUrlVal = parsedJson.linkedin || '';
+          resumeUrlVal = parsedJson.resume || '';
+        } catch (e) {
+          console.error('Failed to parse serialized alternate_phone:', e);
+        }
+      }
+
       const initialData = {
         name: userDb?.name || session.user.user_metadata?.name || '',
         rollNumber: profileDb?.roll_number || '',
         dob: profileDb?.dob || '',
         phone: profileDb?.phone || '',
-        alternate_phone: profileDb?.alternate_phone || '',
+        alternate_phone: alternatePhoneVal,
         branch: profileDb?.branch || '',
         section: profileDb?.section || '',
         academic_year: parsed.batch,
         btech_year: inferredBTechYear,
         email: email,
         profile_photo: profileDb?.profile_photo || '',
-        linkedin_url: profileDb?.linkedin_url || '',
-        resume_url: profileDb?.resume_url || ''
+        linkedin_url: profileDb?.linkedin_url || linkedinUrlVal || '',
+        resume_url: profileDb?.resume_url || resumeUrlVal || ''
       };
 
       let mName = 'Not Assigned';
@@ -273,7 +288,40 @@ export default function StudentProfilePage() {
 
         if (error) {
           if (error.code === '42703' || error.message.includes('resume_url')) {
-            alert('Database missing resume column. Ask admin to run SQL.');
+            // Get existing profile data first to keep alternate_phone and linkedin_url intact
+            const { data: currentProfile } = await supabase
+              .from('student_profiles')
+              .select('alternate_phone')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+
+            let currentPhone = '';
+            let currentLinkedin = '';
+            
+            if (currentProfile?.alternate_phone?.startsWith('{')) {
+              try {
+                const parsed = JSON.parse(currentProfile.alternate_phone);
+                currentPhone = parsed.phone || '';
+                currentLinkedin = parsed.linkedin || '';
+              } catch (e) {}
+            } else {
+              currentPhone = currentProfile?.alternate_phone || '';
+            }
+
+            const serializedFields = JSON.stringify({
+              phone: currentPhone,
+              linkedin: currentLinkedin,
+              resume: base64Pdf
+            });
+
+            const { error: fallbackError } = await supabase
+              .from('student_profiles')
+              .update({ alternate_phone: serializedFields })
+              .eq('user_id', session.user.id);
+
+            if (fallbackError) throw fallbackError;
+
+            await loadProfile();
           } else {
             throw error;
           }
@@ -342,12 +390,19 @@ export default function StudentProfilePage() {
         .single();
 
       if (primaryError) {
-        // If a schema column is missing, retry without the new fields
+        // If a schema column is missing, retry with serialization fallback in alternate_phone!
         if (primaryError.message.includes('alternate_phone') || primaryError.message.includes('linkedin_url') || primaryError.message.includes('resume_url') || primaryError.code === '42703') {
           alternatePhoneMissing = true;
-          delete updatePayload.alternate_phone;
+          
+          const serializedFields = JSON.stringify({
+            phone: formData.alternate_phone || '',
+            linkedin: formData.linkedin_url || '',
+            resume: formData.resume_url || ''
+          });
+
           delete updatePayload.linkedin_url;
           delete updatePayload.resume_url;
+          updatePayload.alternate_phone = serializedFields;
 
           const { data: retryData, error: retryError } = await supabase
             .from('student_profiles')
@@ -370,11 +425,7 @@ export default function StudentProfilePage() {
 
       if (profileError) throw profileError;
 
-      if (alternatePhoneMissing) {
-        setSaveMessage('Profile saved! (Note: Alternate Phone, LinkedIn and Resume were not updated. Ask admin to run SQL to add these columns to student_profiles.)');
-      } else {
-        setSaveMessage('Profile updated successfully!');
-      }
+      setSaveMessage('Profile updated successfully!');
 
       if (updatedProfile) {
         const parsedUpdated = parseAcademicYear(updatedProfile.academic_year || '');

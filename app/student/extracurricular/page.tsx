@@ -53,6 +53,12 @@ export default function ExtracurricularPage() {
   // Lightbox Preview State
   const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
 
+  const isMissingColumnError = (err: any) => {
+    if (!err) return false;
+    const message = String(err.message || err.error || err.details || '');
+    return err.code === '42703' || /column .* does not exist/i.test(message);
+  };
+
   // Modal States: Clubs
   const [clubModalOpen, setClubModalOpen] = useState(false);
   const [editingClubIndex, setEditingClubIndex] = useState<number | null>(null);
@@ -81,11 +87,25 @@ export default function ExtracurricularPage() {
       const userId = sessionData?.session?.user?.id;
       if (!userId) return;
 
-      const { data, error } = await supabase
+      const selectColumns = 'id, clubs, certifications, interests, dreams, career_goals';
+      const fallbackSelect = 'id, clubs, certifications';
+
+      let data: any = null;
+      let error: any = null;
+
+      ({ data, error } = await supabase
         .from('student_profiles')
-        .select('id, clubs, certifications, interests, dreams, career_goals')
+        .select(selectColumns)
         .eq('user_id', userId)
-        .maybeSingle();
+        .maybeSingle());
+
+      if (error && isMissingColumnError(error)) {
+        ({ data, error } = await supabase
+          .from('student_profiles')
+          .select(fallbackSelect)
+          .eq('user_id', userId)
+          .maybeSingle());
+      }
 
       if (error) throw error;
 
@@ -103,7 +123,7 @@ export default function ExtracurricularPage() {
       setProfileId(data.id);
       setClubs(data.clubs || []);
       setCertifications(data.certifications || []);
-      
+
       const rawInterests = data.interests || '';
       let parsedInterests = rawInterests;
       let parsedSkills: any[] = [];
@@ -126,14 +146,17 @@ export default function ExtracurricularPage() {
           }
         }
       }
-      
+
       setInterests(parsedInterests);
       setSkills(parsedSkills);
       setDreams(data.dreams || '');
       setCareerGoals(data.career_goals || '');
     } catch (err: any) {
       console.error('Error loading extracurriculars:', err);
-      setFeedback({ type: 'error', message: 'Failed to load activities. Make sure SQL migration is run.' });
+      const message = isMissingColumnError(err)
+        ? 'Failed to load activities. Missing student_profiles columns; run the latest SQL migration.'
+        : 'Failed to load activities. Make sure SQL migration is run.';
+      setFeedback({ type: 'error', message });
     } finally {
       setLoading(false);
     }
@@ -165,7 +188,10 @@ export default function ExtracurricularPage() {
           .eq('user_id', userId)
           .maybeSingle();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          if (!isMissingColumnError(profileError)) throw profileError;
+        }
+
         if (profileRow?.id) {
           currentProfileId = profileRow.id;
           setProfileId(currentProfileId);
@@ -185,30 +211,58 @@ export default function ExtracurricularPage() {
             .select('id')
             .maybeSingle();
 
-          if (insertError) throw insertError;
-          if (!insertRow?.id) throw new Error('Failed to create student profile record.');
-          currentProfileId = insertRow.id;
-          setProfileId(currentProfileId);
+          if (insertError && isMissingColumnError(insertError)) {
+            const fallbackEntry: any = {
+              user_id: userId,
+              clubs: updatedClubs,
+              certifications: updatedCerts,
+            };
+            const { data: fallbackRow, error: fallbackError } = await supabase
+              .from('student_profiles')
+              .insert(fallbackEntry)
+              .select('id')
+              .maybeSingle();
+            if (fallbackError) throw fallbackError;
+            currentProfileId = fallbackRow?.id;
+            setProfileId(currentProfileId);
+          } else if (insertError) {
+            throw insertError;
+          } else {
+            currentProfileId = insertRow?.id;
+            setProfileId(currentProfileId);
+          }
         }
       }
-
-      const payload: any = {
-        clubs: updatedClubs,
-        certifications: updatedCerts,
-      };
 
       const finalInterestsVal = updatedInterests !== undefined ? updatedInterests : interests;
       const finalSkillsVal = updatedSkills !== undefined ? updatedSkills : skills;
       const interestsPrefix = finalInterestsVal?.trim() ? `${finalInterestsVal}||skills:` : '||skills:';
-      payload.interests = interestsPrefix + JSON.stringify(finalSkillsVal);
+      const payload: any = {
+        clubs: updatedClubs,
+        certifications: updatedCerts,
+        interests: interestsPrefix + JSON.stringify(finalSkillsVal),
+      };
 
       if (updatedDreams !== undefined) payload.dreams = updatedDreams;
       if (updatedGoals !== undefined) payload.career_goals = updatedGoals;
 
-      const { error } = await supabase
+      let { error } = await supabase
         .from('student_profiles')
         .update(payload)
-        .eq('id', profileId);
+        .eq('id', currentProfileId);
+
+      if (error && isMissingColumnError(error)) {
+        const fallbackPayload: any = {
+          clubs: updatedClubs,
+          certifications: updatedCerts,
+        };
+        const { error: fallbackError } = await supabase
+          .from('student_profiles')
+          .update(fallbackPayload)
+          .eq('id', currentProfileId);
+        if (fallbackError) throw fallbackError;
+        error = null;
+      }
 
       if (error) throw error;
       setFeedback({ type: 'success', message: 'Profile updated successfully!' });

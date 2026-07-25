@@ -8,7 +8,7 @@ import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
 import { getRiskLevel } from '@/lib/risk';
 import { 
-  Loader2, X, User, Mail, Phone, Calendar, BookOpen, 
+  Loader2, X, User, Mail, Phone, Calendar, BookOpen, Linkedin, FileText,
   TrendingUp, BarChart3, Sparkles, Heart, Target, 
   Award, Users, ExternalLink, Image as ImageIcon, 
   GraduationCap, AlertTriangle, ShieldCheck, Zap, 
@@ -95,7 +95,28 @@ export default function StudentDetailsPage() {
   const [hodName, setHodName] = useState<string>('Loading...');
   const [chartSemester, setChartSemester] = useState<string>('6');
 
-  const profile = student?.student_profiles?.[0] || {};
+  const profileRaw = student?.student_profiles?.[0] || {};
+  let alternatePhoneVal = profileRaw.alternate_phone || '';
+  let linkedinUrlVal = '';
+  let resumeUrlVal = '';
+
+  if (alternatePhoneVal?.startsWith('{')) {
+    try {
+      const parsedJson = JSON.parse(alternatePhoneVal);
+      alternatePhoneVal = parsedJson.phone || '';
+      linkedinUrlVal = parsedJson.linkedin || '';
+      resumeUrlVal = parsedJson.resume || '';
+    } catch (e) {
+      console.error('Failed to parse serialized alternate_phone:', e);
+    }
+  }
+
+  const profile = {
+    ...profileRaw,
+    alternate_phone: alternatePhoneVal,
+    linkedin_url: profileRaw.linkedin_url || linkedinUrlVal || '',
+    resume_url: profileRaw.resume_url || resumeUrlVal || ''
+  };
   const subjects = profile.academic_subjects || [];
 
   const rawInterests = profile.interests || '';
@@ -891,6 +912,37 @@ export default function StudentDetailsPage() {
                             <div>
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Alternate Contact</div>
                               <span className="text-xs font-mono font-bold text-slate-800">{profile.alternate_phone || 'N/A'}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="rounded-xl border border-slate-150 p-3.5 flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+                              <Linkedin className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">LinkedIn Profile</div>
+                              {profile.linkedin_url ? (
+                                <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-emerald-600 hover:underline truncate block">View LinkedIn Profile ↗</a>
+                              ) : (
+                                <span className="text-xs font-bold text-slate-400">Not provided</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="rounded-xl border border-slate-150 p-3.5 flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Resume Document</div>
+                              {profile.resume_url ? (
+                                <a href={profile.resume_url} download="resume.pdf" className="text-xs font-bold text-[#1c5644] hover:underline flex items-center gap-1 mt-0.5">
+                                  <span>Download Resume PDF</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : (
+                                <span className="text-xs font-bold text-slate-400">No file uploaded</span>
+                              )}
                             </div>
                           </div>
                         </div>
