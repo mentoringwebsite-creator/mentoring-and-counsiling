@@ -17,3 +17,15 @@ ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS career_goals text DEFAULT 
 -- 3. Add sgpa and academic_subjects for Academic Profiles
 ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS sgpa numeric(4,2) DEFAULT 8.00;
 ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS academic_subjects jsonb DEFAULT '[]'::jsonb NOT NULL;
+
+-- 4. Add alternate_phone, linkedin_url, and resume_url columns to student_profiles
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS alternate_phone text;
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS linkedin_url text;
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS resume_url text;
+
+-- 5. Add RLS policy to allow users to update their own user record (for name edits)
+DROP POLICY IF EXISTS "Allow users to update their own user record" ON users;
+CREATE POLICY "Allow users to update their own user record" ON users
+  FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);

@@ -138,6 +138,7 @@ alter table hod_profiles enable row level security;
 drop policy if exists "Allow users to insert their own user record" on users;
 drop policy if exists "Allow users to select their own user record" on users;
 drop policy if exists "Allow admin to manage users" on users;
+drop policy if exists "Allow users to update their own user record" on users;
 drop policy if exists "Allow own student profile insert" on student_profiles;
 drop policy if exists "Allow own student profile select" on student_profiles;
 drop policy if exists "Allow own student profile update" on student_profiles;
@@ -163,6 +164,14 @@ create policy "Allow admin to manage users" on users for update
   )
   with check (
     (auth.jwt() -> 'user_metadata' ->> 'role') = 'admin'
+  );
+
+create policy "Allow users to update their own user record" on users for update
+  using (
+    auth.uid() = id
+  )
+  with check (
+    auth.uid() = id
   );
 
 create policy "Allow own student profile insert" on student_profiles for insert
