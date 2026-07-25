@@ -489,11 +489,26 @@ export default function ExtracurricularPage() {
 
     const updatedSkills = [...skills, newSkill];
     setSkills(updatedSkills);
+
+    let updatedCerts = [...certifications];
+    if (newSkillProofType === 'certificate' || newSkillCertImage) {
+      const certTitle = `${cleanSkill} Certificate`;
+      const exists = updatedCerts.some(c => c.name.toLowerCase() === certTitle.toLowerCase() || (newSkillCertImage && c.image === newSkillCertImage));
+      if (!exists) {
+        updatedCerts.push({
+          name: certTitle,
+          link: newSkillProofType === 'youtube' ? newSkillProofValue.trim() : '',
+          image: newSkillCertImage || '',
+        });
+        setCertifications(updatedCerts);
+      }
+    }
+
     setNewSkillText('');
     setNewSkillProofType('certificate');
     setNewSkillProofValue('');
     setNewSkillCertImage('');
-    const success = await saveToDatabase(clubs, certifications, interests, dreams, careerGoals, updatedSkills);
+    const success = await saveToDatabase(clubs, updatedCerts, interests, dreams, careerGoals, updatedSkills);
     if (success) {
       await loadExtracurriculars();
     }
