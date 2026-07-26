@@ -207,11 +207,14 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
               cgpa, backlogs, sgpa, academic_subjects, interests, dreams, career_goals, clubs, certifications
             )
           `)
-          .eq('id', studentUserId)
-          .single();
+          .eq('id', studentUserId);
 
         if (dbError) throw dbError;
-        setStudent(data);
+
+        // Supabase can sometimes return multiple rows when joins duplicate parent rows.
+        // Safely pick the first row if an array is returned.
+        const userRow = Array.isArray(data) ? data[0] : data;
+        setStudent(userRow || null);
       } catch (err: any) {
         console.error('Error fetching student details:', err);
         setError(err.message || 'Failed to load student details.');
