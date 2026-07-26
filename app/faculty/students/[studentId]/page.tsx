@@ -201,13 +201,12 @@ export default function StudentDetailsPage() {
             id, name, email,
             student_profiles!user_id (
               roll_number, branch, section, academic_year, phone, alternate_phone, dob, profile_photo,
-              cgpa, backlogs, sgpa, academic_subjects, interests, dreams, career_goals, clubs, certifications, mentor_id, attendance_percentage
+              cgpa, backlogs, sgpa, academic_subjects, interests, dreams, career_goals, clubs, certifications, mentor_id, attendance_percentage,
+              linkedin_url, resume_url
             )
           `)
           .eq('id', studentUserId)
           .single();
-
-        if (dbError) throw dbError;
         setStudent(data);
 
         // Fetch Mentor and HOD Info
@@ -321,61 +320,41 @@ export default function StudentDetailsPage() {
   const risk = getRiskLevel(cgpaVal, backlogsVal);
 
   const getSgpaTrendData = () => {
-    const semMap: { [key: number]: any[] } = {};
+    const semMap: Record<number, any[]> = {};
+
     subjects.forEach((sub: any) => {
       const sem = parseInt(sub.semester);
       if (!isNaN(sem)) {
-        if (!semMap[sem]) semMap[sem] = [];
+        semMap[sem] = semMap[sem] || [];
         semMap[sem].push(sub);
       }
     });
 
-    const maxSem = Math.max(...subjects.map((s: any) => parseInt(s.semester)), 2);
-    const length = Math.max(maxSem, 4);
-    
-    return Array.from({ length }, (_, i) => {
+    const maxSem = Math.max(...subjects.map((s: any) => parseInt(s.semester) || 0), 4);
+    const chartLength = Math.max(maxSem, 4);
+
+    return Array.from({ length: chartLength }, (_, i) => {
       const semNum = i + 1;
       const subjectsInSem = semMap[semNum] || [];
-      let studentSGPA = null;
-      
-      const firstSubWithSgpa = subjectsInSem.find(sub => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
+      let studentSGPA: number | null = null;
+
+      const firstSubWithSgpa = subjectsInSem.find((sub: any) => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
       if (firstSubWithSgpa) {
-        studentSGPA = parseFloat(firstSubWithSgpa.sgpa);
+        studentSGPA = Number(parseFloat(firstSubWithSgpa.sgpa).toFixed(2));
       } else if (subjectsInSem.length > 0) {
-        let totalCredits = 0;
-        let weightedGPsum = 0;
-        let validGPsCount = 0;
+        const validGPs = subjectsInSem
+          .map((sub: any) => convertGradeToGP(sub.gpa))
+          .filter((gp: any): gp is number => gp !== null);
 
-        subjectsInSem.forEach((sub) => {
-          const gp = convertGradeToGP(sub.gpa);
-          const credits = parseFloat(sub.credits);
-          if (gp !== null) {
-            validGPsCount++;
-            if (!isNaN(credits) && credits >= 0) {
-              weightedGPsum += gp * credits;
-              totalCredits += credits;
-            }
-          }
-        });
-
-        if (validGPsCount > 0) {
-          if (totalCredits === 0) {
-            const validGPs = subjectsInSem
-              .map((sub) => convertGradeToGP(sub.gpa))
-              .filter((gp): gp is number => gp !== null);
-            studentSGPA = validGPs.reduce((a, b) => a + b, 0) / validGPs.length;
-          } else {
-            studentSGPA = weightedGPsum / totalCredits;
-          }
-          studentSGPA = Number(studentSGPA.toFixed(2));
+        if (validGPs.length > 0) {
+          studentSGPA = Number((validGPs.reduce((a, b) => a + b, 0) / validGPs.length).toFixed(2));
         }
       }
-      
-      const classAvg = Number((7.4 + Math.sin(semNum) * 0.2 + (semNum * 0.05)).toFixed(2));
+
       return {
         name: `Sem ${semNum}`,
         Student: studentSGPA,
-        ClassAvg: classAvg
+        ClassAvg: Number((7.4 + Math.sin(semNum) * 0.2 + semNum * 0.05).toFixed(2))
       };
     }).filter((d: any) => d.Student !== null || Number(d.name.split(' ')[1]) <= maxSem);
   };
@@ -544,9 +523,9 @@ export default function StudentDetailsPage() {
   };
 
   const getRecommendedRoles = () => {
-    const branch = (profile.branch || 'CSE').toUpperCase();
-    const isHighPerformer = cgpaVal >= 8.0;
-    const isMediumPerformer = cgpaVal >= 7.0;
+    const branch = String(profile.branch || '').toUpperCase();
+    const isHighPerformer = cgpaVal >= 8.5 && backlogsVal === 0;
+    const isMediumPerformer = !isHighPerformer && cgpaVal >= 7.0 && backlogsVal <= 1;
 
     let roles: { title: string; match: number; type: string; skills: string[] }[] = [];
 
