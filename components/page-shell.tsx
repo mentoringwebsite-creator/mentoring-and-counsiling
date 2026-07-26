@@ -49,7 +49,6 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
     if (pathname.startsWith('/hod')) {
       return [
         { href: '/hod', label: 'Home', icon: Home },
-        { href: '/hod/profile', label: 'Profile', icon: User },
         { href: '/hod/students', label: 'Students', icon: Users },
         { href: '/hod/queries', label: 'Queries', icon: MessageSquare },
         { href: '/hod/reports', label: 'Reports', icon: FileText }
