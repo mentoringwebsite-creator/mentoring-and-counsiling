@@ -944,7 +944,22 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                             <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
                             <YAxis stroke="#94a3b8" domain={[0, 10]} fontSize={8} fontWeight={600} />
                             <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                            <Bar name="Student" dataKey="Student" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={14} isAnimationActive={true} animationDuration={600}>
+                            <Bar 
+                              onClick={(data: any) => { 
+                                if (data && data.name) { 
+                                  const semNum = data.name.replace('Sem ', ''); 
+                                  setModalChartSemester(semNum); 
+                                } 
+                              }} 
+                              style={{ cursor: 'pointer' }}
+                              name="Student" 
+                              dataKey="Student" 
+                              fill="#1c5644" 
+                              radius={[3, 3, 0, 0]} 
+                              barSize={14} 
+                              isAnimationActive={true} 
+                              animationDuration={600}
+                            >
                               <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
                             </Bar>
                           </BarChart>

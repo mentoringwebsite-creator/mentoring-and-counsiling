@@ -153,8 +153,29 @@ export default function AcademicPage() {
     loadAcademicProfile();
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const sem = params.get('semester');
-      if (sem) setSelectedSemester(sem);
+      const rawSem = params.get('semester') || params.get('sem');
+      if (rawSem) {
+        const cleanSem = rawSem.replace(/^Sem\s*/i, '').trim();
+        const semOptionMap: Record<string, string> = {
+          '1': '1', '1-1': '1',
+          '2': '2', '1-2': '2',
+          '3': '3', '2-1': '3',
+          '4': '4', '2-2': '4',
+          '5': '5', '3-1': '5',
+          '6': '6', '3-2': '6',
+          '7': '7', '4-1': '7',
+          '8': '8', '4-2': '8'
+        };
+        const targetOption = semOptionMap[cleanSem] || cleanSem;
+        setSelectedSemester(targetOption);
+
+        setTimeout(() => {
+          const el = document.getElementById('semester-ledger');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 400);
+      }
       const subj = params.get('subject');
       if (subj) setHighlightSubject(subj);
     }
@@ -568,7 +589,7 @@ export default function AcademicPage() {
             <div className="space-y-6 w-full min-w-0">
                 
                 {/* Subject Overview Card */}
-                <div className="rounded-[28px] border border-slate-100 bg-white p-6 shadow-sm">
+                <div id="semester-ledger" className="rounded-[28px] border border-slate-100 bg-white p-6 shadow-sm scroll-mt-6">
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
                     <div className="flex items-center gap-2.5">
                       <div className="rounded-xl bg-[#1c5644]/10 p-2">

@@ -1046,7 +1046,24 @@ export default function StudentDetailsPage() {
                                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
                                 <YAxis stroke="#94a3b8" domain={[0, 10]} fontSize={8} fontWeight={600} />
                                 <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                                <Bar name="Student" dataKey="Student" fill="#1c5644" radius={[3, 3, 0, 0]} barSize={14}>
+                                <Bar 
+                                  onClick={(data: any) => { 
+                                    if (data && data.name) { 
+                                      const semNum = data.name.replace('Sem ', ''); 
+                                      setChartSemester(semNum); 
+                                      const el = document.getElementById('academic-subjects-section');
+                                      if (el) {
+                                        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                      }
+                                    } 
+                                  }} 
+                                  style={{ cursor: 'pointer' }}
+                                  name="Student" 
+                                  dataKey="Student" 
+                                  fill="#1c5644" 
+                                  radius={[3, 3, 0, 0]} 
+                                  barSize={14}
+                                >
                                   <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
                                 </Bar>
                               </BarChart>
