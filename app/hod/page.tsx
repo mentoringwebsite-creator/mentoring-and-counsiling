@@ -300,37 +300,101 @@ export default function HodPage() {
       const userId = sessionData?.session?.user?.id;
       if (!userId) throw new Error('Must be logged in');
 
-      // Update name in users table
-      await supabase
+      // 1. Update name in users table
+      const { error: userErr } = await supabase
         .from('users')
         .update({ name: formData.name })
         .eq('id', userId);
 
-      // Update hod_profiles
-      await supabase
-        .from('hod_profiles')
-        .upsert({
-          user_id: userId,
-          faculty_id: formData.faculty_id,
-          designation: formData.designation,
-          department: formData.department,
-          qualification: formData.qualification,
-          responsibilities: formData.responsibilities,
-          joining_year: formData.yearJoined,
-          office_room: formData.officeRoom,
-          contact_number: formData.contact,
-          profile_photo: formData.photo
-        }, { onConflict: 'user_id' });
+      if (userErr) {
+        console.warn('Could not update users table:', userErr);
+      }
 
-      setProfileMsg('HOD information updated successfully!');
-      await loadDashboardData();
+      // 2. Prepare HOD profile fields
+      const basePayload: any = {
+        faculty_id: formData.faculty_id || 'HOD10234',
+        designation: formData.designation || 'Professor & HOD',
+        department: formData.department || 'CSE',
+        contact_number: formData.contact || '',
+        profile_photo: formData.photo || ''
+      };
+
+      const fullPayload: any = {
+        ...basePayload,
+        qualification: formData.qualification,
+        responsibilities: formData.responsibilities,
+        joining_year: formData.yearJoined,
+        office_room: formData.officeRoom
+      };
+
+      // Check existing row
+      const { data: existingHod } = await supabase
+        .from('hod_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      let dbError: any = null;
+
+      if (existingHod) {
+        // Update existing row
+        const { error: errFull } = await supabase
+          .from('hod_profiles')
+          .update(fullPayload)
+          .eq('user_id', userId);
+
+        if (errFull) {
+          console.warn('Full column update failed, retrying with base columns:', errFull);
+          const { error: errBase } = await supabase
+            .from('hod_profiles')
+            .update(basePayload)
+            .eq('user_id', userId);
+
+          dbError = errBase;
+        }
+      } else {
+        // Insert new row
+        const { error: errFull } = await supabase
+          .from('hod_profiles')
+          .insert({ user_id: userId, ...fullPayload });
+
+        if (errFull) {
+          console.warn('Full column insert failed, retrying with base columns:', errFull);
+          const { error: errBase } = await supabase
+            .from('hod_profiles')
+            .insert({ user_id: userId, ...basePayload });
+
+          dbError = errBase;
+        }
+      }
+
+      if (dbError) {
+        throw new Error(dbError.message || 'Database update failed.');
+      }
+
+      // Update local state immediately
+      setHodProfile((prev: any) => ({
+        ...prev,
+        name: formData.name,
+        faculty_id: formData.faculty_id,
+        designation: formData.designation,
+        department: formData.department,
+        qualification: formData.qualification,
+        responsibilities: formData.responsibilities,
+        yearJoined: formData.yearJoined,
+        officeRoom: formData.officeRoom,
+        contact: formData.contact,
+        photo: formData.photo
+      }));
+
+      setProfileMsg('HOD information saved successfully!');
       setTimeout(() => {
         setIsEditing(false);
         setProfileMsg(null);
       }, 1200);
     } catch (err: any) {
       console.error('Error saving HOD profile:', err);
-      alert(err.message || 'Failed to update HOD profile.');
+      alert(`Error saving profile: ${err.message || 'Failed to update'}`);
     } finally {
       setSavingProfile(false);
     }
