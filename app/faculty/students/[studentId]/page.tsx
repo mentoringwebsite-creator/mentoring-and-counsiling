@@ -91,6 +91,7 @@ export default function StudentDetailsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars'>('academics');
   const [selectedSemester, setSelectedSemester] = useState<string>('All');
   const [selectedCertImage, setSelectedCertImage] = useState<string | null>(null);
+  const [selectedCert, setSelectedCert] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSkillsPie, setShowSkillsPie] = useState(true);
   const [mentorName, setMentorName] = useState<string>('Loading...');
@@ -1005,11 +1006,17 @@ export default function StudentDetailsPage() {
                                 outerRadius={75}
                                 paddingAngle={2}
                                 dataKey="value"
+                                onClick={() => {
+                                  if (showSkillsPie) {
+                                    setActiveTab('extracurriculars');
+                                  }
+                                }}
                               >
                                 {extracurricularData.map((entry, index) => (
                                   <Cell 
                                     key={`cell-${index}`} 
-                                    fill={showSkillsPie ? SKILLS_COLORS[index % SKILLS_COLORS.length] : PIE_COLORS[index % PIE_COLORS.length]} 
+                                    fill={showSkillsPie ? SKILLS_COLORS[index % SKILLS_COLORS.length] : PIE_COLORS[index % PIE_COLORS.length]}
+                                    style={{ cursor: showSkillsPie ? 'pointer' : 'default' }}
                                   />
                                 ))}
                               </Pie>
@@ -1167,21 +1174,29 @@ export default function StudentDetailsPage() {
                           {certifications.length > 0 ? (
                             <div className="space-y-3">
                               {certifications.map((cert: any, i: number) => (
-                                <div key={i} className="rounded-xl border border-slate-155 p-3.5 flex items-center justify-between gap-4">
+                                <div 
+                                  key={i} 
+                                  onClick={() => setSelectedCert(cert)}
+                                  className="rounded-xl border border-slate-155 p-3.5 flex items-center justify-between gap-4 cursor-pointer hover:bg-emerald-50/30 hover:border-emerald-200 transition"
+                                >
                                   <div className="min-w-0">
                                     <div className="font-bold text-xs text-slate-800 truncate" title={cert.name}>{cert.name}</div>
                                   </div>
-                                  {cert.link && (
-                                    <a 
-                                      href={cert.link} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 hover:text-emerald-850 shrink-0"
-                                    >
-                                      <span>Verify</span>
-                                      <ExternalLink className="h-3 w-3" />
-                                    </a>
-                                  )}
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {cert.link && (
+                                      <a 
+                                        href={cert.link} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-700 hover:text-emerald-850 transition"
+                                      >
+                                        <span>Verify</span>
+                                        <ExternalLink className="h-3 w-3" />
+                                      </a>
+                                    )}
+                                    <span className="text-[9px] font-bold text-slate-400">View</span>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -1237,7 +1252,74 @@ export default function StudentDetailsPage() {
 
           </div>
         </div>
-      </PageShell>
-    </ProtectedRoute>
-  );
-}
+
+        {/* Certificate Detail Modal */}
+        {selectedCert && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-md">
+            <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
+                <h3 className="text-lg font-bold text-slate-900">Certificate Details</h3>
+                <button 
+                  onClick={() => setSelectedCert(null)}
+                  className="rounded-full p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                    <Award className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800">{selectedCert.name}</h4>
+                    <p className="text-xs text-slate-500">Professional Certification</p>
+                  </div>
+                </div>
+
+                {selectedCert.image && (
+                  <div className="mb-4 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center" style={{ minHeight: '200px' }}>
+                    <img 
+                      src={selectedCert.image} 
+                      alt={selectedCert.name}
+                      className="max-w-full max-h-96 object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {selectedCert.link && (
+                    <a 
+                      href={selectedCert.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between w-full p-3 rounded-xl bg-emerald-50 border border-emerald-100 hover:bg-emerald-100 transition"
+                    >
+                      <span className="text-sm font-bold text-emerald-700">View Certificate</span>
+                      <ExternalLink className="h-4 w-4 text-emerald-600" />
+                    </a>
+                  )}
+                  {selectedCert.issuer && (
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Issued By</div>
+                      <div className="text-sm font-semibold text-slate-800 mt-1">{selectedCert.issuer}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 bg-slate-50 px-6 py-3 flex justify-end">
+                <button
+                  onClick={() => setSelectedCert(null)}
+                  className="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold text-sm transition"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
