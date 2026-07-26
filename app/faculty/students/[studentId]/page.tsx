@@ -670,7 +670,7 @@ export default function StudentDetailsPage() {
                   <div className="h-24 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-855" />
                   
                   <div className="px-6 pb-6 pt-0">
-                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-12 md:-mt-16 relative z-10">
+                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-center -mt-12 md:-mt-16 relative z-10">
                       {/* Avatar container */}
                       <div className="h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] md:h-[185px] md:w-[185px] lg:h-[210px] lg:w-[210px] xl:h-[230px] xl:w-[230px] rounded-[32px] overflow-hidden border-[5px] border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
                         {profile.profile_photo ? (
@@ -1096,20 +1096,7 @@ export default function StudentDetailsPage() {
                             </div>
                           </div>
 
-                          <div>
-                            <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                              <Sparkles className="h-3 w-3 text-blue-600" />
-                              <span>AI Career Fit Recommendations</span>
-                            </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {recommendedRoles.slice(0, 2).map((role, i) => (
-                                <span key={i} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[9px] font-extrabold bg-blue-50 border border-blue-100 text-blue-800">
-                                  <span>{role.title}</span>
-                                  <span className="text-blue-600">({role.match}%)</span>
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+                          {/* AI Career Fit Recommendations removed per request */}
                         </div>
                       </div>
 
