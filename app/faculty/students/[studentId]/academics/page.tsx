@@ -30,6 +30,9 @@ export default function StudentAcademicsPage() {
   const [student, setStudent] = useState<any>(null);
   const [selectedSemester, setSelectedSemester] = useState<string>('All');
   const [error, setError] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [editedSubjects, setEditedSubjects] = useState<any[] | null>(null);
+  const [saving, setSaving] = useState<boolean>(false);
 
   useEffect(() => {
     setMounted(true);
@@ -104,6 +107,63 @@ export default function StudentAcademicsPage() {
     if (!selectedSemester || selectedSemester === 'All') return true;
     return normalizeSem(sub.sem || sub.semester) === normalizeSem(selectedSemester);
   });
+
+  const displaySubjects = (editMode && editedSubjects) ? editedSubjects.filter((s: any) => {
+    if (!selectedSemester || selectedSemester === 'All') return true;
+    return normalizeSem(s.sem || s.semester) === normalizeSem(selectedSemester);
+  }) : filteredSubjects;
+
+  const beginEdit = () => {
+    setEditedSubjects(JSON.parse(JSON.stringify(subjects || [])));
+    setEditMode(true);
+  };
+
+  const cancelEdit = () => {
+    setEditedSubjects(null);
+    setEditMode(false);
+  };
+
+  const handleFieldChange = (index: number, field: string, value: any) => {
+    if (!editedSubjects) return;
+    const copy = [...editedSubjects];
+    // find the matching subject in the editedSubjects by index of filteredSubjects
+    // map filtered index -> overall subjects index
+    const filtered = filteredSubjects.map((f: any) => {
+      const code = f.code || f.subject_code || f.subjectCode || f.subjectCode;
+      return String(code || '').toLowerCase();
+    });
+    const targetCode = filtered[index];
+    const overallIndex = copy.findIndex((s: any) => String((s.code || s.subject_code || s.subjectCode || '')).toLowerCase() === targetCode);
+    const targetIdx = overallIndex >= 0 ? overallIndex : index;
+    copy[targetIdx] = { ...(copy[targetIdx] || {}), [field]: value };
+    setEditedSubjects(copy);
+  };
+
+  const saveEdits = async () => {
+    if (!editedSubjects) return;
+    setSaving(true);
+    try {
+      // Update student_profiles by user_id
+      const payload = { academic_subjects: editedSubjects };
+      const { data, error: upErr } = await supabase
+        .from('student_profiles')
+        .update(payload)
+        .eq('user_id', studentUserId);
+
+      if (upErr) throw upErr;
+
+      // Refresh local state
+      const updatedProfile = { ...(profile || {}), academic_subjects: editedSubjects };
+      setStudent({ ...student, student_profiles: [updatedProfile] });
+      setEditMode(false);
+      setEditedSubjects(null);
+    } catch (err: any) {
+      console.error('Failed to save edited marks:', err);
+      setError(err.message || 'Failed to save changes.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const getSelectedSemSGPA = () => {
     if (selectedSemester === 'All' || filteredSubjects.length === 0) return cgpaVal.toFixed(2);
@@ -262,6 +322,33 @@ export default function StudentAcademicsPage() {
                       <TrendingUp className="h-4 w-4 text-[#1c5644]" />
                       <span>Total Courses: {filteredSubjects.length}</span>
                     </div>
+                      <div className="flex items-center gap-2">
+                        {!editMode ? (
+                          <button
+                            onClick={beginEdit}
+                            className="rounded-xl bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold"
+                          >
+                            Edit Marks
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={saveEdits}
+                              disabled={saving}
+                              className="rounded-xl bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold"
+                            >
+                              {saving ? 'Saving...' : 'Save Changes'}
+                            </button>
+                            <button
+                              onClick={cancelEdit}
+                              disabled={saving}
+                              className="rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
                   </div>
 
                   {/* Table */}
@@ -283,8 +370,8 @@ export default function StudentAcademicsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 bg-white">
-                        {filteredSubjects.length > 0 ? (
-                          filteredSubjects.map((sub: any, idx: number) => {
+                        { displaySubjects.length > 0 ? (
+                          displaySubjects.map((sub: any, idx: number) => {
                             const subCode = sub.code || sub.subject_code || sub.subjectCode || '—';
                             const subName = sub.name || sub.subject_name || sub.subjectName || 'Subject';
                             const subSem = sub.sem || sub.semester || '1-1';
@@ -304,11 +391,29 @@ export default function StudentAcademicsPage() {
                                 <td className="px-4 py-3.5 font-bold text-slate-900">{subName}</td>
                                 <td className="px-4 py-3.5 text-center font-bold text-slate-600">{subSem}</td>
                                 <td className="px-4 py-3.5 text-center font-bold text-slate-700">{subCredits}</td>
-                                <td className="px-4 py-3.5 text-center text-slate-500">{subMid1}</td>
-                                <td className="px-4 py-3.5 text-center text-slate-500">{subMid2}</td>
-                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">{subInt}</td>
-                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">{subExt}</td>
-                                <td className="px-4 py-3.5 text-center font-black text-slate-900">{subTotal}</td>
+                                <td className="px-4 py-3.5 text-center text-slate-500">
+                                  {editMode ? (
+                                    <input type="number" value={subMid1 ?? ''} onChange={(e) => handleFieldChange(idx, 'mid1', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subMid1}
+                                </td>
+                                <td className="px-4 py-3.5 text-center text-slate-500">
+                                  {editMode ? (
+                                    <input type="number" value={subMid2 ?? ''} onChange={(e) => handleFieldChange(idx, 'mid2', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subMid2}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                                  {editMode ? (
+                                    <input type="number" value={subInt ?? ''} onChange={(e) => handleFieldChange(idx, 'internal_marks', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subInt}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                                  {editMode ? (
+                                    <input type="number" value={subExt ?? ''} onChange={(e) => handleFieldChange(idx, 'external_marks', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subExt}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-black text-slate-900">
+                                  {editMode ? ((Number(subMid1 || 0) + Number(subMid2 || 0) + Number(subInt || 0) + Number(subExt || 0)) ) : subTotal}
+                                </td>
                                 <td className="px-4 py-3.5 text-center font-black text-[#1c5644]">{subGrade}</td>
                                 <td className="px-4 py-3.5 text-center">
                                   <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black shadow-xs ${
