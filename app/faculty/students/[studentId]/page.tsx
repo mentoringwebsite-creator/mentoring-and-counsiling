@@ -989,64 +989,7 @@ export default function StudentDetailsPage() {
                   {activeTab === 'academics' && (
                     <div className="space-y-5">
                       
-                      {/* Placement Eligibility & Recommendations */}
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        
-                        {/* Placement Eligibility Small Box */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow transition duration-200 flex items-center gap-4">
-                          <div className={`flex h-12 w-12 items-center justify-center rounded-xl shrink-0 ${
-                            placementEligibility.status === 'Eligible' ? 'bg-emerald-50 text-emerald-800' :
-                            placementEligibility.status === 'Conditional' ? 'bg-amber-50 text-amber-800' :
-                            'bg-rose-50 text-rose-800'
-                          }`}>
-                            <Briefcase className="h-5 w-5" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Placement Eligibility</div>
-                            <div className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
-                              <span>{placementEligibility.status === 'Eligible' ? 'Eligible for Campus Placements' : placementEligibility.status === 'Conditional' ? 'Conditional Placement Eligibility' : 'Currently Ineligible'}</span>
-                            </div>
-                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[9px] text-slate-500 font-bold">
-                              <span className="flex items-center gap-1">
-                                <span className={placementEligibility.checks[0].passed ? "text-emerald-600" : "text-rose-500"}>●</span>
-                                CGPA {cgpaVal.toFixed(2)}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <span className={placementEligibility.checks[1].passed ? "text-emerald-600" : "text-rose-500"}>●</span>
-                                Backlogs {backlogsVal}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <span className={placementEligibility.checks[2].passed ? "text-emerald-600" : "text-rose-500"}>●</span>
-                                Attendance {attendanceVal}%
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Career Roles Small Box */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm hover:shadow transition duration-200 flex items-center gap-4">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-800 shrink-0">
-                            <Laptop className="h-5 w-5" />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">AI Career Fit Recommendations</div>
-                            <div className="flex flex-wrap gap-1.5 mt-1.5">
-                              {recommendedRoles.slice(0, 2).map((role, i) => (
-                                <span key={i} className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[9px] font-extrabold border ${
-                                  role.match >= 90 ? 'bg-emerald-50 border-emerald-100 text-emerald-700' :
-                                  'bg-blue-50 border-blue-100 text-blue-700'
-                                }`}>
-                                  <span>{role.title}</span>
-                                  <span className="opacity-80">({role.match}%)</span>
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                      </div>
-
-                      {/* Charts Grid */}
+                      {/* Charts & Analytics Grid */}
                       <div className="grid gap-5 md:grid-cols-2">
                       
                       {/* SGPA Semester Trend */}
@@ -1176,6 +1119,68 @@ export default function StudentDetailsPage() {
                               <p className="text-xs text-slate-455 italic">No backlogs detected! Student is clear.</p>
                             </div>
                           )}
+                        </div>
+                      </div>
+
+                      {/* Placement Eligibility Box (Beside Backlog Overview) */}
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col justify-between hover:shadow-md transition duration-200">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 shrink-0">
+                          <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                            <Briefcase className="h-4 w-4 text-[#1c5644]" />
+                            <span>Placement Eligibility</span>
+                          </h4>
+                          <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[9px] font-extrabold border ${
+                            placementEligibility.status === 'Eligible' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' :
+                            placementEligibility.status === 'Conditional' ? 'bg-amber-50 border-amber-100 text-amber-800' :
+                            'bg-rose-50 border-rose-100 text-rose-800'
+                          }`}>
+                            <span>{placementEligibility.status}</span>
+                          </span>
+                        </div>
+
+                        <div className="space-y-2.5 my-auto">
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                            <span className="text-[11px] font-bold text-slate-500">Placement Status</span>
+                            <span className="text-xs font-extrabold text-slate-900">
+                              {placementEligibility.status === 'Eligible' ? 'Eligible for Campus Placements' : placementEligibility.status === 'Conditional' ? 'Conditional Eligibility' : 'Currently Ineligible'}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 text-[10px]">
+                            <div className="p-2 rounded-xl bg-white border border-slate-150 text-center shadow-xs">
+                              <div className="text-slate-400 font-bold">CGPA</div>
+                              <div className={`font-black mt-0.5 ${placementEligibility.checks[0].passed ? 'text-emerald-700' : 'text-rose-600'}`}>
+                                {cgpaVal.toFixed(2)}
+                              </div>
+                            </div>
+                            <div className="p-2 rounded-xl bg-white border border-slate-150 text-center shadow-xs">
+                              <div className="text-slate-400 font-bold">Backlogs</div>
+                              <div className={`font-black mt-0.5 ${placementEligibility.checks[1].passed ? 'text-emerald-700' : 'text-rose-600'}`}>
+                                {backlogsVal}
+                              </div>
+                            </div>
+                            <div className="p-2 rounded-xl bg-white border border-slate-150 text-center shadow-xs">
+                              <div className="text-slate-400 font-bold">Attendance</div>
+                              <div className={`font-black mt-0.5 ${placementEligibility.checks[2].passed ? 'text-emerald-700' : 'text-rose-600'}`}>
+                                {attendanceVal}%
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                              <Sparkles className="h-3 w-3 text-blue-600" />
+                              <span>AI Career Fit Recommendations</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {recommendedRoles.slice(0, 2).map((role, i) => (
+                                <span key={i} className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[9px] font-extrabold bg-blue-50 border border-blue-100 text-blue-800">
+                                  <span>{role.title}</span>
+                                  <span className="text-blue-600">({role.match}%)</span>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
 
