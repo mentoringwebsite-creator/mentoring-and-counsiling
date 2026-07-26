@@ -22,12 +22,11 @@ import {
 } from 'recharts';
 
 const facultySidebarItems = [
-  { href: '/faculty', label: 'My Dashboard' },
+  { href: '/faculty', label: 'Mentor Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
   { href: '/faculty/academic-forms', label: 'Academic Forms' },
   { href: '/faculty/attendance-forms', label: 'Attendance Forms' },
-  { href: '/faculty/queries', label: 'Student Queries' },
-  { href: '/faculty/notes', label: 'Mentor Notes' }
+  { href: '/faculty/queries', label: 'Student Queries' }
 ];
 
 const getStudentBTechYear = (roll: string, acYear: string) => {

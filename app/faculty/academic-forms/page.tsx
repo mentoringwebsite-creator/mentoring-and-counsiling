@@ -18,12 +18,11 @@ import {
 } from 'lucide-react';
 
 const facultySidebarItems = [
-  { href: '/faculty', label: 'My Dashboard' },
+  { href: '/faculty', label: 'Mentor Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
   { href: '/faculty/academic-forms', label: 'Academic Forms' },
   { href: '/faculty/attendance-forms', label: 'Attendance Forms' },
-  { href: '/faculty/queries', label: 'Student Queries' },
-  { href: '/faculty/notes', label: 'Mentor Notes' }
+  { href: '/faculty/queries', label: 'Student Queries' }
 ];
 
 const SEMESTERS = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2', '4-1', '4-2'];

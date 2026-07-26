@@ -42,16 +42,14 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
         { href: '/faculty/students', label: 'Students', icon: Users },
         { href: '/faculty/academic-forms', label: 'Marks', icon: FileText },
         { href: '/faculty/attendance-forms', label: 'Att.', icon: FileText },
-        { href: '/faculty/queries', label: 'Queries', icon: MessageSquare },
-        { href: '/faculty/notes', label: 'Notes', icon: FileText }
+        { href: '/faculty/queries', label: 'Queries', icon: MessageSquare }
       ];
     }
     if (pathname.startsWith('/hod')) {
       return [
         { href: '/hod', label: 'Home', icon: Home },
         { href: '/hod/students', label: 'Students', icon: Users },
-        { href: '/hod/queries', label: 'Queries', icon: MessageSquare },
-        { href: '/hod/reports', label: 'Reports', icon: FileText }
+        { href: '/hod/queries', label: 'Queries', icon: MessageSquare }
       ];
     }
     if (pathname.startsWith('/admin')) {

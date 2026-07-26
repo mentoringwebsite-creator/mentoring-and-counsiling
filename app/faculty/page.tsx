@@ -20,12 +20,11 @@ import {
 } from 'recharts';
 
 const facultySidebarItems = [
-  { href: '/faculty', label: 'My Dashboard' },
+  { href: '/faculty', label: 'Mentor Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
   { href: '/faculty/academic-forms', label: 'Academic Forms' },
   { href: '/faculty/attendance-forms', label: 'Attendance Forms' },
-  { href: '/faculty/queries', label: 'Student Queries' },
-  { href: '/faculty/notes', label: 'Mentor Notes' }
+  { href: '/faculty/queries', label: 'Student Queries' }
 ];
 
 export default function FacultyDashboardPage() {
@@ -392,7 +391,7 @@ export default function FacultyDashboardPage() {
 
   return (
     <ProtectedRoute role="faculty">
-      <PageShell title="My Dashboard" subtitle="Unified mentor monitoring, profile, and insights">
+      <PageShell title="Mentor Dashboard" subtitle="Unified mentor monitoring, profile, and insights">
         <div className="grid gap-6 px-4 py-4 md:px-6 md:py-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/faculty" items={facultySidebarItems} />
           
