@@ -378,12 +378,12 @@ export default function StudentFormsPage() {
                       ) : (
                         /* Attendance Form Fields */
                         <div className="space-y-4">
-                          <div className="bg-amber-50/70 border border-amber-200/80 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="bg-amber-50/70 border border-amber-200/80 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
-                              <span className="text-xs font-bold text-amber-900 uppercase">Overall Attendance Percentage (%)</span>
-                              <p className="text-[11px] text-amber-700">Enter your current overall cumulative attendance percentage across all subjects.</p>
+                              <span className="text-xs font-extrabold text-amber-900 uppercase tracking-wider">Overall Attendance Percentage (%)</span>
+                              <p className="text-xs text-amber-700 mt-1">Enter your current overall cumulative attendance percentage for this term/semester.</p>
                             </div>
-                            <div className="flex items-center gap-1 shrink-0">
+                            <div className="flex items-center gap-1.5 shrink-0">
                               <input
                                 type="number"
                                 min="0"
@@ -393,46 +393,10 @@ export default function StudentFormsPage() {
                                 disabled={isSubmitted && !isRejected}
                                 value={formInputs.overall_attendance ?? '85'}
                                 onChange={(e) => handleOverallAttendanceChange(form.id, e.target.value)}
-                                className="w-24 rounded-xl border border-amber-300 bg-white px-3 py-1.5 font-extrabold text-sm text-center text-amber-900 focus:border-amber-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
+                                className="w-28 rounded-xl border border-amber-300 bg-white px-3 py-2 font-extrabold text-base text-center text-amber-950 focus:border-amber-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500 shadow-sm"
                               />
-                              <span className="font-bold text-amber-900">%</span>
+                              <span className="font-extrabold text-amber-900 text-lg">%</span>
                             </div>
-                          </div>
-
-                          {/* Per-subject attendance Breakdown */}
-                          <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-slate-50/50 p-4">
-                            <table className="w-full text-xs text-left">
-                              <thead>
-                                <tr className="text-slate-500 font-bold uppercase text-[9px] border-b border-slate-200">
-                                  <th className="p-2">Subject Code</th>
-                                  <th className="p-2">Subject Name</th>
-                                  <th className="p-2 text-center w-32">Attendance %</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-200/60 font-medium text-slate-800">
-                                {(formInputs.fields || []).map((row: any, idx: number) => (
-                                  <tr key={idx}>
-                                    <td className="p-2 font-mono font-bold">{row.code}</td>
-                                    <td className="p-2 font-semibold">{row.name}</td>
-                                    <td className="p-2 text-center">
-                                      <div className="flex items-center justify-center gap-1">
-                                        <input
-                                          type="number"
-                                          min="0"
-                                          max="100"
-                                          placeholder="85"
-                                          disabled={isSubmitted && !isRejected}
-                                          value={row.attendance ?? '85'}
-                                          onChange={(e) => handleFieldChange(form.id, idx, 'attendance', e.target.value)}
-                                          className="w-20 rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-center font-bold text-xs focus:border-emerald-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500"
-                                        />
-                                        <span>%</span>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
                           </div>
                         </div>
                       )}

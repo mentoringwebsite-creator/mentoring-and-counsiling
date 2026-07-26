@@ -148,7 +148,7 @@ export default function FacultyFormsPage() {
 
   const handleCreateForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (subjectRows.length === 0) {
+    if (formType === 'semester_marks' && subjectRows.length === 0) {
       alert('Please add at least one subject to the form.');
       return;
     }
@@ -165,7 +165,7 @@ export default function FacultyFormsPage() {
         form_type: formType,
         title: formTitle,
         semester: selectedSemester,
-        fields: subjectRows,
+        fields: formType === 'semester_marks' ? subjectRows : [],
         status: 'Active'
       };
 
@@ -557,33 +557,10 @@ export default function FacultyFormsPage() {
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            <div className="flex items-center gap-4 bg-amber-50 border border-amber-200 p-3 rounded-2xl">
-                              <span className="text-xs font-bold text-amber-900 uppercase">Overall Attendance:</span>
-                              <span className="text-base font-extrabold text-amber-900">{sub.overall_attendance}%</span>
+                            <div className="flex items-center justify-between bg-amber-50 border border-amber-200 p-4 rounded-2xl">
+                              <span className="text-xs font-extrabold text-amber-900 uppercase tracking-wider">Overall Attendance Percentage:</span>
+                              <span className="text-lg font-black text-amber-950">{sub.overall_attendance}%</span>
                             </div>
-
-                            {Array.isArray(sub.submission_data) && sub.submission_data.length > 0 && (
-                              <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-                                <table className="w-full text-xs text-left">
-                                  <thead>
-                                    <tr className="text-slate-500 font-bold uppercase text-[9px] border-b border-slate-200">
-                                      <th className="p-2">Subject Code</th>
-                                      <th className="p-2">Subject Name</th>
-                                      <th className="p-2 text-center">Attendance %</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-200/60 font-medium text-slate-800">
-                                    {sub.submission_data.map((r: any, i: number) => (
-                                      <tr key={i}>
-                                        <td className="p-2 font-mono font-bold">{r.code}</td>
-                                        <td className="p-2 font-semibold">{r.name}</td>
-                                        <td className="p-2 text-center font-bold text-emerald-800">{r.attendance}%</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
                           </div>
                         )}
                       </div>
@@ -706,60 +683,62 @@ export default function FacultyFormsPage() {
                   />
                 </div>
 
-                {/* Subject Rows Builder */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Form Subjects ({subjectRows.length})</label>
-                    <button
-                      type="button"
-                      onClick={addSubjectRow}
-                      className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>Add Subject</span>
-                    </button>
-                  </div>
+                {/* Subject Rows Builder for Semester Marks */}
+                {formType === 'semester_marks' && (
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Form Subjects ({subjectRows.length})</label>
+                      <button
+                        type="button"
+                        onClick={addSubjectRow}
+                        className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Add Subject</span>
+                      </button>
+                    </div>
 
-                  <div className="space-y-2">
-                    {subjectRows.map((row, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          placeholder="Subject Code (e.g. 9EC06)"
-                          value={row.code}
-                          onChange={(e) => {
-                            const updated = [...subjectRows];
-                            updated[idx].code = e.target.value;
-                            setSubjectRows(updated);
-                          }}
-                          required
-                          className="w-1/3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Subject Name (e.g. Microwave Engineering)"
-                          value={row.name}
-                          onChange={(e) => {
-                            const updated = [...subjectRows];
-                            updated[idx].name = e.target.value;
-                            setSubjectRows(updated);
-                          }}
-                          required
-                          className="w-2/3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold"
-                        />
-                        {subjectRows.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeSubjectRow(idx)}
-                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                    <div className="space-y-2">
+                      {subjectRows.map((row, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            placeholder="Subject Code (e.g. 9EC06)"
+                            value={row.code}
+                            onChange={(e) => {
+                              const updated = [...subjectRows];
+                              updated[idx].code = e.target.value;
+                              setSubjectRows(updated);
+                            }}
+                            required
+                            className="w-1/3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Subject Name (e.g. Microwave Engineering)"
+                            value={row.name}
+                            onChange={(e) => {
+                              const updated = [...subjectRows];
+                              updated[idx].name = e.target.value;
+                              setSubjectRows(updated);
+                            }}
+                            required
+                            className="w-2/3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold"
+                          />
+                          {subjectRows.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeSubjectRow(idx)}
+                              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
                   <button
