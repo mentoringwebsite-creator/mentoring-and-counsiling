@@ -1084,24 +1084,6 @@ export function StudentDetailsModal({ studentUserId, isOpen, onClose }: StudentD
                         </div>
                         <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col justify-between gap-2 text-xs">
                           <div className="space-y-1">
-                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
-                              <span className="text-slate-400 font-bold">CGPA</span>
-                              <span className="font-extrabold text-slate-800">{cgpaVal.toFixed(2)} / 10.0</span>
-                            </div>
-                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
-                              <span className="text-slate-400 font-bold">Attendance</span>
-                              <span className="font-extrabold text-emerald-800">{studentAttendance}%</span>
-                            </div>
-                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
-                              <span className="text-slate-400 font-bold">Placement Eligibility</span>
-                              <span className={`font-extrabold text-[9px] ${backlogsVal === 0 && cgpaVal >= 6.0 ? 'text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded' : 'text-rose-800 bg-rose-50 px-1 py-0.5 rounded'}`}>
-                                {backlogsVal === 0 && cgpaVal >= 6.0 ? 'Eligible' : 'Ineligible'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-1.5 rounded-lg bg-white border text-[10px] shadow-sm">
-                              <span className="text-slate-400 font-bold">Recommended Roles</span>
-                              <span className="font-extrabold text-[#1c5644] text-[9px] truncate max-w-[140px]" title={getSuitableRoles()}>{getSuitableRoles()}</span>
-                            </div>
                           </div>
                           <div className="rounded-lg border border-slate-200 bg-white p-2 flex flex-col gap-0.5 shrink-0">
                             <div className="flex items-center gap-1 border-b pb-0.5 text-[7px] font-bold text-[#1c5644] uppercase tracking-wider">

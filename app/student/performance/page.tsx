@@ -725,26 +725,6 @@ export default function PerformancePage() {
                         <div className="flex-1 overflow-y-auto scrollbar-none flex flex-col justify-between gap-3 text-xs">
                           {/* Parental highlights card list */}
                           <div className="space-y-2 flex-1 min-h-0 overflow-y-auto scrollbar-none">
-                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
-                              <span className="text-slate-550 font-bold text-[10px]">Academic CGPA</span>
-                              <span className="font-extrabold text-slate-800 text-[11px]">{cgpa} / 10.0</span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
-                              <span className="text-slate-550 font-bold text-[10px]">Attendance Status</span>
-                              <span className={`font-extrabold text-[11px] ${studentAttendance >= 85 ? 'text-emerald-800' : studentAttendance >= 75 ? 'text-slate-700' : 'text-rose-800'}`}>
-                                {studentAttendance}% ({studentAttendance >= 85 ? 'Excellent' : studentAttendance >= 75 ? 'Good' : 'Critical'})
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
-                              <span className="text-slate-550 font-bold text-[10px]">Pending Backlogs</span>
-                              <span className="font-extrabold text-slate-800 text-[11px]">{backlogs === 0 ? 'Nil (Clean Record)' : `${backlogs} subjects`}</span>
-                            </div>
-                            <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
-                              <span className="text-slate-550 font-bold text-[10px]">Placement Eligibility</span>
-                              <span className={`font-extrabold text-[10px] ${backlogs === 0 && cgpa >= 6.0 ? 'text-emerald-800 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded' : 'text-rose-800 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded'}`}>
-                                {backlogs === 0 && cgpa >= 6.0 ? 'Eligible' : 'Ineligible'}
-                              </span>
-                            </div>
                           </div>
                         </div>
                       </div>
