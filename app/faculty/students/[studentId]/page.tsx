@@ -1323,3 +1323,8 @@ export default function StudentDetailsPage() {
             </div>
           </div>
         )}
+      </PageShell>
+    </ProtectedRoute>
+  );
+}
+
