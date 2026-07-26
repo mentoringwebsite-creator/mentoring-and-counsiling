@@ -183,8 +183,43 @@ export default function PerformancePage() {
       setCgpa(finalCgpa);
       setBacklogs(finalBacklogs);
 
+      // Helper functions for semester normalization
+      const normalizeSem = (val: string | number | undefined | null): string => {
+        if (!val) return '';
+        const s = String(val).trim();
+        const map: Record<string, string> = {
+          '1': '1-1', '1-1': '1-1',
+          '2': '1-2', '1-2': '1-2',
+          '3': '2-1', '2-1': '2-1',
+          '4': '2-2', '2-2': '2-2',
+          '5': '3-1', '3-1': '3-1',
+          '6': '3-2', '3-2': '3-2',
+          '7': '4-1', '4-1': '4-1',
+          '8': '4-2', '4-2': '4-2'
+        };
+        return map[s] || s;
+      };
+
+      const semIndexMap: Record<string, number> = {
+        '1-1': 1, '1': 1,
+        '1-2': 2, '2': 2,
+        '2-1': 3, '3': 3,
+        '2-2': 4, '4': 4,
+        '3-1': 5, '5': 5,
+        '3-2': 6, '6': 6,
+        '4-1': 7, '7': 7,
+        '4-2': 8, '8': 8
+      };
+
+      const getSemIdx = (sub: any): number | null => {
+        const raw = sub.sem || sub.semester;
+        if (!raw) return null;
+        const norm = normalizeSem(raw);
+        return semIndexMap[norm] || (parseInt(raw) || null);
+      };
+
       // Set default selected semester to the highest available semester
-      const sems = subjectsList.map((s: any) => parseInt(s.semester)).filter((s: number) => !isNaN(s));
+      const sems = subjectsList.map((s: any) => getSemIdx(s)).filter((s: number | null): s is number => s !== null);
       if (sems.length > 0) {
         setChartSemester(Math.max(...sems).toString());
       }
@@ -213,6 +248,40 @@ export default function PerformancePage() {
     loadPerformanceData();
   }, []);
 
+  const normalizeSem = (val: string | number | undefined | null): string => {
+    if (!val) return '';
+    const s = String(val).trim();
+    const map: Record<string, string> = {
+      '1': '1-1', '1-1': '1-1',
+      '2': '1-2', '1-2': '1-2',
+      '3': '2-1', '2-1': '2-1',
+      '4': '2-2', '2-2': '2-2',
+      '5': '3-1', '3-1': '3-1',
+      '6': '3-2', '3-2': '3-2',
+      '7': '4-1', '4-1': '4-1',
+      '8': '4-2', '4-2': '4-2'
+    };
+    return map[s] || s;
+  };
+
+  const semIndexMap: Record<string, number> = {
+    '1-1': 1, '1': 1,
+    '1-2': 2, '2': 2,
+    '2-1': 3, '3': 3,
+    '2-2': 4, '4': 4,
+    '3-1': 5, '5': 5,
+    '3-2': 6, '6': 6,
+    '4-1': 7, '7': 7,
+    '4-2': 8, '8': 8
+  };
+
+  const getSemIdx = (sub: any): number | null => {
+    const raw = sub.sem || sub.semester;
+    if (!raw) return null;
+    const norm = normalizeSem(raw);
+    return semIndexMap[norm] || (parseInt(raw) || null);
+  };
+
   const convertGradeToGP = (gpaStr: string | number | undefined | null): number | null => {
     if (gpaStr === undefined || gpaStr === null) return null;
     const str = String(gpaStr).trim().toUpperCase();
@@ -235,14 +304,15 @@ export default function PerformancePage() {
   const getSgpaTrendData = () => {
     const semMap: { [key: number]: any[] } = {};
     subjects.forEach((sub) => {
-      const sem = parseInt(sub.semester);
-      if (!isNaN(sem)) {
-        if (!semMap[sem]) semMap[sem] = [];
-        semMap[sem].push(sub);
+      const semIdx = getSemIdx(sub);
+      if (semIdx) {
+        if (!semMap[semIdx]) semMap[semIdx] = [];
+        semMap[semIdx].push(sub);
       }
     });
 
-    const maxSem = Math.max(...subjects.map(s => parseInt(s.semester)), 2);
+    const parsedSemIndices = subjects.map(s => getSemIdx(s)).filter((s): s is number => s !== null);
+    const maxSem = parsedSemIndices.length > 0 ? Math.max(...parsedSemIndices) : 2;
     const length = Math.max(maxSem, 4);
     
     return Array.from({ length }, (_, i) => {
@@ -260,13 +330,11 @@ export default function PerformancePage() {
 
         subjectsInSem.forEach((sub) => {
           const gp = convertGradeToGP(sub.gpa);
-          const credits = parseFloat(sub.credits);
+          const credits = parseFloat(sub.credits) || 3;
           if (gp !== null) {
             validGPsCount++;
-            if (!isNaN(credits) && credits >= 0) {
-              weightedGPsum += gp * credits;
-              totalCredits += credits;
-            }
+            weightedGPsum += gp * credits;
+            totalCredits += credits;
           }
         });
 
@@ -293,13 +361,19 @@ export default function PerformancePage() {
   };
 
   const getSubjectMarksData = () => {
-    const semSubjects = subjects.filter(s => s.semester?.toString() === chartSemester);
+    const semSubjects = subjects.filter(s => {
+      const semIdx = getSemIdx(s);
+      return semIdx?.toString() === chartSemester || normalizeSem(s.sem || s.semester) === normalizeSem(chartSemester);
+    });
     return semSubjects.map(sub => {
-      const marks = parseInt(sub.total_marks) || 0;
+      const intVal = parseInt(sub.internal_marks ?? sub.internal) || 0;
+      const extVal = parseInt(sub.external_marks ?? sub.external) || 0;
+      const totalVal = parseInt(sub.total_marks ?? sub.totalMarks ?? sub.total) || (intVal + extVal);
+
       return {
         name: sub.name.length > 10 ? sub.name.substring(0, 8) + '...' : sub.name,
         fullName: sub.name,
-        Marks: marks
+        Marks: totalVal
       };
     }).filter(d => d.Marks > 0);
   };
@@ -326,17 +400,18 @@ export default function PerformancePage() {
     }
 
     subjects.forEach((sub: any) => {
-      const sem = parseInt(sub.semester);
+      const sem = getSemIdx(sub);
       const gp = convertGradeToGP(sub.gpa);
       const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
-      if (!isNaN(sem)) {
+      if (sem) {
         if (isF) {
           semMap[sem] = (semMap[sem] || 0) + 1;
         }
       }
     });
 
-    const maxSemInDb = Math.max(...subjects.map((s: any) => parseInt(s.semester) || 1), 6);
+    const parsedSemIndices = subjects.map(s => getSemIdx(s)).filter((s): s is number => s !== null);
+    const maxSemInDb = parsedSemIndices.length > 0 ? Math.max(...parsedSemIndices) : 6;
     for (let i = 7; i <= maxSemInDb; i++) {
       if (semMap[i] === undefined) semMap[i] = 0;
     }
@@ -364,7 +439,7 @@ export default function PerformancePage() {
     let totalInternal = 0;
     let count = 0;
     subjects.forEach(sub => {
-      const im = parseInt(sub.internal_marks);
+      const im = parseInt(sub.internal_marks ?? sub.internal);
       if (!isNaN(im) && im > 0) {
         totalInternal += im;
         count++;
