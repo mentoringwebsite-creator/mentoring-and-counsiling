@@ -670,7 +670,7 @@ export default function StudentDetailsPage() {
                   <div className="h-24 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-855" />
                   
                   <div className="px-6 pb-6 pt-0">
-                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-center -mt-12 md:-mt-16 relative z-10">
+                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-center -mt-8 md:-mt-12 relative z-10">
                       {/* Avatar container */}
                       <div className="h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] md:h-[185px] md:w-[185px] lg:h-[210px] lg:w-[210px] xl:h-[230px] xl:w-[230px] rounded-[32px] overflow-hidden border-[5px] border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
                         {profile.profile_photo ? (
@@ -694,7 +694,9 @@ export default function StudentDetailsPage() {
                         {/* Row 1: Student Name & Risk Status */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-4 border-b border-slate-100/90">
                           <div>
-                            <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight leading-none mb-1.5">{student?.name}</h2>
+                            <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight leading-none mb-1.5">
+                              <span className="inline-block bg-white px-3 py-1 rounded-md shadow-sm">{student?.name}</span>
+                            </h2>
                             <p className="text-xs text-slate-400 font-bold tracking-wide uppercase">{profile.roll_number || 'N/A'} • B.Tech Student</p>
                           </div>
                           
@@ -1032,17 +1034,19 @@ export default function StudentDetailsPage() {
                         </div>
                         <div className="flex-1 min-h-0 w-full">
                           {backlogData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={backlogData} margin={{ top: 15, right: 10, left: -25, bottom: 2 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
-                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
-                                <YAxis stroke="#94a3b8" fontSize={8} fontWeight={600} allowDecimals={false} domain={[0, 'dataMax + 1']} />
-                                <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                                <Bar name="Backlogs" dataKey="Backlogs" fill="#dc2626" radius={[3, 3, 0, 0]} barSize={12}>
-                                  <LabelList dataKey="Backlogs" position="top" style={{ fontSize: '8px', fill: '#dc2626', fontWeight: 'bold' }} />
-                                </Bar>
-                              </BarChart>
-                            </ResponsiveContainer>
+                            <div onClick={() => router.push(`/faculty/students/${studentUserId}/academics`)} className="cursor-pointer h-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={backlogData} margin={{ top: 15, right: 10, left: -25, bottom: 2 }}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+                                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
+                                  <YAxis stroke="#94a3b8" fontSize={8} fontWeight={600} allowDecimals={false} domain={[0, 'dataMax + 1']} />
+                                  <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
+                                  <Bar name="Backlogs" dataKey="Backlogs" fill="#dc2626" radius={[3, 3, 0, 0]} barSize={12}>
+                                    <LabelList dataKey="Backlogs" position="top" style={{ fontSize: '8px', fill: '#dc2626', fontWeight: 'bold' }} />
+                                  </Bar>
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
                           ) : (
                             <div className="flex h-full items-center justify-center">
                               <p className="text-xs text-slate-455 italic">No backlogs detected! Student is clear.</p>
