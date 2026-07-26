@@ -496,13 +496,9 @@ export default function FacultyDashboardPage() {
                           <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Department</span>
                           <span className="font-semibold text-slate-800 uppercase">{profile.department}</span>
                         </div>
-                        <div className="flex items-center justify-between py-1.5 border-b border-slate-100/80">
+                        <div className="flex items-center justify-between py-1.5">
                           <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Highest Qualification</span>
                           <span className="font-semibold text-slate-800 uppercase">{profile.qualification}</span>
-                        </div>
-                        <div className="flex items-center justify-between py-1.5">
-                          <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Subjects Handled</span>
-                          <span className="font-semibold text-slate-800">{profile.subjects}</span>
                         </div>
                       </div>
                     </div>
