@@ -41,7 +41,7 @@ export default function StudentAcademicFormsPage() {
 
       const { data: profile } = await supabase
         .from('student_profiles')
-        .select('mentor_id')
+        .select('mentor_id, sgpa, cgpa')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -79,12 +79,19 @@ export default function StudentAcademicFormsPage() {
 
       (formsData || []).forEach((f) => {
         const sub = subMap[f.id];
+        const rawData = sub?.submission_data;
+        const isObjectData = rawData && !Array.isArray(rawData);
+
         if (sub) {
           stateMap[f.id] = {
-            fields: sub.submission_data || f.fields || []
+            sgpa: isObjectData ? (rawData.sgpa ?? '') : (profile?.sgpa ?? ''),
+            cgpa: isObjectData ? (rawData.cgpa ?? '') : (profile?.cgpa ?? ''),
+            fields: isObjectData ? (rawData.fields || []) : (rawData || f.fields || [])
           };
         } else {
           stateMap[f.id] = {
+            sgpa: profile?.sgpa ? String(profile.sgpa) : '',
+            cgpa: profile?.cgpa ? String(profile.cgpa) : '',
             fields: (f.fields || []).map((row: any) => ({
               ...row,
               internal: '',
@@ -110,13 +117,23 @@ export default function StudentAcademicFormsPage() {
   const handleFieldChange = (formId: string, idx: number, key: string, value: any) => {
     setFormDataState((prev) => {
       const currentForm = prev[formId] || { fields: [] };
-      const newFields = [...currentForm.fields];
+      const newFields = [...(currentForm.fields || [])];
       newFields[idx] = { ...newFields[idx], [key]: value };
       return {
         ...prev,
         [formId]: { ...currentForm, fields: newFields }
       };
     });
+  };
+
+  const handleSgpaCgpaChange = (formId: string, key: 'sgpa' | 'cgpa', value: string) => {
+    setFormDataState((prev) => ({
+      ...prev,
+      [formId]: {
+        ...(prev[formId] || { fields: [] }),
+        [key]: value
+      }
+    }));
   };
 
   const handleSubmitForm = async (form: any) => {
@@ -128,6 +145,20 @@ export default function StudentAcademicFormsPage() {
 
       const currentInputs = formDataState[form.id] || {};
       const fields = currentInputs.fields || [];
+      const sgpaVal = parseFloat(currentInputs.sgpa);
+      const cgpaVal = parseFloat(currentInputs.cgpa);
+
+      if (isNaN(sgpaVal) || sgpaVal < 0 || sgpaVal > 10) {
+        alert('Please enter a valid Semester SGPA (0.00 - 10.00).');
+        setSubmittingId(null);
+        return;
+      }
+
+      if (isNaN(cgpaVal) || cgpaVal < 0 || cgpaVal > 10) {
+        alert('Please enter a valid Cumulative CGPA (0.00 - 10.00).');
+        setSubmittingId(null);
+        return;
+      }
 
       // Validate marks
       for (const row of fields) {
@@ -152,7 +183,11 @@ export default function StudentAcademicFormsPage() {
         mentor_id: form.mentor_id,
         form_type: 'semester_marks',
         semester: form.semester,
-        submission_data: fields,
+        submission_data: {
+          sgpa: sgpaVal,
+          cgpa: cgpaVal,
+          fields: fields
+        },
         status: 'Submitted',
         submitted_at: new Date().toISOString()
       };
@@ -261,6 +296,43 @@ export default function StudentAcademicFormsPage() {
                               <span>Action Required</span>
                             </span>
                           )}
+                        </div>
+                      </div>
+
+                      {/* SGPA & CGPA Input Card */}
+                      <div className="grid gap-4 md:grid-cols-2 bg-purple-50/70 border border-purple-200/80 p-4 rounded-2xl">
+                        <div>
+                          <label className="block text-xs font-extrabold text-purple-900 uppercase tracking-wider mb-1">
+                            Semester SGPA (0.00 - 10.00)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            step="0.01"
+                            placeholder="e.g. 8.50"
+                            disabled={isSubmitted && !isRejected}
+                            value={formInputs.sgpa ?? ''}
+                            onChange={(e) => handleSgpaCgpaChange(form.id, 'sgpa', e.target.value)}
+                            className="w-full rounded-xl border border-purple-300 bg-white px-3 py-2 font-bold text-sm text-purple-950 focus:border-purple-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500 shadow-sm"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-extrabold text-purple-900 uppercase tracking-wider mb-1">
+                            Cumulative CGPA (0.00 - 10.00)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            step="0.01"
+                            placeholder="e.g. 8.25"
+                            disabled={isSubmitted && !isRejected}
+                            value={formInputs.cgpa ?? ''}
+                            onChange={(e) => handleSgpaCgpaChange(form.id, 'cgpa', e.target.value)}
+                            className="w-full rounded-xl border border-purple-300 bg-white px-3 py-2 font-bold text-sm text-purple-950 focus:border-purple-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-500 shadow-sm"
+                          />
                         </div>
                       </div>
 

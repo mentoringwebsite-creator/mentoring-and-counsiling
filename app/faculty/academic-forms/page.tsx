@@ -192,10 +192,16 @@ export default function FacultyAcademicFormsPage() {
       const profileId = studentProf?.id;
       if (!profileId) throw new Error('Student profile record not found.');
 
-      const existingSubjects: any[] = studentProf.academic_subjects || [];
-      const submittedMarks: any[] = sub.submission_data || [];
+      const rawSubData = sub.submission_data;
+      const isObj = rawSubData && !Array.isArray(rawSubData);
+      const submittedMarks: any[] = isObj ? (rawSubData.fields || []) : (rawSubData || []);
+      const submittedSgpa = isObj ? parseFloat(rawSubData.sgpa) : NaN;
+      const submittedCgpa = isObj ? parseFloat(rawSubData.cgpa) : NaN;
 
+      const semValue = sub.semester || '3-2';
+      const existingSubjects: any[] = studentProf?.academic_subjects || [];
       const updatedSubjects = [...existingSubjects];
+
       submittedMarks.forEach((m: any) => {
         const total = (parseInt(m.internal) || 0) + (parseInt(m.external) || 0);
         let grade = 'A';
@@ -210,7 +216,8 @@ export default function FacultyAcademicFormsPage() {
         const newSubObj = {
           code: m.code,
           name: m.name,
-          sem: sub.semester || '3-2',
+          sem: semValue,
+          semester: semValue,
           credits: '3',
           internal: m.internal,
           external: m.external,
@@ -219,7 +226,9 @@ export default function FacultyAcademicFormsPage() {
           result: grade === 'F' ? 'FAIL' : 'P'
         };
 
-        const idx = updatedSubjects.findIndex((s: any) => s.code === m.code && s.sem === (sub.semester || '3-2'));
+        const idx = updatedSubjects.findIndex((s: any) => 
+          s.code === m.code && (s.sem === semValue || s.semester === semValue)
+        );
         if (idx >= 0) {
           updatedSubjects[idx] = newSubObj;
         } else {
@@ -245,12 +254,15 @@ export default function FacultyAcademicFormsPage() {
       });
 
       const newCgpa = totalCreds > 0 ? parseFloat((totalPts / totalCreds).toFixed(2)) : 8.0;
+      const finalSgpa = !isNaN(submittedSgpa) && submittedSgpa > 0 ? submittedSgpa : newCgpa;
+      const finalCgpa = !isNaN(submittedCgpa) && submittedCgpa > 0 ? submittedCgpa : newCgpa;
 
       const { error: updateProfErr } = await supabase
         .from('student_profiles')
         .update({
           academic_subjects: updatedSubjects,
-          cgpa: newCgpa,
+          sgpa: finalSgpa,
+          cgpa: finalCgpa,
           backlogs: backlogs
         })
         .eq('id', profileId);
@@ -437,30 +449,59 @@ export default function FacultyAcademicFormsPage() {
                           </div>
                         </div>
 
-                        <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
-                          <table className="w-full text-xs text-left">
-                            <thead>
-                              <tr className="text-slate-500 font-bold uppercase text-[9px] border-b border-slate-200">
-                                <th className="p-2">Subject Code</th>
-                                <th className="p-2">Subject Name</th>
-                                <th className="p-2 text-center">Internal (40)</th>
-                                <th className="p-2 text-center">External (60)</th>
-                                <th className="p-2 text-center font-black text-slate-800">Total (100)</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200/60 font-medium text-slate-800">
-                              {(sub.submission_data || []).map((m: any, i: number) => (
-                                <tr key={i}>
-                                  <td className="p-2 font-mono font-bold">{m.code}</td>
-                                  <td className="p-2 font-semibold">{m.name}</td>
-                                  <td className="p-2 text-center">{m.internal || 0}</td>
-                                  <td className="p-2 text-center">{m.external || 0}</td>
-                                  <td className="p-2 text-center font-bold text-emerald-800">{(parseInt(m.internal) || 0) + (parseInt(m.external) || 0)}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                        {(() => {
+                          const rawData = sub.submission_data;
+                          const isObj = rawData && !Array.isArray(rawData);
+                          const rows: any[] = isObj ? (rawData.fields || []) : (rawData || []);
+                          const sgpaVal = isObj ? rawData.sgpa : null;
+                          const cgpaVal = isObj ? rawData.cgpa : null;
+
+                          return (
+                            <div className="space-y-3">
+                              {(sgpaVal || cgpaVal) && (
+                                <div className="flex flex-wrap items-center gap-6 bg-purple-50 border border-purple-200 p-3 rounded-2xl">
+                                  {sgpaVal && (
+                                    <div>
+                                      <span className="text-[10px] font-extrabold text-purple-900 uppercase tracking-wider">Submitted SGPA:</span>
+                                      <span className="ml-1.5 text-sm font-extrabold text-purple-950">{sgpaVal}</span>
+                                    </div>
+                                  )}
+                                  {cgpaVal && (
+                                    <div>
+                                      <span className="text-[10px] font-extrabold text-purple-900 uppercase tracking-wider">Submitted CGPA:</span>
+                                      <span className="ml-1.5 text-sm font-extrabold text-purple-950">{cgpaVal}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              <div className="overflow-x-auto rounded-2xl border border-slate-100 bg-slate-50/70 p-3">
+                                <table className="w-full text-xs text-left">
+                                  <thead>
+                                    <tr className="text-slate-500 font-bold uppercase text-[9px] border-b border-slate-200">
+                                      <th className="p-2">Subject Code</th>
+                                      <th className="p-2">Subject Name</th>
+                                      <th className="p-2 text-center">Internal (40)</th>
+                                      <th className="p-2 text-center">External (60)</th>
+                                      <th className="p-2 text-center font-black text-slate-800">Total (100)</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-200/60 font-medium text-slate-800">
+                                    {rows.map((m: any, i: number) => (
+                                      <tr key={i}>
+                                        <td className="p-2 font-mono font-bold">{m.code}</td>
+                                        <td className="p-2 font-semibold">{m.name}</td>
+                                        <td className="p-2 text-center">{m.internal || 0}</td>
+                                        <td className="p-2 text-center">{m.external || 0}</td>
+                                        <td className="p-2 text-center font-bold text-emerald-800">{(parseInt(m.internal) || 0) + (parseInt(m.external) || 0)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })

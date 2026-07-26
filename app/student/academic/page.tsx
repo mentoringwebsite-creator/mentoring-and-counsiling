@@ -171,8 +171,24 @@ export default function AcademicPage() {
     }
   }, [highlightSubject, loading, selectedSemester]);
 
+  const normalizeSem = (val: string | number | undefined | null): string => {
+    if (!val) return '';
+    const s = String(val).trim();
+    const map: Record<string, string> = {
+      '1': '1-1', '1-1': '1-1',
+      '2': '1-2', '1-2': '1-2',
+      '3': '2-1', '2-1': '2-1',
+      '4': '2-2', '2-2': '2-2',
+      '5': '3-1', '3-1': '3-1',
+      '6': '3-2', '3-2': '3-2',
+      '7': '4-1', '4-1': '4-1',
+      '8': '4-2', '4-2': '4-2'
+    };
+    return map[s] || s;
+  };
+
   const getSemesterMetadata = (sem: string) => {
-    const sub = subjects.find((s: any) => s.semester?.toString() === sem);
+    const sub = subjects.find((s: any) => normalizeSem(s.sem || s.semester) === normalizeSem(sem));
     return {
       memo_no: sub?.memo_no || '',
       serial_no: sub?.serial_no || '',
@@ -189,7 +205,7 @@ export default function AcademicPage() {
   // Filter subjects by semester
   const filteredSubjects = subjects.filter((sub) => {
     if (selectedSemester === 'All') return true;
-    return sub.semester?.toString() === selectedSemester;
+    return normalizeSem(sub.sem || sub.semester) === normalizeSem(selectedSemester);
   });
 
   // Helper to convert letter grades to GPA numbers
@@ -214,11 +230,9 @@ export default function AcademicPage() {
 
   const selectedSemesterSGPA = (() => {
     if (selectedSemester === 'All') return null;
-    const semNum = parseInt(selectedSemester);
-    if (isNaN(semNum)) return null;
 
     const subjectsInSem = subjects.filter(
-      (sub) => parseInt(sub.semester) === semNum
+      (sub) => normalizeSem(sub.sem || sub.semester) === normalizeSem(selectedSemester)
     );
 
     // Prioritize explicit SGPA value if present
