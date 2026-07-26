@@ -33,6 +33,7 @@ export default function StudentAcademicsPage() {
   const [editMode, setEditMode] = useState<boolean>(false);
   const [editedSubjects, setEditedSubjects] = useState<any[] | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
+  const [editedProfile, setEditedProfile] = useState<any | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -115,11 +116,13 @@ export default function StudentAcademicsPage() {
 
   const beginEdit = () => {
     setEditedSubjects(JSON.parse(JSON.stringify(subjects || [])));
+    setEditedProfile(JSON.parse(JSON.stringify(profile || {})));
     setEditMode(true);
   };
 
   const cancelEdit = () => {
     setEditedSubjects(null);
+    setEditedProfile(null);
     setEditMode(false);
   };
 
@@ -139,12 +142,24 @@ export default function StudentAcademicsPage() {
     setEditedSubjects(copy);
   };
 
+  const handleProfileFieldChange = (field: string, value: any) => {
+    setEditedProfile((prev: any) => ({ ...(prev || {}), [field]: value }));
+  };
+
   const saveEdits = async () => {
     if (!editedSubjects) return;
     setSaving(true);
     try {
-      // Update student_profiles by user_id
-      const payload = { academic_subjects: editedSubjects };
+      // Build payload merging academic_subjects and edited profile fields
+      const payload: any = {};
+      if (editedSubjects) payload.academic_subjects = editedSubjects;
+      if (editedProfile) {
+        if (editedProfile.cgpa !== undefined) payload.cgpa = editedProfile.cgpa;
+        if (editedProfile.sgpa !== undefined) payload.sgpa = editedProfile.sgpa;
+        if (editedProfile.backlogs !== undefined) payload.backlogs = editedProfile.backlogs;
+        if (editedProfile.attendance_percentage !== undefined) payload.attendance_percentage = editedProfile.attendance_percentage;
+      }
+
       const { data, error: upErr } = await supabase
         .from('student_profiles')
         .update(payload)
@@ -153,10 +168,11 @@ export default function StudentAcademicsPage() {
       if (upErr) throw upErr;
 
       // Refresh local state
-      const updatedProfile = { ...(profile || {}), academic_subjects: editedSubjects };
+      const updatedProfile = { ...(profile || {}), ...(editedProfile || {}), academic_subjects: editedSubjects || profile.academic_subjects };
       setStudent({ ...student, student_profiles: [updatedProfile] });
       setEditMode(false);
       setEditedSubjects(null);
+      setEditedProfile(null);
     } catch (err: any) {
       console.error('Failed to save edited marks:', err);
       setError(err.message || 'Failed to save changes.');
@@ -275,27 +291,49 @@ export default function StudentAcademicsPage() {
                     </div>
 
                     {/* Summary Metric Pills */}
-                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Overall CGPA</div>
-                        <div className="text-lg font-black text-white">{cgpaVal.toFixed(2)}</div>
+                        <div className="text-lg font-black text-white">
+                          {editMode ? (
+                            <input type="number" step="0.01" value={editedProfile?.cgpa ?? cgpaVal} onChange={(e) => handleProfileFieldChange('cgpa', e.target.value)} className="w-20 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
+                          ) : (
+                            cgpaVal.toFixed(2)
+                          )}
+                        </div>
                       </div>
                       
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Selected SGPA</div>
-                        <div className="text-lg font-black text-emerald-300">{getSelectedSemSGPA()}</div>
+                        <div className="text-lg font-black text-emerald-300">
+                          {editMode ? (
+                            <input type="number" step="0.01" value={editedProfile?.sgpa ?? getSelectedSemSGPA()} onChange={(e) => handleProfileFieldChange('sgpa', e.target.value)} className="w-20 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-emerald-300" />
+                          ) : (
+                            getSelectedSemSGPA()
+                          )}
+                        </div>
                       </div>
 
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Backlogs</div>
-                        <div className={`text-lg font-black ${backlogsVal === 0 ? 'text-emerald-300' : 'text-rose-300'}`}>
-                          {backlogsVal}
+                        <div className={`text-lg font-black ${((editedProfile?.backlogs ?? backlogsVal) === 0) ? 'text-emerald-300' : 'text-rose-300'}`}>
+                          {editMode ? (
+                            <input type="number" value={editedProfile?.backlogs ?? backlogsVal} onChange={(e) => handleProfileFieldChange('backlogs', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-emerald-300" />
+                          ) : (
+                            backlogsVal
+                          )}
                         </div>
                       </div>
 
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Attendance</div>
-                        <div className="text-lg font-black text-white">{attendanceVal}%</div>
+                        <div className="text-lg font-black text-white">
+                          {editMode ? (
+                            <input type="number" value={editedProfile?.attendance_percentage ?? attendanceVal} onChange={(e) => handleProfileFieldChange('attendance_percentage', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
+                          ) : (
+                            `${attendanceVal}%`
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
