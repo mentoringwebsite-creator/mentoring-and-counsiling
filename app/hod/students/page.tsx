@@ -16,13 +16,33 @@ const hodSidebarItems = [
   { href: '/hod/reports', label: 'Reports' }
 ];
 
+const isBranchInDepartment = (branch: string, department: string) => {
+  if (!branch || !department) return false;
+  const b = branch.toLowerCase().trim();
+  const d = department.toLowerCase().trim();
+  if (b === d) return true;
+  if (b === 'ece' && (d.includes('electronics') || d.includes('ece'))) return true;
+  if (d.includes('electronics') && b.includes('ece')) return true;
+  if (b === 'cse' && (d.includes('computer science') || d.includes('cse'))) return true;
+  if (d.includes('computer science') && b.includes('cse')) return true;
+  if (b === 'it' && (d.includes('information technology') || d.includes('it'))) return true;
+  if (d.includes('information technology') && b.includes('it')) return true;
+  if (b === 'eee' && (d.includes('electrical') || d.includes('eee'))) return true;
+  if (d.includes('electrical') && b.includes('eee')) return true;
+  if ((b === 'me' || b === 'mech' || b.includes('mechanical')) && (d.includes('mechanical') || d.includes('mech') || d === 'me')) return true;
+  if ((b === 'ce' || b.includes('civil')) && (d.includes('civil') || d === 'ce')) return true;
+  return d.includes(b) || b.includes(d);
+};
+
 export default function HodStudentsPage() {
   const router = useRouter();
   const [hodId, setHodId] = useState<string | null>(null);
+  const [hodDepartment, setHodDepartment] = useState<string>('');
+  const [departmentMentorIds, setDepartmentMentorIds] = useState<string[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'my-students' | 'unassigned' | 'all'>('my-students');
+  const [activeTab, setActiveTab] = useState<'assigned' | 'unassigned' | 'all'>('assigned');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const getStudentBTechYear = (profile: any) => {
@@ -58,6 +78,26 @@ export default function HodStudentsPage() {
       const hId = session.user.id;
       setHodId(hId);
 
+      const { data: hodProfile, error: hodError } = await supabase
+        .from('hod_profiles')
+        .select('department')
+        .eq('user_id', hId)
+        .maybeSingle();
+      const dept = hodProfile?.department || '';
+      setHodDepartment(dept);
+
+      const { data: mentorsDb, error: mentorsError } = await supabase
+        .from('users')
+        .select('id, faculty_profiles!user_id(department)')
+        .eq('role', 'faculty')
+        .eq('status', 'Approved');
+      if (mentorsError) throw mentorsError;
+
+      const departmentMentors = (mentorsDb || [])
+        .filter((mentor: any) => isBranchInDepartment(mentor.faculty_profiles?.[0]?.department, dept))
+        .map((mentor: any) => mentor.id);
+      setDepartmentMentorIds(departmentMentors);
+
       const { data: studentsDb, error } = await supabase
         .from('users')
         .select(`
@@ -70,7 +110,13 @@ export default function HodStudentsPage() {
         .eq('status', 'Approved');
 
       if (error) throw error;
-      setStudents(studentsDb || []);
+
+      const deptStudents = (studentsDb || []).filter((student: any) => {
+        const profile = student.student_profiles?.[0] || {};
+        return isBranchInDepartment(profile.branch, dept) || (profile.mentor_id && departmentMentors.includes(profile.mentor_id));
+      });
+
+      setStudents(deptStudents);
     } catch (err: any) {
       console.error('Error loading student roster:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to load students. Make sure database policies are updated.' });
@@ -106,13 +152,13 @@ export default function HodStudentsPage() {
   const filteredStudents = students.filter((student) => {
     const profile = student.student_profiles?.[0] || {};
     const isMine = profile.mentor_id === hodId;
+    const isAssigned = !!profile.mentor_id && (departmentMentorIds.includes(profile.mentor_id) || profile.mentor_id === hodId);
     const isUnassigned = !profile.mentor_id;
-    if (!isMine && !isUnassigned) return false;
 
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase()) || (profile.roll_number || '').toLowerCase().includes(searchQuery.toLowerCase());
     if (!matchesSearch) return false;
 
-    if (activeTab === 'my-students') return isMine;
+    if (activeTab === 'assigned') return isAssigned;
     if (activeTab === 'unassigned') return isUnassigned;
     return true;
   });
@@ -139,8 +185,8 @@ export default function HodStudentsPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex rounded-2xl bg-slate-100 p-1 border border-slate-200">
-                <button onClick={() => setActiveTab('my-students')} className={`rounded-xl px-4 py-2 text-xs font-bold transition ${activeTab === 'my-students' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}>
-                  My Mentored Students
+                <button onClick={() => setActiveTab('assigned')} className={`rounded-xl px-4 py-2 text-xs font-bold transition ${activeTab === 'assigned' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}>
+                  Assigned Students
                 </button>
                 <button onClick={() => setActiveTab('unassigned')} className={`rounded-xl px-4 py-2 text-xs font-bold transition ${activeTab === 'unassigned' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-800'}`}>
                   Unassigned
