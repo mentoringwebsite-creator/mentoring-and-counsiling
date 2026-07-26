@@ -220,8 +220,12 @@ export default function FacultyAcademicFormsPage() {
           semester: semValue,
           credits: '3',
           internal: m.internal,
+          internal_marks: m.internal,
           external: m.external,
+          external_marks: m.external,
           totalMarks: total,
+          total_marks: total,
+          total: total,
           gpa: grade,
           result: grade === 'F' ? 'FAIL' : 'P'
         };

@@ -687,13 +687,17 @@ export default function AcademicPage() {
                                 >
                                   <td className="p-3 font-mono font-bold text-slate-600">{sub.code || '-'}</td>
                                   <td className="p-3 font-semibold text-slate-800">{sub.name}</td>
-                                  <td className="p-3 text-slate-600 text-center font-bold">{semesterLabels[sub.semester]?.short || `Sem ${sub.semester}`}</td>
-                                  <td className="p-3 text-slate-655 text-center font-semibold">{sub.credits ?? '-'}</td>
+                                  <td className="p-3 text-slate-600 text-center font-bold">{normalizeSem(sub.sem || sub.semester) || '-'}</td>
+                                  <td className="p-3 text-slate-655 text-center font-semibold">{sub.credits ?? '3'}</td>
                                   <td className="p-3 text-slate-550 text-center font-mono">{sub.mid1 || '-'}</td>
                                   <td className="p-3 text-slate-550 text-center font-mono">{sub.mid2 || '-'}</td>
-                                  <td className="p-3 text-slate-700 text-center font-bold font-mono">{sub.internal_marks || '-'}</td>
-                                  <td className="p-3 text-slate-700 text-center font-bold font-mono">{sub.external_marks || '-'}</td>
-                                  <td className="p-3 text-slate-900 text-center font-black font-mono">{sub.total_marks || '-'}</td>
+                                  <td className="p-3 text-slate-700 text-center font-bold font-mono">{sub.internal_marks ?? sub.internal ?? '-'}</td>
+                                  <td className="p-3 text-slate-700 text-center font-bold font-mono">{sub.external_marks ?? sub.external ?? '-'}</td>
+                                  <td className="p-3 text-slate-900 text-center font-black font-mono">
+                                    {sub.total_marks ?? sub.totalMarks ?? sub.total ?? (
+                                      (parseInt(sub.internal || '0') + parseInt(sub.external || '0')) || '-'
+                                    )}
+                                  </td>
                                   <td className="p-3 text-center font-bold text-slate-900">{sub.gpa ?? '-'}</td>
                                   <td className="p-3 text-center">
                                     <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-[10px] font-bold border ${
