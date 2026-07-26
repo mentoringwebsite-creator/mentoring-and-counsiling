@@ -96,6 +96,7 @@ export default function StudentDetailsPage() {
   const [mentorName, setMentorName] = useState<string>('Loading...');
   const [hodName, setHodName] = useState<string>('Loading...');
   const [chartSemester, setChartSemester] = useState<string>('6');
+  const [selectedLedgerSem, setSelectedLedgerSem] = useState<string>('All');
 
   const profileRaw = student?.student_profiles?.[0] || {};
   let alternatePhoneVal = profileRaw.alternate_phone || '';
@@ -120,6 +121,27 @@ export default function StudentDetailsPage() {
     resume_url: profileRaw.resume_url || resumeUrlVal || ''
   };
   const subjects = profile.academic_subjects || [];
+
+  const normalizeSem = (val: string | number | undefined | null): string => {
+    if (!val) return '';
+    const s = String(val).trim();
+    const map: Record<string, string> = {
+      '1': '1-1', '1-1': '1-1',
+      '2': '1-2', '1-2': '1-2',
+      '3': '2-1', '2-1': '2-1',
+      '4': '2-2', '2-2': '2-2',
+      '5': '3-1', '3-1': '3-1',
+      '6': '3-2', '3-2': '3-2',
+      '7': '4-1', '4-1': '4-1',
+      '8': '4-2', '4-2': '4-2'
+    };
+    return map[s] || s;
+  };
+
+  const filteredLedgerSubjects = subjects.filter((sub: any) => {
+    if (selectedLedgerSem === 'All') return true;
+    return normalizeSem(sub.sem || sub.semester) === normalizeSem(selectedLedgerSem);
+  });
 
   const rawInterests = profile.interests || '';
   let parsedInterests = rawInterests;
@@ -1051,6 +1073,7 @@ export default function StudentDetailsPage() {
                                     if (data && data.name) { 
                                       const semNum = data.name.replace('Sem ', ''); 
                                       setChartSemester(semNum); 
+                                      setSelectedLedgerSem(semNum);
                                       const el = document.getElementById('academic-subjects-section');
                                       if (el) {
                                         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1162,7 +1185,107 @@ export default function StudentDetailsPage() {
                       </div>
 
                     </div>
-                  </div>
+
+                      {/* Academic Semester Ledger Table */}
+                      <div id="academic-subjects-section" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-4 scroll-mt-6">
+                        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="rounded-xl bg-emerald-50 p-2 text-emerald-800">
+                              <BookOpen className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-extrabold text-slate-800">Academic Semester Ledger</h3>
+                              <p className="text-[10px] font-bold text-slate-400">Detailed course marks, internals, externals, and grades</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <select
+                              value={selectedLedgerSem}
+                              onChange={(e) => setSelectedLedgerSem(e.target.value)}
+                              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 focus:border-emerald-600 focus:outline-none"
+                            >
+                              <option value="All">All Semesters</option>
+                              <option value="1">Sem 1 (1-1)</option>
+                              <option value="2">Sem 2 (1-2)</option>
+                              <option value="3">Sem 3 (2-1)</option>
+                              <option value="4">Sem 4 (2-2)</option>
+                              <option value="5">Sem 5 (3-1)</option>
+                              <option value="6">Sem 6 (3-2)</option>
+                              <option value="7">Sem 7 (4-1)</option>
+                              <option value="8">Sem 8 (4-2)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Table */}
+                        <div className="overflow-x-auto rounded-xl border border-slate-100">
+                          <table className="w-full text-left text-xs font-semibold text-slate-700">
+                            <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 font-extrabold border-b border-slate-100">
+                              <tr>
+                                <th className="px-4 py-3">Subject Code</th>
+                                <th className="px-4 py-3">Subject Name</th>
+                                <th className="px-4 py-3 text-center">Semester</th>
+                                <th className="px-4 py-3 text-center">Credits</th>
+                                <th className="px-4 py-3 text-center">Mid-1</th>
+                                <th className="px-4 py-3 text-center">Mid-2</th>
+                                <th className="px-4 py-3 text-center">Int (40)</th>
+                                <th className="px-4 py-3 text-center">Ext (60)</th>
+                                <th className="px-4 py-3 text-center">Total</th>
+                                <th className="px-4 py-3 text-center">Grade Secured</th>
+                                <th className="px-4 py-3 text-center">Result</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {filteredLedgerSubjects.length > 0 ? (
+                                filteredLedgerSubjects.map((sub: any, idx: number) => {
+                                  const subCode = sub.code || sub.subject_code || sub.subjectCode || '—';
+                                  const subName = sub.name || sub.subject_name || sub.subjectName || 'Subject';
+                                  const subSem = sub.sem || sub.semester || '1-1';
+                                  const subCredits = sub.credits ?? '3';
+                                  const subMid1 = sub.mid1 ?? sub.mid_1 ?? '-';
+                                  const subMid2 = sub.mid2 ?? sub.mid_2 ?? '-';
+                                  const subInt = sub.internal_marks ?? sub.internal ?? sub.int ?? '-';
+                                  const subExt = sub.external_marks ?? sub.external ?? sub.ext ?? '-';
+                                  const subTotal = sub.total_marks ?? sub.totalMarks ?? sub.total ?? '-';
+                                  const subGrade = sub.gpa ?? sub.grade ?? sub.gradeSecured ?? 'A';
+                                  const subResult = (sub.result || sub.status || (subGrade === 'F' ? 'F' : 'P')).toString().toUpperCase();
+                                  const isPass = subResult === 'P' || subResult === 'PASS';
+
+                                  return (
+                                    <tr key={idx} className="hover:bg-slate-50/60 transition">
+                                      <td className="px-4 py-3 font-mono font-bold text-slate-800">{subCode}</td>
+                                      <td className="px-4 py-3 font-bold text-slate-900">{subName}</td>
+                                      <td className="px-4 py-3 text-center font-bold text-slate-600">{subSem}</td>
+                                      <td className="px-4 py-3 text-center font-bold text-slate-700">{subCredits}</td>
+                                      <td className="px-4 py-3 text-center text-slate-500">{subMid1}</td>
+                                      <td className="px-4 py-3 text-center text-slate-500">{subMid2}</td>
+                                      <td className="px-4 py-3 text-center font-bold text-slate-700">{subInt}</td>
+                                      <td className="px-4 py-3 text-center font-bold text-slate-700">{subExt}</td>
+                                      <td className="px-4 py-3 text-center font-black text-slate-900">{subTotal}</td>
+                                      <td className="px-4 py-3 text-center font-black text-emerald-800">{subGrade}</td>
+                                      <td className="px-4 py-3 text-center">
+                                        <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black ${
+                                          isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                        }`}>
+                                          {isPass ? 'P' : 'F'}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              ) : (
+                                <tr>
+                                  <td colSpan={11} className="px-4 py-8 text-center text-xs text-slate-400 italic">
+                                    No course subjects recorded for this semester filter.
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
                 )}
 
                   {/* Tab 3: Extracurriculars */}
