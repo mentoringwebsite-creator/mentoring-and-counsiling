@@ -694,7 +694,7 @@ export default function StudentDetailsPage() {
                         {/* Row 1: Student Name & Risk Status */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-4 border-b border-slate-100/90">
                           <div>
-                            <div className="inline-block bg-white rounded-md px-3 py-1 transform translate-y-3 md:translate-y-4">
+                            <div className="inline-block bg-white rounded-md px-3 py-1 transform translate-y-6 md:translate-y-8 shadow-sm">
                               <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight leading-none mb-1.5">{student?.name}</h2>
                             </div>
                             <p className="text-xs text-slate-400 font-bold tracking-wide uppercase mt-2">{profile.roll_number || 'N/A'} • B.Tech Student</p>
