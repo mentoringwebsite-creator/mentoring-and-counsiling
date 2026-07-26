@@ -596,11 +596,15 @@ export default function PerformancePage() {
                   {/* Graph 3: Extracurricular Activity */}
                   <div className="rounded-[24px] border border-slate-150 bg-white p-3 shadow-sm flex flex-col min-h-0 h-[340px] xl:h-full xl:row-span-2">
                     <div className="flex items-center justify-between border-b border-slate-100 pb-1 mb-2 shrink-0">
-                      <div>
+                      <div 
+                        onClick={() => router.push('/student/extracurricular')}
+                        className="cursor-pointer hover:opacity-80 transition"
+                      >
                         <h2 className="text-[11px] font-black text-slate-800 flex items-center gap-1">
                           <Trophy className="h-3.5 w-3.5 text-emerald-800" />
                           <span>{showSkillsPie ? "Skills Breakdown" : "Activity & Certifications"}</span>
                         </h2>
+                        <p className="text-[8px] font-semibold text-emerald-700">Click graph to view certificates →</p>
                       </div>
                       <button 
                         onClick={() => setShowSkillsPie(!showSkillsPie)}
@@ -610,7 +614,11 @@ export default function PerformancePage() {
                       </button>
                     </div>
 
-                    <div className="flex-1 min-h-0 w-full">
+                    <div 
+                      onClick={() => router.push('/student/extracurricular')}
+                      className="flex-1 min-h-0 w-full cursor-pointer hover:opacity-95 transition"
+                      title="Click graph to view and manage certifications"
+                    >
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -621,11 +629,14 @@ export default function PerformancePage() {
                             outerRadius={100}
                             paddingAngle={3}
                             dataKey="value"
+                            onClick={() => router.push('/student/extracurricular')}
+                            style={{ cursor: 'pointer' }}
                           >
                             {extracurricularData.map((entry, index) => (
                               <Cell 
                                 key={`cell-${index}`} 
                                 fill={showSkillsPie ? SKILLS_COLORS[index % SKILLS_COLORS.length] : PIE_COLORS[index % PIE_COLORS.length]} 
+                                style={{ cursor: 'pointer' }}
                               />
                             ))}
                           </Pie>
