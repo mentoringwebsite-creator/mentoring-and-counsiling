@@ -508,6 +508,7 @@ export default function AcademicPage() {
             items={[
               { href: '/student', label: 'Profile' }, 
               { href: '/student/academic', label: 'Academic Profile' }, 
+              { href: '/student/forms', label: 'Academic Forms' }, 
               { href: '/student/extracurricular', label: 'Extracurricular Activities' }, 
               { href: '/student/performance', label: 'Performance' },
               { href: '/student/queries', label: 'Problems / Queries' }

@@ -52,3 +52,68 @@ CREATE POLICY "Allow delete query_messages" ON query_messages
       )
     )
   );
+
+-- 7. Add Academic Forms tables and Attendance Sync
+CREATE TABLE IF NOT EXISTS academic_forms (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  mentor_id uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  student_id uuid REFERENCES users(id) ON DELETE CASCADE,
+  form_type text NOT NULL,
+  title text NOT NULL,
+  description text,
+  semester text,
+  fields jsonb DEFAULT '[]'::jsonb NOT NULL,
+  status text DEFAULT 'Active' NOT NULL,
+  due_date timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS academic_form_submissions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  form_id uuid REFERENCES academic_forms(id) ON DELETE CASCADE NOT NULL,
+  student_id uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  mentor_id uuid REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  form_type text NOT NULL,
+  semester text,
+  submission_data jsonb NOT NULL,
+  overall_attendance numeric(5,2),
+  status text DEFAULT 'Submitted' NOT NULL,
+  submitted_at timestamp with time zone DEFAULT now() NOT NULL,
+  reviewed_at timestamp with time zone,
+  rejection_reason text
+);
+
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS attendance_percentage numeric(5,2) DEFAULT 85.00;
+ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS attendance_records jsonb DEFAULT '[]'::jsonb NOT NULL;
+
+ALTER TABLE academic_forms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE academic_form_submissions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Mentors can manage forms" ON academic_forms;
+CREATE POLICY "Mentors can manage forms" ON academic_forms
+  FOR ALL
+  USING (
+    auth.uid() = mentor_id
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'hod')
+  );
+
+DROP POLICY IF EXISTS "Students can view assigned forms" ON academic_forms;
+CREATE POLICY "Students can view assigned forms" ON academic_forms
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM student_profiles
+      WHERE student_profiles.user_id = auth.uid()
+      AND (student_profiles.mentor_id = academic_forms.mentor_id)
+    )
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'hod')
+  );
+
+DROP POLICY IF EXISTS "Students can submit forms" ON academic_form_submissions;
+CREATE POLICY "Students can submit forms" ON academic_form_submissions
+  FOR ALL
+  USING (
+    auth.uid() = student_id
+    OR auth.uid() = mentor_id
+    OR (auth.jwt() -> 'user_metadata' ->> 'role') IN ('admin', 'hod')
+  );

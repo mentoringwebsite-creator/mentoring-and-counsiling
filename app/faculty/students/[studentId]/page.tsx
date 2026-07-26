@@ -24,7 +24,9 @@ import {
 const facultySidebarItems = [
   { href: '/faculty', label: 'My Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
-  { href: '/faculty/queries', label: 'Student Queries' }
+  { href: '/faculty/forms', label: 'Academic Forms' },
+  { href: '/faculty/queries', label: 'Student Queries' },
+  { href: '/faculty/notes', label: 'Mentor Notes' }
 ];
 
 const getStudentBTechYear = (roll: string, acYear: string) => {
@@ -176,7 +178,7 @@ export default function StudentDetailsPage() {
             id, name, email,
             student_profiles!user_id (
               roll_number, branch, section, academic_year, phone, alternate_phone, dob, profile_photo,
-              cgpa, backlogs, sgpa, academic_subjects, interests, dreams, career_goals, clubs, certifications, mentor_id
+              cgpa, backlogs, sgpa, academic_subjects, interests, dreams, career_goals, clubs, certifications, mentor_id, attendance_percentage
             )
           `)
           .eq('id', studentUserId)
@@ -432,6 +434,9 @@ export default function StudentDetailsPage() {
   };
 
   const getStudentAttendance = () => {
+    if (profile.attendance_percentage !== undefined && profile.attendance_percentage !== null) {
+      return Number(profile.attendance_percentage);
+    }
     const roll = profile.roll_number || '';
     if (!roll) return 85.0;
     let hash = 0;

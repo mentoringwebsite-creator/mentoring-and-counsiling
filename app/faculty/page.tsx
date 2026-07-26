@@ -22,7 +22,9 @@ import {
 const facultySidebarItems = [
   { href: '/faculty', label: 'My Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
-  { href: '/faculty/queries', label: 'Student Queries' }
+  { href: '/faculty/forms', label: 'Academic Forms' },
+  { href: '/faculty/queries', label: 'Student Queries' },
+  { href: '/faculty/notes', label: 'Mentor Notes' }
 ];
 
 export default function FacultyDashboardPage() {
@@ -139,7 +141,7 @@ export default function FacultyDashboardPage() {
         .select(`
           id, name, email,
           student_profiles!user_id (
-            mentor_id, cgpa, backlogs, roll_number, branch, academic_year
+            mentor_id, cgpa, backlogs, roll_number, branch, academic_year, attendance_percentage
           )
         `)
         .eq('role', 'student')
@@ -157,7 +159,7 @@ export default function FacultyDashboardPage() {
         const sp = s.student_profiles?.[0] || {};
         const cgpa = sp.cgpa !== undefined && sp.cgpa !== null ? Number(sp.cgpa) : 8.0;
         const backlogs = sp.backlogs !== undefined && sp.backlogs !== null ? Number(sp.backlogs) : 0;
-        const attendance = getStudentAttendance(sp.roll_number || '');
+        const attendance = sp.attendance_percentage !== undefined && sp.attendance_percentage !== null ? Number(sp.attendance_percentage) : getStudentAttendance(sp.roll_number || '');
         const risk = getRiskLevel(cgpa, backlogs);
         
         return {

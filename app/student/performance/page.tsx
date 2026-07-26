@@ -105,6 +105,7 @@ const SKILLS_COLORS = [
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
   { href: '/student/academic', label: 'Academic Profile' },
+  { href: '/student/forms', label: 'Academic Forms' },
   { href: '/student/extracurricular', label: 'Extracurricular Activities' },
   { href: '/student/performance', label: 'Performance' },
   { href: '/student/queries', label: 'Problems / Queries' }
@@ -123,6 +124,7 @@ export default function PerformancePage() {
   const [skills, setSkills] = useState<{ name: string; level: number }[]>([]);
   const [showSkillsPie, setShowSkillsPie] = useState(true);
   const [rollNumber, setRollNumber] = useState<string>('');
+  const [attendancePct, setAttendancePct] = useState<number | null>(null);
   const [classAverage, setClassAverage] = useState<number>(7.80);
   
   // Semester filter for Subject Marks Analysis Chart
@@ -149,6 +151,9 @@ export default function PerformancePage() {
       setClubs(profileDb.clubs || []);
       setCertifications(profileDb.certifications || []);
       setRollNumber(profileDb.roll_number || '');
+      if (profileDb.attendance_percentage !== undefined && profileDb.attendance_percentage !== null) {
+        setAttendancePct(Number(profileDb.attendance_percentage));
+      }
 
       const rawInterests = profileDb.interests || '';
       const parsedSkills = parseSkillsFromInterests(rawInterests);
@@ -343,6 +348,7 @@ export default function PerformancePage() {
 
   // Dynamic Attendance evaluation based on roll number
   const getStudentAttendance = () => {
+    if (attendancePct !== null && attendancePct !== undefined) return attendancePct;
     if (!rollNumber) return 85.0;
     let hash = 0;
     for (let i = 0; i < rollNumber.length; i++) {

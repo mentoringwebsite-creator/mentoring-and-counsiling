@@ -12,7 +12,9 @@ import { Loader2, Search, UserCheck, UserPlus, UserMinus } from 'lucide-react';
 const facultySidebarItems = [
   { href: '/faculty', label: 'My Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
-  { href: '/faculty/queries', label: 'Student Queries' }
+  { href: '/faculty/forms', label: 'Academic Forms' },
+  { href: '/faculty/queries', label: 'Student Queries' },
+  { href: '/faculty/notes', label: 'Mentor Notes' }
 ];
 
 export default function FacultyStudentsPage() {
