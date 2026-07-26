@@ -105,7 +105,8 @@ const SKILLS_COLORS = [
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
   { href: '/student/academic', label: 'Academic Profile' },
-  { href: '/student/forms', label: 'Academic Forms' },
+  { href: '/student/academic-forms', label: 'Academic Forms' },
+  { href: '/student/attendance-forms', label: 'Attendance Forms' },
   { href: '/student/extracurricular', label: 'Extracurricular Activities' },
   { href: '/student/performance', label: 'Performance' },
   { href: '/student/queries', label: 'Problems / Queries' }

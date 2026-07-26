@@ -29,7 +29,8 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
       return [
         { href: '/student', label: 'Profile', icon: User },
         { href: '/student/academic', label: 'Academics', icon: GraduationCap },
-        { href: '/student/forms', label: 'Forms', icon: FileText },
+        { href: '/student/academic-forms', label: 'Marks', icon: FileText },
+        { href: '/student/attendance-forms', label: 'Att.', icon: FileText },
         { href: '/student/performance', label: 'Perf', icon: TrendingUp },
         { href: '/student/extracurricular', label: 'Activities', icon: Trophy },
         { href: '/student/queries', label: 'Queries', icon: MessageSquare }
@@ -39,7 +40,8 @@ export function PageShell({ title, subtitle, children }: { title: string; subtit
       return [
         { href: '/faculty', label: 'Home', icon: Home },
         { href: '/faculty/students', label: 'Students', icon: Users },
-        { href: '/faculty/forms', label: 'Forms', icon: FileText },
+        { href: '/faculty/academic-forms', label: 'Marks', icon: FileText },
+        { href: '/faculty/attendance-forms', label: 'Att.', icon: FileText },
         { href: '/faculty/queries', label: 'Queries', icon: MessageSquare },
         { href: '/faculty/notes', label: 'Notes', icon: FileText }
       ];

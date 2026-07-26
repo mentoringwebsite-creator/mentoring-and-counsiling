@@ -24,6 +24,16 @@ const parseQueryMetadata = (description: string) => {
   return { raisedBy, raisedTo, cleanDesc };
 };
 
+const studentSidebarItems = [
+  { href: '/student', label: 'Profile' },
+  { href: '/student/academic', label: 'Academic Profile' },
+  { href: '/student/academic-forms', label: 'Academic Forms' },
+  { href: '/student/attendance-forms', label: 'Attendance Forms' },
+  { href: '/student/extracurricular', label: 'Extracurricular Activities' },
+  { href: '/student/performance', label: 'Performance' },
+  { href: '/student/queries', label: 'Problems / Queries' }
+];
+
 export default function QueriesPage() {
   const [queries, setQueries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -253,7 +263,7 @@ export default function QueriesPage() {
     <ProtectedRoute role="student">
       <PageShell title="Problems & Queries" subtitle="Raise and track support requests">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
-          <Sidebar active="/student/queries" items={[{ href: '/student', label: 'Profile' }, { href: '/student/academic', label: 'Academic Profile' }, { href: '/student/extracurricular', label: 'Extracurricular Activities' }, { href: '/student/performance', label: 'Performance' }, { href: '/student/queries', label: 'Problems / Queries' }]} />
+          <Sidebar active="/student/queries" items={studentSidebarItems} />
           
           <div className={showChat ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
             {/* Left side: Query List */}

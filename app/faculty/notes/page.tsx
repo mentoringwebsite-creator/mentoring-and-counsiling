@@ -5,7 +5,8 @@ import { Sidebar } from '@/components/sidebar';
 const facultySidebarItems = [
   { href: '/faculty', label: 'My Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
-  { href: '/faculty/forms', label: 'Academic Forms' },
+  { href: '/faculty/academic-forms', label: 'Academic Forms' },
+  { href: '/faculty/attendance-forms', label: 'Attendance Forms' },
   { href: '/faculty/queries', label: 'Student Queries' },
   { href: '/faculty/notes', label: 'Mentor Notes' }
 ];

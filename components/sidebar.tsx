@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Home, User, GraduationCap, Trophy, MessageSquare, Users, FileText, Settings, TrendingUp, ClipboardList } from 'lucide-react';
+import { Home, User, GraduationCap, Trophy, MessageSquare, Users, FileText, Settings, TrendingUp, ClipboardList, Calendar } from 'lucide-react';
 
 type Item = { href: string; label: string };
 
@@ -24,6 +24,8 @@ const getIcon = (label: string) => {
     case 'academic forms':
     case 'forms':
       return <ClipboardList className="h-5 w-5 mr-3 shrink-0" />;
+    case 'attendance forms':
+      return <Calendar className="h-5 w-5 mr-3 shrink-0" />;
     case 'problems / queries':
     case 'problems & queries':
     case 'student queries':
