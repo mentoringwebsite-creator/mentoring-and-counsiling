@@ -11,7 +11,8 @@ import {
   Loader2, X, User, Mail, Phone, Calendar, BookOpen, Linkedin, FileText,
   TrendingUp, BarChart3, Sparkles, Heart, Target, 
   Award, Users, ExternalLink, Image as ImageIcon, 
-  GraduationCap, ShieldCheck, 
+  GraduationCap, AlertTriangle, ShieldCheck, Zap, 
+  ArrowUpRight, ArrowDownRight, Trophy, Activity, MessageSquare,
   ArrowLeft, Laptop, ShieldAlert, Briefcase, CheckCircle2, XCircle, AlertCircle
 } from 'lucide-react';
 import { 
@@ -88,24 +89,72 @@ export default function AdminStudentDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars'>('academics');
-  const [selectedSemester, setSelectedSemester] = useState<string>('All');
   const [selectedCert, setSelectedCert] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [mentorName, setMentorName] = useState<string>('Loading...');
   const [hodName, setHodName] = useState<string>('Loading...');
+  const [selectedLedgerSem, setSelectedLedgerSem] = useState<string | null>(null);
 
-  const normalizeSem = (sStr: string): string => {
-    const s = String(sStr).toLowerCase().replace('sem', '').replace('semester', '').trim();
-    if (s === '1') return '1-1';
-    if (s === '2') return '1-2';
-    if (s === '3') return '2-1';
-    if (s === '4') return '2-2';
-    if (s === '5') return '3-1';
-    if (s === '6') return '3-2';
-    if (s === '7') return '4-1';
-    if (s === '8') return '4-2';
-    return sStr;
+  const profileRaw = student?.student_profiles?.[0] || {};
+  let alternatePhoneVal = profileRaw.alternate_phone || '';
+  let linkedinUrlVal = '';
+  let resumeUrlVal = '';
+
+  if (alternatePhoneVal?.startsWith('{')) {
+    try {
+      const parsedJson = JSON.parse(alternatePhoneVal);
+      alternatePhoneVal = parsedJson.phone || '';
+      linkedinUrlVal = parsedJson.linkedin || '';
+      resumeUrlVal = parsedJson.resume || '';
+    } catch (e) {
+      console.error('Failed to parse serialized alternate_phone:', e);
+    }
+  }
+
+  const profile = {
+    ...profileRaw,
+    alternate_phone: alternatePhoneVal,
+    linkedin_url: profileRaw.linkedin_url || linkedinUrlVal || '',
+    resume_url: profileRaw.resume_url || resumeUrlVal || ''
   };
+
+  const subjects = profile.academic_subjects || [];
+
+  const normalizeSem = (val: string | number | undefined | null): string => {
+    if (!val) return '';
+    const s = String(val).trim();
+    const map: Record<string, string> = {
+      '1': '1-1', '1-1': '1-1',
+      '2': '1-2', '1-2': '1-2',
+      '3': '2-1', '2-1': '2-1',
+      '4': '2-2', '2-2': '2-2',
+      '5': '3-1', '3-1': '3-1',
+      '6': '3-2', '3-2': '3-2',
+      '7': '4-1', '4-1': '4-1',
+      '8': '4-2', '4-2': '4-2'
+    };
+    return map[s] || s;
+  };
+
+  const filteredLedgerSubjects = subjects.filter((sub: any) => {
+    if (!selectedLedgerSem || selectedLedgerSem === 'All') return true;
+    return normalizeSem(sub.sem || sub.semester) === normalizeSem(selectedLedgerSem);
+  });
+
+  const rawInterests = profile.interests || '';
+  let parsedInterests = rawInterests;
+  let parsedSkills: any[] = [];
+  if (rawInterests.includes('||skills:')) {
+    const parts = rawInterests.split('||skills:');
+    parsedInterests = parts[0] || '';
+    try {
+      parsedSkills = JSON.parse(parts[1]);
+    } catch {
+      parsedSkills = DEFAULT_SKILLS;
+    }
+  } else {
+    parsedSkills = DEFAULT_SKILLS;
+  }
 
   useEffect(() => {
     setMounted(true);
@@ -166,7 +215,7 @@ export default function AdminStudentDetailsPage() {
 
         setStudent({
           ...userDb,
-          profile: profileData,
+          student_profiles: [profileData],
           academic_records: subjectsDb || [],
           semester_sgpa: sgpaDb || []
         });
@@ -184,63 +233,22 @@ export default function AdminStudentDetailsPage() {
     }
   }, [studentUserId]);
 
-  if (!mounted) return null;
-
-  const profile = student?.profile || {};
-  const studentName = student?.name || 'Student Profile';
-  const studentRoll = profile.roll_number || 'N/A';
-  const studentBranch = profile.branch || 'CSE';
-  const studentSec = profile.section || 'A';
-  const studentYear = getStudentBTechYear(studentRoll, profile.academic_year);
-  const studentPhoto = profile.profile_photo || '';
-
   const cgpaVal = profile.cgpa !== undefined && profile.cgpa !== null ? Number(profile.cgpa) : 7.96;
   const backlogsVal = profile.backlogs !== undefined && profile.backlogs !== null ? Number(profile.backlogs) : 0;
+  const attendanceVal = 85;
   const risk = getRiskLevel(cgpaVal, backlogsVal);
 
-  const rawCerts = profile.certifications || profile.certificates;
-  let certifications: any[] = [];
-  if (Array.isArray(rawCerts)) certifications = rawCerts;
-  else if (typeof rawCerts === 'string' && rawCerts.trim()) {
-    try { certifications = JSON.parse(rawCerts); } catch { certifications = DEFAULT_CERTS; }
-  } else certifications = DEFAULT_CERTS;
-
-  const rawClubs = profile.clubs || profile.student_clubs;
-  let clubs: any[] = [];
-  if (Array.isArray(rawClubs)) clubs = rawClubs;
-  else if (typeof rawClubs === 'string' && rawClubs.trim()) {
-    try { clubs = JSON.parse(rawClubs); } catch { clubs = DEFAULT_CLUBS; }
-  } else clubs = DEFAULT_CLUBS;
-
-  const rawSkills = profile.skills || profile.technical_skills;
-  let skills: any[] = [];
-  if (Array.isArray(rawSkills)) skills = rawSkills;
-  else if (typeof rawSkills === 'string' && rawSkills.trim()) {
-    try {
-      const parsed = JSON.parse(rawSkills);
-      if (Array.isArray(parsed)) {
-        skills = parsed.map(s => typeof s === 'string' ? { name: s, level: 80 } : s);
-      }
-    } catch {
-      const parts = rawSkills.split(',').map(s => s.trim()).filter(Boolean);
-      skills = parts.map(s => ({ name: s, level: 80 }));
-    }
-  } else skills = DEFAULT_SKILLS;
-
-  const parsedInterests = typeof profile.interests === 'string' ? profile.interests : DEFAULT_INTERESTS;
-
   const sgpaTrendData = [
-    { sem: 'Sem 1', sgpa: 8.2, semNum: '1' },
-    { sem: 'Sem 2', sgpa: 8.0, semNum: '2' },
-    { sem: 'Sem 3', sgpa: 7.9, semNum: '3' },
-    { sem: 'Sem 4', sgpa: 8.1, semNum: '4' },
-    { sem: 'Sem 5', sgpa: 7.8, semNum: '5' },
-    { sem: 'Sem 6', sgpa: Number(cgpaVal.toFixed(2)), semNum: '6' },
+    { sem: 'Sem 1', sgpa: 8.36, semNum: '1' },
+    { sem: 'Sem 2', sgpa: 7.84, semNum: '2' },
+    { sem: 'Sem 3', sgpa: 8.11, semNum: '3' },
+    { sem: 'Sem 4', sgpa: 8.17, semNum: '4' },
+    { sem: 'Sem 5', sgpa: 7.89, semNum: '5' },
+    { sem: 'Sem 6', sgpa: 7.62, semNum: '6' },
   ];
 
   if (student?.semester_sgpa && student.semester_sgpa.length > 0) {
     student.semester_sgpa.forEach((item: any) => {
-      const normalized = normalizeSem(String(item.semester));
       const idx = sgpaTrendData.findIndex(s => s.semNum === String(item.semester) || s.sem === `Sem ${item.semester}`);
       if (idx !== -1 && item.sgpa) {
         sgpaTrendData[idx].sgpa = Number(item.sgpa);
@@ -257,208 +265,325 @@ export default function AdminStudentDetailsPage() {
     { name: 'Sem 6', backlogs: backlogsVal },
   ];
 
+  const clubs = profile.clubs || DEFAULT_CLUBS;
+  const certifications = profile.certifications || DEFAULT_CERTS;
+  const skillsList = parsedSkills && parsedSkills.length > 0 ? parsedSkills : DEFAULT_SKILLS;
+
   const placementEligible = cgpaVal >= 6.5 && backlogsVal === 0;
+
+  if (!mounted) return null;
 
   return (
     <ProtectedRoute role="admin">
-      <PageShell title="Student Full Profile" subtitle="Review complete student profile, academic metrics, and credentials">
+      <PageShell title="Student Details" subtitle="Student profile and academic insights">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/admin/students" items={adminSidebarItems} />
 
-          <div className="space-y-6 w-full min-w-0">
-            {/* Top Back Navigation Bar */}
+          <div className="space-y-5 w-full min-w-0">
+            {/* Back Button */}
             <div className="flex items-center justify-between">
               <button 
-                onClick={() => router.push('/admin/students')}
-                className="inline-flex items-center gap-2 rounded-2xl bg-white border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+                onClick={() => router.push('/admin/students')} 
+                className="group inline-flex items-center gap-2 text-xs font-bold text-emerald-805 hover:text-emerald-955 transition-all duration-250 bg-emerald-50/50 hover:bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-150 shadow-sm select-none"
               >
-                <ArrowLeft className="h-4 w-4 text-emerald-700" />
-                <span>Back to Approved Students List</span>
+                <ArrowLeft className="h-4 w-4 transform group-hover:-translate-x-0.5 transition-transform" />
+                <span>Back to Manage Students</span>
               </button>
             </div>
 
             {loading ? (
-              <div className="portal-card flex h-64 items-center justify-center">
-                <div className="flex items-center gap-3 text-slate-500 font-bold">
-                  <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
-                  <span>Loading full student profile data...</span>
+              <div className="portal-card flex h-[350px] items-center justify-center">
+                <div className="flex flex-col items-center gap-3 text-slate-500">
+                  <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
+                  <span className="text-sm font-semibold">Loading student profile...</span>
                 </div>
               </div>
             ) : error ? (
-              <div className="portal-card p-6 border-rose-200 bg-rose-50 text-rose-800 font-bold text-sm">
-                {error}
+              <div className="portal-card flex flex-col items-center justify-center text-rose-800 p-8 text-center">
+                <AlertTriangle className="h-12 w-12 text-rose-500 mb-3" />
+                <p className="font-bold text-lg">Error Loading Profile</p>
+                <p className="text-sm mt-1 text-rose-600 max-w-md">{error}</p>
+              </div>
+            ) : !student ? (
+              <div className="portal-card flex flex-col items-center justify-center text-slate-500 p-8 text-center">
+                <User className="h-12 w-12 text-slate-350 mb-3" />
+                <p className="font-bold text-lg">Student Not Found</p>
+                <p className="text-sm mt-1 text-slate-500">The requested student could not be located.</p>
               </div>
             ) : (
-              <div className="space-y-6">
-
-                {/* 1. STUDENT PROFILE HEADER BANNER */}
-                <div className="rounded-[24px] border border-slate-200 bg-white shadow-sm overflow-hidden relative">
-                  <div className="h-32 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800" />
+              <div className="space-y-5 animate-fade-in">
+                
+                {/* Redesigned Premium Profile Header */}
+                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden relative">
+                  <div className="h-24 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-855" />
                   
                   <div className="px-6 pb-6 pt-0">
-                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-end -mt-16 md:-mt-20 relative z-10">
-                      
-                      {/* Avatar */}
-                      <div className="h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] md:h-[185px] md:w-[185px] rounded-[32px] overflow-hidden border-[5px] border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
-                        {studentPhoto ? (
+                    <div className="flex flex-col md:flex-row gap-6 items-center md:items-center -mt-12 md:-mt-16 relative z-10">
+                      {/* Avatar container */}
+                      <div className="h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] md:h-[185px] md:w-[185px] lg:h-[210px] lg:w-[210px] xl:h-[230px] xl:w-[230px] rounded-[32px] overflow-hidden border-[5px] border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
+                        {profile.profile_photo ? (
                           <img
-                            src={studentPhoto}
-                            alt={studentName}
+                            src={profile.profile_photo}
+                            alt={student?.name || 'Student'}
                             className="h-full w-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(studentName)}`;
+                              (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(student?.name || 'Student')}`;
                             }}
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-slate-100 to-slate-200 text-slate-400 font-bold text-3xl">
-                            {studentName.charAt(0)}
+                          <div className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-slate-150 to-slate-200 text-slate-400">
+                            <User className="h-20 w-20 md:h-24 md:w-24 text-slate-355" />
                           </div>
                         )}
                       </div>
 
-                      {/* Header Basic Details */}
+                      {/* Header Details */}
                       <div className="flex-1 w-full text-center md:text-left pb-1">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                          <div>
-                            <div className="flex items-center justify-center md:justify-start gap-2.5 mb-1">
-                              <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-800 tracking-tight leading-none">{studentName}</h2>
-                              <span className={`inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
-                                risk === 'High' ? 'bg-rose-100 text-rose-800 border border-rose-200' :
-                                risk === 'Medium' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
-                                'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                              }`}>
-                                <ShieldCheck className="h-3 w-3" />
-                                {risk} Risk
-                              </span>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-4 border-b border-slate-100/90">
+                          <div className="flex flex-col items-start justify-center">
+                            <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-800 tracking-tight leading-none mb-0">{student?.name}</h2>
+                            <p className="text-xs text-slate-400 font-bold tracking-wide uppercase mt-2">{profile.roll_number || 'N/A'} • B.Tech Student</p>
+                          </div>
+                          
+                          <div className="flex justify-center sm:justify-start">
+                            <span className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-[9px] font-extrabold uppercase tracking-widest border shadow-sm ${
+                              risk === 'High' ? 'bg-rose-50 text-rose-700 border-rose-205' :
+                              risk === 'Medium' ? 'bg-amber-50 text-amber-700 border-amber-250' :
+                              'bg-emerald-50 text-emerald-700 border-emerald-205'
+                            }`}>
+                              <span className={`h-1.5 w-1.5 rounded-full ${
+                                risk === 'High' ? 'bg-rose-500 animate-pulse' :
+                                risk === 'Medium' ? 'bg-amber-500' :
+                                'bg-emerald-500'
+                              }`} />
+                              {risk} Risk Status
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Demographics Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 mt-1 text-left">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50/60 pb-1.5">
+                              <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Department</span>
+                              <span className="font-bold text-slate-750 uppercase">{profile.branch || 'N/A'}</span>
                             </div>
-                            <p className="text-xs text-emerald-800 font-extrabold tracking-wide uppercase mb-1">
-                              ROLL NO: {studentRoll} • {studentBranch} ({studentSec}) • {studentYear}
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-bold tracking-wide uppercase font-mono">
-                              EMAIL: {student?.email}
-                            </p>
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50/60 pb-1.5">
+                              <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Section</span>
+                              <span className="font-bold text-slate-755">Section {profile.section || '-'}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Year of Study</span>
+                              <span className="font-bold text-emerald-805">{getStudentBTechYear(profile.roll_number, profile.academic_year)}</span>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50/60 pb-1.5">
+                              <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Assigned Mentor</span>
+                              <span className="font-bold text-slate-700 truncate max-w-[160px] inline-block" title={mentorName}>{mentorName}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-xs border-b border-slate-50/60 pb-1.5">
+                              <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Assigned HOD</span>
+                              <span className="font-bold text-slate-700 truncate max-w-[160px] inline-block" title={hodName}>{hodName}</span>
+                            </div>
+                            {profile.phone && (
+                              <div className="flex items-center justify-between text-xs">
+                                <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px]">Mobile Phone</span>
+                                <span className="font-mono font-bold text-slate-800">{profile.phone}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-
                     </div>
                   </div>
                 </div>
 
-                {/* 2. STICKY TAB NAVIGATION */}
-                <div className="flex border-b border-slate-200 bg-white rounded-2xl p-1.5 shadow-sm">
-                  <button
-                    onClick={() => setActiveTab('academics')}
-                    className={`flex-1 rounded-xl py-2.5 text-xs font-black transition flex items-center justify-center gap-2 ${
-                      activeTab === 'academics'
-                        ? 'bg-emerald-800 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                    <span>Academic Analytics</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('profile')}
-                    className={`flex-1 rounded-xl py-2.5 text-xs font-black transition flex items-center justify-center gap-2 ${
-                      activeTab === 'profile'
-                        ? 'bg-emerald-800 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <User className="h-4 w-4" />
-                    <span>Overview & Profile</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('extracurriculars')}
-                    className={`flex-1 rounded-xl py-2.5 text-xs font-black transition flex items-center justify-center gap-2 ${
-                      activeTab === 'extracurriculars'
-                        ? 'bg-emerald-800 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Award className="h-4 w-4" />
-                    <span>Certifications & Goals</span>
-                  </button>
+                {/* Sticky Sub-Tab Navigation Bar */}
+                <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+                  <div className="flex flex-wrap sm:flex-nowrap gap-1">
+                    <button
+                      onClick={() => setActiveTab('profile')}
+                      className={`flex-1 rounded-xl py-2.5 px-4 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                        activeTab === 'profile'
+                          ? 'bg-emerald-805 text-white shadow-sm font-extrabold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      }`}
+                    >
+                      <User className="h-4 w-4" />
+                      <span>General Profile</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('academics')}
+                      className={`flex-1 rounded-xl py-2.5 px-4 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                        activeTab === 'academics'
+                          ? 'bg-emerald-805 text-white shadow-sm font-extrabold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      }`}
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                      <span>Academics & Analytics</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('extracurriculars')}
+                      className={`flex-1 rounded-xl py-2.5 px-4 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                        activeTab === 'extracurriculars'
+                          ? 'bg-emerald-805 text-white shadow-sm font-extrabold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Award className="h-4 w-4" />
+                      <span>Extracurriculars & Goals</span>
+                    </button>
+                  </div>
                 </div>
 
-                {/* 3. TAB CONTENT VIEWS */}
-                <div className="space-y-6">
-
-                  {/* TAB 1: ACADEMICS ANALYTICS */}
-                  {activeTab === 'academics' && (
-                    <div className="space-y-6">
-                      
-                      {/* SGPA Semester Trend */}
-                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                          <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                            <TrendingUp className="h-4.5 w-4.5 text-emerald-800" />
-                            <span>SGPA Semester Trend</span>
+                {/* TAB CONTENT VIEWS */}
+                <div className="space-y-5">
+                  
+                  {/* GENERAL PROFILE TAB */}
+                  {activeTab === 'profile' && (
+                    <div className="space-y-5">
+                      <div className="grid gap-5 md:grid-cols-2">
+                        {/* Personal Demographics */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <User className="h-4.5 w-4.5 text-emerald-805" />
+                            <span>Personal Demographics</span>
                           </h3>
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                            Click semester bar to view details
-                          </span>
+                          <div className="space-y-3 text-xs">
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Full Name</span>
+                              <span className="font-bold text-slate-800">{student?.name}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Roll Number</span>
+                              <span className="font-mono font-bold text-slate-800">{profile.roll_number || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Branch / Department</span>
+                              <span className="font-bold text-slate-800">{profile.branch || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Section</span>
+                              <span className="font-bold text-slate-800">{profile.section || '-'}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Date of Birth</span>
+                              <span className="font-bold text-slate-800">{profile.dob || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5">
+                              <span className="font-bold text-slate-400">Academic Year</span>
+                              <span className="font-bold text-emerald-805">{profile.academic_year || 'N/A'}</span>
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="h-64 w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={sgpaTrendData}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                              <XAxis dataKey="sem" stroke="#94a3b8" fontSize={11} fontWeight="bold" />
-                              <YAxis domain={[0, 10]} stroke="#94a3b8" fontSize={11} fontWeight="bold" />
-                              <Tooltip 
-                                formatter={(value: any) => [`${Number(value).toFixed(2)} SGPA`, 'SGPA']}
-                              />
-                              <Bar 
-                                dataKey="sgpa" 
-                                fill="#1c5644" 
-                                radius={[8, 8, 0, 0]} 
-                                className="cursor-pointer hover:opacity-80 transition"
-                                onClick={(data: any) => {
-                                  if (data && data.name) {
-                                    const semNum = data.name.replace('Sem ', '').trim();
-                                    router.push(`/admin/students/${studentUserId}/academics?semester=${semNum}` as any);
-                                  }
-                                }}
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
+                        {/* Directory & Contact */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                            <Phone className="h-4.5 w-4.5 text-emerald-805" />
+                            <span>Contact & Directory Info</span>
+                          </h3>
+                          <div className="space-y-3 text-xs">
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Email Address</span>
+                              <span className="font-semibold text-emerald-700">{student?.email || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Student Phone</span>
+                              <span className="font-mono font-bold text-slate-800">{profile.phone || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Parent / Guardian Contact</span>
+                              <span className="font-mono font-bold text-slate-800">{profile.parent_phone || 'N/A'}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b border-slate-100">
+                              <span className="font-bold text-slate-400">Assigned Mentor</span>
+                              <span className="font-bold text-slate-800">{mentorName}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5">
+                              <span className="font-bold text-slate-400">Assigned HOD</span>
+                              <span className="font-bold text-slate-800">{hodName}</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
+                    </div>
+                  )}
 
-                      {/* 2 Grid: Skills Breakdown & Backlog Overview */}
-                      <div className="grid gap-6 md:grid-cols-2">
+                  {/* ACADEMICS & ANALYTICS TAB */}
+                  {activeTab === 'academics' && (
+                    <div className="space-y-5">
+                      <div className="grid gap-5 md:grid-cols-2">
+                        {/* SGPA Semester Trend */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                              <TrendingUp className="h-4.5 w-4.5 text-emerald-805" />
+                              <span>SGPA Semester Trend</span>
+                            </h3>
+                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                              CGPA: {cgpaVal.toFixed(2)}
+                            </span>
+                          </div>
+
+                          <div className="h-56 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={sgpaTrendData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                <XAxis dataKey="sem" stroke="#94a3b8" fontSize={10} fontWeight="bold" />
+                                <YAxis domain={[0, 10]} stroke="#94a3b8" fontSize={10} fontWeight="bold" />
+                                <Tooltip formatter={(val: any) => [`${Number(val).toFixed(2)} SGPA`, 'SGPA']} />
+                                <Bar 
+                                  dataKey="sgpa" 
+                                  fill="#1c5644" 
+                                  radius={[6, 6, 0, 0]} 
+                                  className="cursor-pointer hover:opacity-80 transition"
+                                  onClick={(data: any) => {
+                                    if (data && data.name) {
+                                      const semNum = data.name.replace('Sem ', '').trim();
+                                      router.push(`/admin/students/${studentUserId}/academics?semester=${semNum}` as any);
+                                    }
+                                  }}
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
 
                         {/* Skills Breakdown */}
                         <div 
                           onClick={() => setActiveTab('extracurriculars')}
-                          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[320px] cursor-pointer hover:border-emerald-300 transition"
+                          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[280px] cursor-pointer hover:border-emerald-300 transition"
                         >
                           <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
                             <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                              <Sparkles className="h-4.5 w-4.5 text-emerald-805" />
-                              <span>Skills Breakdown & Competencies</span>
+                              <Award className="h-4.5 w-4.5 text-emerald-805" />
+                              <span>Skills Breakdown</span>
                             </h3>
-                            <span className="text-[9px] font-bold text-slate-400">Click to view certs</span>
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                              Show Certs & Clubs
+                            </span>
                           </div>
 
-                          <div className="flex-1 h-56">
+                          <div className="flex-1 h-48">
                             <ResponsiveContainer width="100%" height="100%">
                               <PieChart>
                                 <Pie
-                                  data={skills.slice(0, 6)}
+                                  data={skillsList.slice(0, 6)}
                                   cx="50%"
                                   cy="50%"
-                                  innerRadius={45}
-                                  outerRadius={75}
+                                  innerRadius={40}
+                                  outerRadius={70}
                                   paddingAngle={4}
                                   dataKey="level"
                                   nameKey="name"
                                   onClick={() => setActiveTab('extracurriculars')}
                                   className="cursor-pointer"
                                 >
-                                  {skills.slice(0, 6).map((entry: any, index: number) => (
+                                  {skillsList.slice(0, 6).map((entry: any, index: number) => (
                                     <Cell key={`cell-${index}`} fill={SKILLS_COLORS[index % SKILLS_COLORS.length]} />
                                   ))}
                                 </Pie>
@@ -467,147 +592,82 @@ export default function AdminStudentDetailsPage() {
                             </ResponsiveContainer>
                           </div>
                         </div>
+                      </div>
 
-                        {/* Backlog Overview & Placement Eligibility */}
-                        <div className="grid gap-6">
-                          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <ShieldAlert className="h-4.5 w-4.5 text-amber-600" />
-                                <span>Backlog Overview</span>
-                              </h3>
-                              <span className="text-[10px] font-bold text-slate-400">Click bar for semester</span>
-                            </div>
-
-                            <div className="h-48 w-full">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={backlogChartData}>
-                                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight="bold" />
-                                  <YAxis allowDecimals={false} stroke="#94a3b8" fontSize={10} fontWeight="bold" />
-                                  <Tooltip />
-                                  <Bar 
-                                    dataKey="backlogs" 
-                                    fill="#f59e0b" 
-                                    radius={[6, 6, 0, 0]} 
-                                    className="cursor-pointer hover:opacity-80 transition"
-                                    onClick={(data: any) => {
-                                      if (data && data.name) {
-                                        const semNum = data.name.replace('Sem ', '').trim();
-                                        router.push(`/admin/students/${studentUserId}/academics?semester=${semNum}` as any);
-                                      }
-                                    }}
-                                  />
-                                </BarChart>
-                              </ResponsiveContainer>
-                            </div>
+                      {/* Backlog Overview & Placement Eligibility Side by Side */}
+                      <div className="grid gap-5 md:grid-cols-2">
+                        {/* Backlog Overview */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                              <ShieldAlert className="h-4.5 w-4.5 text-amber-600" />
+                              <span>Backlog Overview</span>
+                            </h3>
+                            <span className="text-[10px] font-bold text-slate-400">Click bar for semester</span>
                           </div>
 
-                          {/* Placement Eligibility Card */}
-                          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
-                            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <Briefcase className="h-4.5 w-4.5 text-emerald-805" />
-                                <span>Placement Eligibility</span>
-                              </h3>
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                                placementEligible ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                              }`}>
-                                {placementEligible ? 'Eligible' : 'Not Eligible'}
-                              </span>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-3 text-center">
-                              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">CGPA</div>
-                                <div className="text-sm font-black text-slate-800 mt-0.5">{cgpaVal.toFixed(2)}</div>
-                              </div>
-                              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Backlogs</div>
-                                <div className="text-sm font-black text-slate-800 mt-0.5">{backlogsVal}</div>
-                              </div>
-                              <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Attendance</div>
-                                <div className="text-sm font-black text-emerald-800 mt-0.5">85%</div>
-                              </div>
-                            </div>
+                          <div className="h-48 w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={backlogChartData}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight="bold" />
+                                <YAxis allowDecimals={false} stroke="#94a3b8" fontSize={10} fontWeight="bold" />
+                                <Tooltip />
+                                <Bar 
+                                  dataKey="backlogs" 
+                                  fill="#f59e0b" 
+                                  radius={[6, 6, 0, 0]} 
+                                  className="cursor-pointer hover:opacity-80 transition"
+                                  onClick={(data: any) => {
+                                    if (data && data.name) {
+                                      const semNum = data.name.replace('Sem ', '').trim();
+                                      router.push(`/admin/students/${studentUserId}/academics?semester=${semNum}` as any);
+                                    }
+                                  }}
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
                           </div>
                         </div>
 
+                        {/* Placement Eligibility Card */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                              <Briefcase className="h-4.5 w-4.5 text-emerald-805" />
+                              <span>Placement Eligibility</span>
+                            </h3>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                              placementEligible ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              {placementEligible ? 'Eligible' : 'Not Eligible'}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-3 text-center">
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">CGPA</div>
+                              <div className="text-sm font-black text-slate-800 mt-0.5">{cgpaVal.toFixed(2)}</div>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Backlogs</div>
+                              <div className="text-sm font-black text-slate-800 mt-0.5">{backlogsVal}</div>
+                            </div>
+                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Attendance</div>
+                              <div className="text-sm font-black text-emerald-800 mt-0.5">85%</div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                     </div>
                   )}
 
-                  {/* TAB 2: OVERVIEW & PROFILE */}
-                  {activeTab === 'profile' && (
-                    <div className="grid gap-6 md:grid-cols-2">
-                      {/* Demographics Card */}
-                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                          <User className="h-4.5 w-4.5 text-emerald-805" />
-                          <span>Personal & Academic Details</span>
-                        </h3>
-                        <div className="space-y-3 text-xs">
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Full Name</span>
-                            <span className="font-bold text-slate-800">{studentName}</span>
-                          </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Roll Number</span>
-                            <span className="font-mono font-bold text-slate-800">{studentRoll}</span>
-                          </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Branch & Section</span>
-                            <span className="font-bold text-slate-800">{studentBranch} - {studentSec}</span>
-                          </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Year of Study</span>
-                            <span className="font-bold text-emerald-800">{studentYear}</span>
-                          </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Assigned Mentor</span>
-                            <span className="font-bold text-slate-800">{mentorName}</span>
-                          </div>
-                          <div className="flex justify-between py-1.5">
-                            <span className="font-bold text-slate-400">Assigned HOD</span>
-                            <span className="font-bold text-slate-800">{hodName}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Contact Directory */}
-                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                          <Phone className="h-4.5 w-4.5 text-emerald-805" />
-                          <span>Contact & Directory Info</span>
-                        </h3>
-                        <div className="space-y-3 text-xs">
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Email Address</span>
-                            <span className="font-semibold text-emerald-700">{student?.email || 'N/A'}</span>
-                          </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Primary Phone</span>
-                            <span className="font-mono font-bold text-slate-800">{profile.phone || 'N/A'}</span>
-                          </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Parent / Guardian Contact</span>
-                            <span className="font-mono font-bold text-slate-800">{profile.parent_phone || 'N/A'}</span>
-                          </div>
-                          <div className="flex justify-between py-1.5">
-                            <span className="font-bold text-slate-400">Date of Birth</span>
-                            <span className="font-bold text-slate-800">{profile.dob || 'N/A'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 3: EXTRACURRICULARS & GOALS */}
+                  {/* EXTRACURRICULARS & GOALS TAB */}
                   {activeTab === 'extracurriculars' && (
-                    <div className="space-y-6">
-                      <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-5">
+                      <div className="grid gap-5 md:grid-cols-2">
                         {/* Clubs Card */}
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                           <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
@@ -635,7 +695,7 @@ export default function AdminStudentDetailsPage() {
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                           <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
                             <Award className="h-4.5 w-4.5 text-emerald-805" />
-                            <span>Professional Certifications</span>
+                            <span>Certifications & Achievements</span>
                           </h3>
                           {certifications.length > 0 ? (
                             <div className="space-y-3">
@@ -675,27 +735,36 @@ export default function AdminStudentDetailsPage() {
                       {/* Aspirations & Goals */}
                       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                          <Target className="h-4.5 w-4.5 text-emerald-805" />
-                          <span>Student Aspirations & Career Goals</span>
+                          <Sparkles className="h-4.5 w-4.5 text-emerald-705" />
+                          <span>Personal Goals & Core Interests</span>
                         </h3>
-                        <div className="grid gap-4 sm:grid-cols-3">
-                          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                              <Sparkles className="h-3 w-3 text-emerald-600" /> Technical Interests
-                            </div>
-                            <p className="text-xs font-semibold text-slate-800">{parsedInterests || DEFAULT_INTERESTS}</p>
+                        <div className="grid gap-5 md:grid-cols-3">
+                          <div className="rounded-xl bg-[#f0f6f3]/80 border border-slate-100 p-4">
+                            <h4 className="font-bold text-emerald-800 text-xs mb-2 flex items-center gap-1.5">
+                              <Heart className="h-3.5 w-3.5 fill-emerald-800/10" />
+                              <span>Core Interests</span>
+                            </h4>
+                            <p className="text-xs text-slate-650 font-medium whitespace-pre-wrap leading-relaxed">
+                              {parsedInterests.trim() || DEFAULT_INTERESTS}
+                            </p>
                           </div>
-                          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                              <Heart className="h-3 w-3 text-rose-500" /> Personal Dreams
-                            </div>
-                            <p className="text-xs font-semibold text-slate-800">{profile.dreams || DEFAULT_DREAMS}</p>
+                          <div className="rounded-xl bg-[#f0faf7]/80 border border-slate-100 p-4">
+                            <h4 className="font-bold text-emerald-905 text-xs mb-2 flex items-center gap-1.5">
+                              <Sparkles className="h-3.5 w-3.5" />
+                              <span>Biggest Dream</span>
+                            </h4>
+                            <p className="text-xs text-slate-650 font-medium whitespace-pre-wrap leading-relaxed">
+                              {profile.dreams?.trim() || DEFAULT_DREAMS}
+                            </p>
                           </div>
-                          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-1">
-                            <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                              <Target className="h-3 w-3 text-blue-600" /> Career Goals
-                            </div>
-                            <p className="text-xs font-semibold text-slate-800">{profile.career_goals || DEFAULT_CAREER_GOALS}</p>
+                          <div className="rounded-xl bg-[#fffaf2]/80 border border-slate-100 p-4">
+                            <h4 className="font-bold text-amber-800 text-xs mb-2 flex items-center gap-1.5">
+                              <Target className="h-3.5 w-3.5" />
+                              <span>Who I Want to Become</span>
+                            </h4>
+                            <p className="text-xs text-slate-650 font-medium whitespace-pre-wrap leading-relaxed">
+                              {profile.career_goals?.trim() || DEFAULT_CAREER_GOALS}
+                            </p>
                           </div>
                         </div>
                       </div>
