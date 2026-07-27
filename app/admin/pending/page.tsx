@@ -104,8 +104,7 @@ export default function AdminPendingApprovalsPage() {
             { href: '/admin/pending', label: 'Pending Approvals' },
             { href: '/admin/students', label: 'Manage Students' },
             { href: '/admin/faculty', label: 'Manage Mentors' },
-            { href: '/admin/hod', label: 'Manage HOD' },
-            { href: '/admin/settings', label: 'Settings' }
+            { href: '/admin/hod', label: 'Manage HOD' }
           ]}
         />
         <div className="space-y-6 w-full min-w-0">
