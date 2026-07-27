@@ -977,7 +977,7 @@ export default function StudentDetailsPage() {
                             {showSkillsPie ? "Show Certs & Clubs" : "Show Skills"}
                           </button>
                         </div>
-                        <div className="flex-1 min-h-0 w-full">
+                        <div className="flex-1 min-h-0 w-full cursor-pointer" onClick={() => setActiveTab('extracurriculars')}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <Pie
@@ -988,17 +988,14 @@ export default function StudentDetailsPage() {
                                 outerRadius={75}
                                 paddingAngle={2}
                                 dataKey="value"
-                                onClick={() => {
-                                  if (showSkillsPie) {
-                                    setActiveTab('extracurriculars');
-                                  }
-                                }}
+                                onClick={() => setActiveTab('extracurriculars')}
+                                style={{ cursor: 'pointer' }}
                               >
                                 {extracurricularData.map((entry, index) => (
                                   <Cell 
                                     key={`cell-${index}`} 
                                     fill={showSkillsPie ? SKILLS_COLORS[index % SKILLS_COLORS.length] : PIE_COLORS[index % PIE_COLORS.length]}
-                                    style={{ cursor: showSkillsPie ? 'pointer' : 'default' }}
+                                    style={{ cursor: 'pointer' }}
                                   />
                                 ))}
                               </Pie>
@@ -1035,19 +1032,32 @@ export default function StudentDetailsPage() {
                         </div>
                         <div className="flex-1 min-h-0 w-full">
                           {backlogData.length > 0 ? (
-                            <div onClick={() => router.push(`/faculty/students/${studentUserId}/academics`)} className="cursor-pointer h-full w-full">
-                              <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={backlogData} margin={{ top: 15, right: 10, left: -25, bottom: 2 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={backlogData} margin={{ top: 15, right: 10, left: -25, bottom: 2 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
                                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
                                 <YAxis stroke="#94a3b8" fontSize={8} fontWeight={600} allowDecimals={false} domain={[0, 'dataMax + 1']} />
                                 <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                                <Bar name="Backlogs" dataKey="Backlogs" fill="#dc2626" radius={[3, 3, 0, 0]} barSize={12}>
+                                <Bar 
+                                  onClick={(data: any) => { 
+                                    if (data && data.name) { 
+                                      const semNum = data.name.replace('Sem ', ''); 
+                                      router.push(`/faculty/students/${studentUserId}/academics?semester=${semNum}` as any);
+                                    } else {
+                                      router.push(`/faculty/students/${studentUserId}/academics` as any);
+                                    }
+                                  }} 
+                                  style={{ cursor: 'pointer' }}
+                                  name="Backlogs" 
+                                  dataKey="Backlogs" 
+                                  fill="#dc2626" 
+                                  radius={[3, 3, 0, 0]} 
+                                  barSize={12}
+                                >
                                   <LabelList dataKey="Backlogs" position="top" style={{ fontSize: '8px', fill: '#dc2626', fontWeight: 'bold' }} />
                                 </Bar>
-                                </BarChart>
-                              </ResponsiveContainer>
-                            </div>
+                              </BarChart>
+                            </ResponsiveContainer>
                           ) : (
                             <div className="flex h-full items-center justify-center">
                               <p className="text-xs text-slate-455 italic">No backlogs detected! Student is clear.</p>

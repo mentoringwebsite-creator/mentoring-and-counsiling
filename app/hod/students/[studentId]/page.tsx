@@ -959,7 +959,7 @@ export default function HodStudentDetailsPage() {
                             {showSkillsPie ? "Show Certs & Clubs" : "Show Skills"}
                           </button>
                         </div>
-                        <div className="flex-1 min-h-0 w-full">
+                        <div className="flex-1 min-h-0 w-full cursor-pointer" onClick={() => setActiveTab('extracurriculars')}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <Pie
@@ -970,11 +970,14 @@ export default function HodStudentDetailsPage() {
                                 outerRadius={75}
                                 paddingAngle={2}
                                 dataKey="value"
+                                onClick={() => setActiveTab('extracurriculars')}
+                                style={{ cursor: 'pointer' }}
                               >
                                 {extracurricularData.map((entry, index) => (
                                   <Cell 
                                     key={`cell-${index}`} 
                                     fill={showSkillsPie ? SKILLS_COLORS[index % SKILLS_COLORS.length] : PIE_COLORS[index % PIE_COLORS.length]} 
+                                    style={{ cursor: 'pointer' }}
                                   />
                                 ))}
                               </Pie>
@@ -1017,7 +1020,22 @@ export default function HodStudentDetailsPage() {
                                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
                                 <YAxis stroke="#94a3b8" fontSize={8} fontWeight={600} allowDecimals={false} domain={[0, 'dataMax + 1']} />
                                 <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
-                                <Bar name="Backlogs" dataKey="Backlogs" fill="#dc2626" radius={[3, 3, 0, 0]} barSize={12}>
+                                <Bar 
+                                  onClick={(data: any) => { 
+                                    if (data && data.name) { 
+                                      const semNum = data.name.replace('Sem ', ''); 
+                                      router.push(`/hod/students/${studentUserId}/academics?semester=${semNum}` as any);
+                                    } else {
+                                      router.push(`/hod/students/${studentUserId}/academics` as any);
+                                    }
+                                  }} 
+                                  style={{ cursor: 'pointer' }}
+                                  name="Backlogs" 
+                                  dataKey="Backlogs" 
+                                  fill="#dc2626" 
+                                  radius={[3, 3, 0, 0]} 
+                                  barSize={12}
+                                >
                                   <LabelList dataKey="Backlogs" position="top" style={{ fontSize: '8px', fill: '#dc2626', fontWeight: 'bold' }} />
                                 </Bar>
                               </BarChart>
