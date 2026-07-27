@@ -14,8 +14,7 @@ import {
 const hodSidebarItems = [
   { href: '/hod', label: 'HOD Dashboard' },
   { href: '/hod/students', label: 'Students' },
-  { href: '/hod/queries', label: 'Student Queries' },
-  { href: '/hod/reports', label: 'Reports' }
+  { href: '/hod/queries', label: 'Student Queries' }
 ];
 
 export default function HodStudentAcademicsPage() {
@@ -129,7 +128,7 @@ export default function HodStudentAcademicsPage() {
     if (!editedSubjects) return;
     const copy = [...editedSubjects];
     const filtered = filteredSubjects.map((f: any) => {
-      const code = f.code || f.subject_code || f.subjectCode || f.subjectCode;
+      const code = f.code || f.subject_code || f.subjectCode;
       return String(code || '').toLowerCase();
     });
     const targetCode = filtered[index];
@@ -206,6 +205,7 @@ export default function HodStudentAcademicsPage() {
           <Sidebar active="/hod/students" items={hodSidebarItems} />
 
           <div className="space-y-5 w-full min-w-0">
+            {/* Header Back & Filter Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4">
               <button
                 onClick={() => router.push(`/hod/students/${studentUserId}` as any)}
@@ -214,6 +214,7 @@ export default function HodStudentAcademicsPage() {
                 <ArrowLeft className="h-4 w-4 transform group-hover:-translate-x-0.5 transition-transform" />
                 <span>Back to Student Profile</span>
               </button>
+              
               <div className="flex items-center gap-2">
                 <span className="text-[10px] uppercase tracking-wider font-black text-slate-400">Select Semester:</span>
                 <select
@@ -249,13 +250,21 @@ export default function HodStudentAcademicsPage() {
               </div>
             ) : (
               <div className="space-y-6">
+                
+                {/* Student Overview Header Card */}
                 <div className="rounded-[24px] border border-slate-200 bg-gradient-to-r from-[#1c5644] to-[#12382c] p-6 text-white shadow-md">
                   <div className="flex flex-wrap items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
                       {profile.profile_photo ? (
-                        <img src={profile.profile_photo} alt={student.name} className="h-16 w-16 rounded-2xl object-cover border-2 border-white/20 shadow-md" />
+                        <img
+                          src={profile.profile_photo}
+                          alt={student.name}
+                          className="h-16 w-16 rounded-2xl object-cover border-2 border-white/20 shadow-md"
+                        />
                       ) : (
-                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-xl font-black text-white border border-white/20">{student.name ? student.name.substring(0,2).toUpperCase() : 'ST'}</div>
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-xl font-black text-white border border-white/20">
+                          {student.name ? student.name.substring(0, 2).toUpperCase() : 'ST'}
+                        </div>
                       )}
                       <div>
                         <h1 className="text-xl font-black tracking-tight">{student.name}</h1>
@@ -275,27 +284,56 @@ export default function HodStudentAcademicsPage() {
                       </div>
                     </div>
 
+                    {/* Summary Metric Pills */}
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Overall CGPA</div>
-                        <div className="text-lg font-black text-white">{cgpaVal.toFixed(2)}</div>
+                        <div className="text-lg font-black text-white">
+                          {editMode ? (
+                            <input type="number" step="0.01" value={editedProfile?.cgpa ?? cgpaVal} onChange={(e) => handleProfileFieldChange('cgpa', e.target.value)} className="w-20 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
+                          ) : (
+                            cgpaVal.toFixed(2)
+                          )}
+                        </div>
                       </div>
+                      
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Selected SGPA</div>
-                        <div className="text-lg font-black text-emerald-300">{getSelectedSemSGPA()}</div>
+                        <div className="text-lg font-black text-emerald-300">
+                          {editMode ? (
+                            <input type="number" step="0.01" value={editedProfile?.sgpa ?? getSelectedSemSGPA()} onChange={(e) => handleProfileFieldChange('sgpa', e.target.value)} className="w-20 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-emerald-300" />
+                          ) : (
+                            getSelectedSemSGPA()
+                          )}
+                        </div>
                       </div>
+
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Backlogs</div>
-                        <div className={`text-lg font-black ${((profile?.backlogs ?? backlogsVal) === 0) ? 'text-emerald-300' : 'text-rose-300'}`}>{backlogsVal}</div>
+                        <div className={`text-lg font-black ${((editedProfile?.backlogs ?? backlogsVal) === 0) ? 'text-emerald-300' : 'text-rose-300'}`}>
+                          {editMode ? (
+                            <input type="number" value={editedProfile?.backlogs ?? backlogsVal} onChange={(e) => handleProfileFieldChange('backlogs', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-emerald-300" />
+                          ) : (
+                            backlogsVal
+                          )}
+                        </div>
                       </div>
+
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Attendance</div>
-                        <div className="text-lg font-black text-white">{`${attendanceVal}%`}</div>
+                        <div className="text-lg font-black text-white">
+                          {editMode ? (
+                            <input type="number" value={editedProfile?.attendance_percentage ?? attendanceVal} onChange={(e) => handleProfileFieldChange('attendance_percentage', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
+                          ) : (
+                            `${attendanceVal}%`
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
+                {/* Main Ledger Table Card */}
                 <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-5">
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-3">
@@ -304,7 +342,11 @@ export default function HodStudentAcademicsPage() {
                       </div>
                       <div>
                         <h2 className="text-base font-extrabold text-slate-900">Academic Semester Ledger</h2>
-                        <p className="text-xs font-semibold text-slate-400">{selectedSemester === 'All' ? 'Showing all semester subject details, internal & external marks' : `Displaying detailed ledger for Semester ${normalizeSem(selectedSemester)}`}</p>
+                        <p className="text-xs font-semibold text-slate-400">
+                          {selectedSemester === 'All' 
+                            ? 'Showing all semester subject details, internal & external marks' 
+                            : `Displaying detailed ledger for Semester ${normalizeSem(selectedSemester)}`}
+                        </p>
                       </div>
                     </div>
 
@@ -312,21 +354,121 @@ export default function HodStudentAcademicsPage() {
                       <TrendingUp className="h-4 w-4 text-[#1c5644]" />
                       <span>Total Courses: {filteredSubjects.length}</span>
                     </div>
-                      <div className="flex items-center gap-2">
-                        {!editMode ? (
-                          <button onClick={beginEdit} className="rounded-xl bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold">Edit Marks</button>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <button onClick={saveEdits} disabled={saving} className="rounded-xl bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold">{saving ? 'Saving...' : 'Save Changes'}</button>
-                            <button onClick={cancelEdit} disabled={saving} className="rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold">Cancel</button>
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex items-center gap-2">
+                      {!editMode ? (
+                        <button
+                          onClick={beginEdit}
+                          className="rounded-xl bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold"
+                        >
+                          Edit Marks
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={saveEdits}
+                            disabled={saving}
+                            className="rounded-xl bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold"
+                          >
+                            {saving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            disabled={saving}
+                            className="rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Simplified: not rendering full table to keep file manageable; reuse displaySubjects if needed later */}
-                  <div className="text-sm text-slate-500">Academic ledger is available. Use edit to modify marks and summary metrics.</div>
+                  {/* Table */}
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200/80 shadow-xs">
+                    <table className="w-full text-left text-xs font-semibold text-slate-700">
+                      <thead className="bg-slate-50/90 text-[10px] uppercase tracking-wider text-slate-500 font-black border-b border-slate-200">
+                        <tr>
+                          <th className="px-4 py-3.5">Subject Code</th>
+                          <th className="px-4 py-3.5">Subject Name</th>
+                          <th className="px-4 py-3.5 text-center">Semester</th>
+                          <th className="px-4 py-3.5 text-center">Credits</th>
+                          <th className="px-4 py-3.5 text-center">Mid-1</th>
+                          <th className="px-4 py-3.5 text-center">Mid-2</th>
+                          <th className="px-4 py-3.5 text-center">Int (40)</th>
+                          <th className="px-4 py-3.5 text-center">Ext (60)</th>
+                          <th className="px-4 py-3.5 text-center">Total</th>
+                          <th className="px-4 py-3.5 text-center">Grade Secured</th>
+                          <th className="px-4 py-3.5 text-center">Result</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        { displaySubjects.length > 0 ? (
+                          displaySubjects.map((sub: any, idx: number) => {
+                            const subCode = sub.code || sub.subject_code || sub.subjectCode || '—';
+                            const subName = sub.name || sub.subject_name || sub.subjectName || 'Subject';
+                            const subSem = sub.sem || sub.semester || '1-1';
+                            const subCredits = sub.credits ?? '3';
+                            const subMid1 = sub.mid1 ?? sub.mid_1 ?? '-';
+                            const subMid2 = sub.mid2 ?? sub.mid_2 ?? '-';
+                            const subInt = sub.internal_marks ?? sub.internal ?? sub.int ?? '-';
+                            const subExt = sub.external_marks ?? sub.external ?? sub.ext ?? '-';
+                            const subTotal = sub.total_marks ?? sub.totalMarks ?? sub.total ?? '-';
+                            const subGrade = sub.gpa ?? sub.grade ?? sub.gradeSecured ?? 'A';
+                            const subResult = (sub.result || sub.status || (subGrade === 'F' ? 'F' : 'P')).toString().toUpperCase();
+                            const isPass = subResult === 'P' || subResult === 'PASS';
+
+                            return (
+                              <tr key={idx} className="hover:bg-emerald-50/20 transition duration-150">
+                                <td className="px-4 py-3.5 font-mono font-bold text-slate-800">{subCode}</td>
+                                <td className="px-4 py-3.5 font-bold text-slate-900">{subName}</td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-600">{subSem}</td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">{subCredits}</td>
+                                <td className="px-4 py-3.5 text-center text-slate-500">
+                                  {editMode ? (
+                                    <input type="number" value={subMid1 ?? ''} onChange={(e) => handleFieldChange(idx, 'mid1', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subMid1}
+                                </td>
+                                <td className="px-4 py-3.5 text-center text-slate-500">
+                                  {editMode ? (
+                                    <input type="number" value={subMid2 ?? ''} onChange={(e) => handleFieldChange(idx, 'mid2', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subMid2}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                                  {editMode ? (
+                                    <input type="number" value={subInt ?? ''} onChange={(e) => handleFieldChange(idx, 'internal_marks', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subInt}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                                  {editMode ? (
+                                    <input type="number" value={subExt ?? ''} onChange={(e) => handleFieldChange(idx, 'external_marks', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subExt}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-black text-slate-900">
+                                  {editMode ? ((Number(subMid1 || 0) + Number(subMid2 || 0) + Number(subInt || 0) + Number(subExt || 0)) ) : subTotal}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-black text-[#1c5644]">{subGrade}</td>
+                                <td className="px-4 py-3.5 text-center">
+                                  <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black shadow-xs ${
+                                    isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                  }`}>
+                                    {isPass ? 'P' : 'F'}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan={11} className="px-4 py-12 text-center text-xs text-slate-400 italic">
+                              No course subjects recorded for this semester filter.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
+
               </div>
             )}
           </div>
