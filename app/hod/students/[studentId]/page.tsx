@@ -290,7 +290,7 @@ export default function HodStudentDetailsPage() {
             ) : (
               <div className="space-y-5 animate-fade-in">
                 
-                {/* Header Profile Card */}
+                {/* Profile Header Banner */}
                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden relative">
                   <div className="h-24 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-855" />
                   
@@ -374,7 +374,7 @@ export default function HodStudentDetailsPage() {
                   </div>
                 </div>
 
-                {/* Sub-Tab Navigation Bar with Proper Active Color */}
+                {/* Sub-Tab Navigation Bar with Mentor Portal Styling */}
                 <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur border-b border-slate-200 -mx-4 px-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0 py-2.5 transition-all">
                   <div className="flex bg-white rounded-xl p-1 border border-slate-200 max-w-lg shadow-sm">
                     <button
@@ -413,67 +413,113 @@ export default function HodStudentDetailsPage() {
                 {/* TAB CONTENT VIEWS */}
                 <div className="space-y-5">
                   
-                  {/* GENERAL PROFILE TAB */}
+                  {/* GENERAL PROFILE TAB (Matches Mentor Portal layout) */}
                   {activeTab === 'profile' && (
-                    <div className="grid gap-5 md:grid-cols-2">
-                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="grid gap-5 md:grid-cols-3">
+                      {/* Demographics Card */}
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:col-span-2">
                         <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
                           <User className="h-4.5 w-4.5 text-emerald-805" />
-                          <span>Personal Demographics</span>
+                          <span>Student Demographics & Bio</span>
                         </h3>
-                        <div className="space-y-3 text-xs">
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Full Name</span>
-                            <span className="font-bold text-slate-800">{student?.name}</span>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                          <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Date of Birth</div>
+                            <div className="mt-1 text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                              <Calendar className="h-4 w-4 text-slate-450" />
+                              <span>{profile.dob ? new Date(profile.dob).toLocaleDateString(undefined, { dateStyle: 'medium' }) : 'Not Specified'}</span>
+                            </div>
                           </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Roll Number</span>
-                            <span className="font-mono font-bold text-slate-800">{profile.roll_number || 'N/A'}</span>
+                          <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Branch / Course</div>
+                            <div className="mt-1 text-sm font-semibold text-slate-800">{profile.branch || 'Not Specified'}</div>
                           </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Branch / Department</span>
-                            <span className="font-bold text-slate-800">{profile.branch || 'N/A'}</span>
+                          <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Section</div>
+                            <div className="mt-1 text-sm font-semibold text-slate-800">Section {profile.section || 'N/A'}</div>
                           </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Section</span>
-                            <span className="font-bold text-slate-800">{profile.section || '-'}</span>
+                          <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Current Academic Year</div>
+                            <div className="mt-1 text-sm font-semibold text-slate-800">{profile.academic_year || 'Not Specified'}</div>
                           </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Date of Birth</span>
-                            <span className="font-bold text-slate-800">{profile.dob || 'N/A'}</span>
+                          <div className="rounded-xl bg-emerald-50/50 p-4 border border-emerald-100">
+                            <div className="text-[10px] font-bold text-emerald-805 uppercase tracking-wider">B.Tech Year</div>
+                            <div className="mt-1 text-sm font-bold text-emerald-955">{getStudentBTechYear(profile.roll_number, profile.academic_year)}</div>
                           </div>
-                          <div className="flex justify-between py-1.5">
-                            <span className="font-bold text-slate-400">Academic Year</span>
-                            <span className="font-bold text-emerald-805">{profile.academic_year || 'N/A'}</span>
+                          <div className="rounded-xl bg-slate-50 p-4 border border-slate-100">
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Role & Status</div>
+                            <div className="mt-1 text-sm font-semibold text-slate-800 flex items-center gap-1.5">
+                              <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                              <span>Approved Student</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
+                      {/* Contact Directory */}
                       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
                           <Phone className="h-4.5 w-4.5 text-emerald-805" />
-                          <span>Contact & Directory Info</span>
+                          <span>Contact Directory</span>
                         </h3>
-                        <div className="space-y-3 text-xs">
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Email Address</span>
-                            <span className="font-semibold text-emerald-700">{student?.email || 'N/A'}</span>
+                        <div className="space-y-3">
+                          <div className="rounded-xl border border-slate-150 p-3.5 flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-805 shrink-0">
+                              <Mail className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Official Email</div>
+                              <a href={student?.email ? `mailto:${student.email}` : '#'} className="text-xs font-semibold text-slate-800 hover:text-emerald-700 break-all block">{student?.email || 'N/A'}</a>
+                            </div>
                           </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Student Phone</span>
-                            <span className="font-mono font-bold text-slate-800">{profile.phone || 'N/A'}</span>
+                          <div className="rounded-xl border border-slate-150 p-3.5 flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-50 text-orange-850 shrink-0">
+                              <Phone className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Mobile Number</div>
+                              <span className="text-xs font-mono font-bold text-slate-800">{profile.phone || 'N/A'}</span>
+                            </div>
                           </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Parent / Guardian Contact</span>
-                            <span className="font-mono font-bold text-slate-800">{profile.parent_phone || 'N/A'}</span>
+                          <div className="rounded-xl border border-slate-150 p-3.5 flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-slate-655 shrink-0">
+                              <Phone className="h-4 w-4" />
+                            </div>
+                            <div>
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Alternate Contact</div>
+                              <span className="text-xs font-mono font-bold text-slate-800">{profile.alternate_phone || 'N/A'}</span>
+                            </div>
                           </div>
-                          <div className="flex justify-between py-1.5 border-b border-slate-100">
-                            <span className="font-bold text-slate-400">Assigned Mentor</span>
-                            <span className="font-bold text-slate-800">{mentorName}</span>
+                          
+                          <div className="rounded-xl border border-slate-150 p-3.5 flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+                              <Linkedin className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">LinkedIn Profile</div>
+                              {profile.linkedin_url ? (
+                                <a href={profile.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-emerald-600 hover:underline truncate block">View LinkedIn Profile ↗</a>
+                              ) : (
+                                <span className="text-xs font-bold text-slate-400">Not provided</span>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex justify-between py-1.5">
-                            <span className="font-bold text-slate-400">Assigned HOD</span>
-                            <span className="font-bold text-slate-800">{hodName}</span>
+
+                          <div className="rounded-xl border border-slate-150 p-3.5 flex items-center gap-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 shrink-0">
+                              <FileText className="h-4 w-4" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Resume Document</div>
+                              {profile.resume_url ? (
+                                <a href={profile.resume_url} download="resume.pdf" className="text-xs font-bold text-[#1c5644] hover:underline flex items-center gap-1 mt-0.5">
+                                  <span>Download Resume PDF</span>
+                                  <ExternalLink className="h-3 w-3" />
+                                </a>
+                              ) : (
+                                <span className="text-xs font-bold text-slate-400">No file uploaded</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -484,7 +530,7 @@ export default function HodStudentDetailsPage() {
                   {activeTab === 'academics' && (
                     <div className="space-y-5">
                       <div className="grid gap-5 md:grid-cols-2">
-                        {/* SGPA Semester Trend - Card Header & Bar Click Navigate to Academic Marks */}
+                        {/* SGPA Semester Trend */}
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
                           <div 
                             onClick={() => router.push(`/hod/students/${studentUserId}/academics` as any)}
@@ -574,7 +620,6 @@ export default function HodStudentDetailsPage() {
 
                       {/* Backlog Overview & Placement Eligibility Side by Side */}
                       <div className="grid gap-5 md:grid-cols-2">
-                        {/* Backlog Overview - Header & Bar Click Navigate to Academic Marks */}
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
                           <div 
                             onClick={() => router.push(`/hod/students/${studentUserId}/academics` as any)}
