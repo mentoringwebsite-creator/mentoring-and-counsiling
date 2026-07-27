@@ -258,7 +258,7 @@ export default function HodQueriesPage() {
     <ProtectedRoute role="hod">
       <PageShell title="Student Queries" subtitle="Department query watchlist">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
-          <Sidebar active="/hod/queries" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }, { href: '/hod/reports', label: 'Reports' }]} />
+          <Sidebar active="/hod/queries" items={[{ href: '/hod', label: 'HOD Dashboard' }, { href: '/hod/students', label: 'Students' }, { href: '/hod/queries', label: 'Student Queries' }]} />
           
           <div className={showChat ? "grid gap-6 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
             {/* Left Column: Queries List */}

@@ -12,8 +12,7 @@ import { Loader2, Search, UserCheck, UserPlus, UserMinus } from 'lucide-react';
 const hodSidebarItems = [
   { href: '/hod', label: 'HOD Dashboard' },
   { href: '/hod/students', label: 'Students' },
-  { href: '/hod/queries', label: 'Student Queries' },
-  { href: '/hod/reports', label: 'Reports' }
+  { href: '/hod/queries', label: 'Student Queries' }
 ];
 
 const isBranchInDepartment = (branch: string, department: string) => {

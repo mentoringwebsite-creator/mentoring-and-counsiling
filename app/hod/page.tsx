@@ -13,8 +13,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, Cart
 const hodSidebarItems = [
   { href: '/hod', label: 'HOD Dashboard' },
   { href: '/hod/students', label: 'Students' },
-  { href: '/hod/queries', label: 'Student Queries' },
-  { href: '/hod/reports', label: 'Reports' }
+  { href: '/hod/queries', label: 'Student Queries' }
 ];
 
 const isBranchInDepartment = (branch: string, department: string) => {
@@ -595,9 +594,8 @@ export default function HodPage() {
                   </div>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <StatCard title="High Risk Students" value={highRiskStudents.toString()} tone="red" />
-                  <StatCard title="Reports Generated" value={reportsGenerated.toString()} tone="neutral" hint="Resolved student queries" />
                   <StatCard title="Faculty Coverage" value={`${facultyCoverage}%`} tone="green" hint="Students assigned a mentor" />
                 </div>
 
