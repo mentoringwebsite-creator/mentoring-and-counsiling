@@ -5,10 +5,13 @@ import { Home, User, GraduationCap, Trophy, MessageSquare, Users, FileText, Sett
 type Item = { href: string; label: string };
 
 const getIcon = (label: string) => {
-  switch (label.toLowerCase()) {
+  const l = label.toLowerCase().trim();
+  switch (l) {
     case 'student dashboard':
     case 'faculty dashboard':
     case 'hod dashboard':
+    case 'mentor dashboard':
+    case 'admin dashboard':
     case 'overview':
     case 'dashboard':
     case 'my dashboard':
@@ -35,7 +38,11 @@ const getIcon = (label: string) => {
     case 'students':
     case 'manage students':
     case 'manage faculty':
+    case 'manage mentors':
+    case 'faculty & mentors':
     case 'manage hod':
+    case 'faculty':
+    case 'mentors':
       return <Users className="h-5 w-5 mr-3 shrink-0" />;
     case 'mentor notes':
     case 'reports':
@@ -43,7 +50,7 @@ const getIcon = (label: string) => {
     case 'settings':
       return <Settings className="h-5 w-5 mr-3 shrink-0" />;
     default:
-      return null;
+      return <Users className="h-5 w-5 mr-3 shrink-0" />;
   }
 };
 
