@@ -95,9 +95,7 @@ export default function HodStudentsPage() {
         .from('users')
         .select(`
           id, name, email,
-          faculty_profiles!user_id (
-            faculty_id, designation, department, qualification, year_joined, contact_number, office_room
-          )
+          faculty_profiles!user_id (*)
         `)
         .eq('role', 'faculty')
         .eq('status', 'Approved');
@@ -323,7 +321,7 @@ export default function HodStudentsPage() {
                               </div>
                               <div>
                                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px] block">Joining Year</span>
-                                <span className="font-bold text-slate-800">{fProfile.year_joined || 'N/A'}</span>
+                                <span className="font-bold text-slate-800">{fProfile.year_joined || fProfile.yearJoined || fProfile.year_of_joining || 'N/A'}</span>
                               </div>
                               <div>
                                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[9px] block">Contact Number</span>
