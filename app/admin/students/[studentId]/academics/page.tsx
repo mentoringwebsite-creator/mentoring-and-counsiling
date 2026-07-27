@@ -48,379 +48,425 @@ export default function AdminStudentAcademicsPage() {
     }
   }, [searchParams]);
 
-  const fetchStudentDetails = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: dbError } = await supabase
-        .from('users')
-        .select(`
-          id, name, email,
-          student_profiles!user_id (*)
-        `)
-        .eq('id', studentUserId)
-        .single();
-
-      if (dbError || !data) {
-        throw new Error(dbError?.message || 'Student not found.');
-      }
-
-      const { data: subjectsDb } = await supabase
-        .from('academic_records')
-        .select('*')
-        .eq('student_id', studentUserId);
-
-      const { data: sgpaDb } = await supabase
-        .from('semester_sgpa')
-        .select('*')
-        .eq('student_id', studentUserId);
-
-      setStudent({
-        ...data,
-        profile: data.student_profiles?.[0] || {},
-        academic_records: subjectsDb || [],
-        semester_sgpa: sgpaDb || []
-      });
-
-    } catch (err: any) {
-      console.error('Error fetching student academic details:', err);
-      setError(err.message || 'Failed to load student academic records.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (studentUserId) {
-      fetchStudentDetails();
-    }
+    if (!studentUserId) return;
+
+    const fetchStudentDetails = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data, error: dbError } = await supabase
+          .from('users')
+          .select(`
+            id, name, email,
+            student_profiles!user_id (
+              roll_number, branch, section, academic_year, phone, alternate_phone, profile_photo,
+              cgpa, backlogs, sgpa, academic_subjects, attendance_percentage
+            )
+          `)
+          .eq('id', studentUserId)
+          .single();
+
+        if (dbError) throw dbError;
+        setStudent(data);
+      } catch (err: any) {
+        console.error('Failed to fetch student academics:', err);
+        setError('Unable to load student academic details.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentDetails();
   }, [studentUserId]);
 
   if (!mounted) return null;
 
-  const profile = student?.profile || {};
-  const studentName = student?.name || 'Student';
-  const studentRoll = profile.roll_number || 'N/A';
+  const profile = student?.student_profiles?.[0] || {};
+  const subjects = profile.academic_subjects || [];
+  const cgpaVal = parseFloat(profile.cgpa) || 0;
+  const backlogsVal = parseInt(profile.backlogs) || 0;
+  const attendanceVal = parseInt(profile.attendance_percentage) || 85;
 
-  const normalizeSem = (sStr: string): string => {
-    const s = String(sStr).toLowerCase().replace('sem', '').replace('semester', '').trim();
-    if (s === '1') return '1-1';
-    if (s === '2') return '1-2';
-    if (s === '3') return '2-1';
-    if (s === '4') return '2-2';
-    if (s === '5') return '3-1';
-    if (s === '6') return '3-2';
-    if (s === '7') return '4-1';
-    if (s === '8') return '4-2';
-    return sStr;
+  const normalizeSem = (val: string | number | undefined | null): string => {
+    if (!val) return '';
+    const s = String(val).trim();
+    const map: Record<string, string> = {
+      '1': '1-1', '1-1': '1-1',
+      '2': '1-2', '1-2': '1-2',
+      '3': '2-1', '2-1': '2-1',
+      '4': '2-2', '2-2': '2-2',
+      '5': '3-1', '3-1': '3-1',
+      '6': '3-2', '3-2': '3-2',
+      '7': '4-1', '4-1': '4-1',
+      '8': '4-2', '4-2': '4-2'
+    };
+    return map[s] || s;
   };
 
-  const getSemesterDisplay = (semVal: any) => {
-    const norm = normalizeSem(String(semVal));
-    if (norm === '1-1') return '1-1 (I Year I Sem)';
-    if (norm === '1-2') return '1-2 (I Year II Sem)';
-    if (norm === '2-1') return '2-1 (II Year I Sem)';
-    if (norm === '2-2') return '2-2 (II Year II Sem)';
-    if (norm === '3-1') return '3-1 (III Year I Sem)';
-    if (norm === '3-2') return '3-2 (III Year II Sem)';
-    if (norm === '4-1') return '4-1 (IV Year I Sem)';
-    if (norm === '4-2') return '4-2 (IV Year II Sem)';
-    return `Sem ${semVal}`;
-  };
+  const filteredSubjects = subjects.filter((sub: any) => {
+    if (!selectedSemester || selectedSemester === 'All') return true;
+    return normalizeSem(sub.sem || sub.semester) === normalizeSem(selectedSemester);
+  });
 
-  const allRecords = student?.academic_records || [];
-  const activeRecords = editMode && editedSubjects ? editedSubjects : allRecords;
+  const displaySubjects = (editMode && editedSubjects) ? editedSubjects.filter((s: any) => {
+    if (!selectedSemester || selectedSemester === 'All') return true;
+    return normalizeSem(s.sem || s.semester) === normalizeSem(selectedSemester);
+  }) : filteredSubjects;
 
-  const filteredRecords = selectedSemester === 'All'
-    ? activeRecords
-    : activeRecords.filter((rec: any) => {
-        const normRec = normalizeSem(String(rec.semester));
-        const normSel = normalizeSem(selectedSemester);
-        return normRec === normSel || String(rec.semester) === selectedSemester;
-      });
-
-  const handleStartEdit = () => {
-    setEditedSubjects(JSON.parse(JSON.stringify(allRecords)));
-    setEditedProfile({
-      cgpa: profile.cgpa !== undefined && profile.cgpa !== null ? profile.cgpa : 7.96,
-      backlogs: profile.backlogs !== undefined && profile.backlogs !== null ? profile.backlogs : 0,
-    });
+  const beginEdit = () => {
+    setEditedSubjects(JSON.parse(JSON.stringify(subjects || [])));
+    setEditedProfile(JSON.parse(JSON.stringify(profile || {})));
     setEditMode(true);
   };
 
-  const handleCancelEdit = () => {
-    setEditMode(false);
+  const cancelEdit = () => {
     setEditedSubjects(null);
     setEditedProfile(null);
+    setEditMode(false);
   };
 
-  const handleSubjectChange = (index: number, field: string, value: any) => {
+  const handleFieldChange = (index: number, field: string, value: any) => {
     if (!editedSubjects) return;
-    const updated = [...editedSubjects];
-    updated[index] = { ...updated[index], [field]: value };
-    setEditedSubjects(updated);
+    const copy = [...editedSubjects];
+    const filtered = filteredSubjects.map((f: any) => {
+      const code = f.code || f.subject_code || f.subjectCode;
+      return String(code || '').toLowerCase();
+    });
+    const targetCode = filtered[index];
+    const overallIndex = copy.findIndex((s: any) => String((s.code || s.subject_code || s.subjectCode || '')).toLowerCase() === targetCode);
+    const targetIdx = overallIndex >= 0 ? overallIndex : index;
+    copy[targetIdx] = { ...(copy[targetIdx] || {}), [field]: value };
+    setEditedSubjects(copy);
   };
 
-  const handleSaveMarks = async () => {
+  const handleProfileFieldChange = (field: string, value: any) => {
+    setEditedProfile((prev: any) => ({ ...(prev || {}), [field]: value }));
+  };
+
+  const saveEdits = async () => {
     if (!editedSubjects) return;
+    setSaving(true);
     try {
-      setSaving(true);
-
-      for (const sub of editedSubjects) {
-        if (sub.id) {
-          const { error } = await supabase
-            .from('academic_records')
-            .update({
-              grade: sub.grade,
-              grade_points: Number(sub.grade_points || 0),
-              credits: Number(sub.credits || 0),
-              result: sub.result,
-              internal_marks: Number(sub.internal_marks || 0),
-              external_marks: Number(sub.external_marks || 0),
-              total_marks: Number(sub.total_marks || 0),
-            })
-            .eq('id', sub.id);
-          if (error) console.error('Error updating subject:', error);
-        }
-      }
-
+      const payload: any = {};
+      if (editedSubjects) payload.academic_subjects = editedSubjects;
       if (editedProfile) {
-        const { error: profErr } = await supabase
-          .from('student_profiles')
-          .update({
-            cgpa: Number(editedProfile.cgpa || 0),
-            backlogs: Number(editedProfile.backlogs || 0),
-          })
-          .eq('user_id', studentUserId);
-        if (profErr) console.error('Error updating student profile stats:', profErr);
+        if (editedProfile.cgpa !== undefined) payload.cgpa = editedProfile.cgpa;
+        if (editedProfile.sgpa !== undefined) payload.sgpa = editedProfile.sgpa;
+        if (editedProfile.backlogs !== undefined) payload.backlogs = editedProfile.backlogs;
+        if (editedProfile.attendance_percentage !== undefined) payload.attendance_percentage = editedProfile.attendance_percentage;
       }
 
+      const { error: upErr } = await supabase
+        .from('student_profiles')
+        .update(payload)
+        .eq('user_id', studentUserId);
+
+      if (upErr) throw upErr;
+
+      const updatedProfile = { ...(profile || {}), ...(editedProfile || {}), academic_subjects: editedSubjects || profile.academic_subjects };
+      setStudent({ ...student, student_profiles: [updatedProfile] });
       setEditMode(false);
       setEditedSubjects(null);
       setEditedProfile(null);
-      await fetchStudentDetails();
     } catch (err: any) {
-      console.error('Error saving edited marks:', err);
-      alert('Failed to save changes. Please try again.');
+      console.error('Failed to save edited marks:', err);
+      setError(err.message || 'Failed to save changes.');
     } finally {
       setSaving(false);
     }
   };
 
+  const getSelectedSemSGPA = () => {
+    if (selectedSemester === 'All' || filteredSubjects.length === 0) return cgpaVal.toFixed(2);
+    let totalGradePoints = 0;
+    let totalCredits = 0;
+
+    const gradePointMap: Record<string, number> = {
+      'O': 10, 'A+': 9, 'A': 8, 'B+': 7, 'B': 6, 'C': 5, 'P': 4, 'F': 0
+    };
+
+    filteredSubjects.forEach((sub: any) => {
+      const credits = parseFloat(sub.credits) || 3;
+      const grade = (sub.gpa || sub.grade || sub.gradeSecured || 'A').toUpperCase();
+      const points = gradePointMap[grade] ?? (parseFloat(grade) || 8);
+      totalGradePoints += points * credits;
+      totalCredits += credits;
+    });
+
+    return totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : cgpaVal.toFixed(2);
+  };
+
   return (
     <ProtectedRoute role="admin">
-      <PageShell title="Academic Semester Ledger" subtitle="Review and manage academic performance records">
+      <PageShell
+        title="Academic Semester Ledger"
+        subtitle={student ? `${student.name} • ${profile.roll_number || 'Academic Details'}` : 'Academic Profile'}
+      >
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/admin/students" items={adminSidebarItems} />
 
-          <div className="space-y-6 w-full min-w-0">
-            {/* Top Bar */}
+          <div className="space-y-5 w-full min-w-0">
+            {/* Header Back & Filter Bar */}
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <button 
+              <button
                 onClick={() => router.push(`/admin/students/${studentUserId}` as any)}
-                className="inline-flex items-center gap-2 rounded-2xl bg-white border border-slate-200 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm"
+                className="group inline-flex items-center gap-2 text-xs font-bold text-emerald-800 hover:text-emerald-900 transition-all bg-emerald-50 hover:bg-emerald-100/70 px-4 py-2 rounded-xl border border-emerald-200 shadow-xs cursor-pointer"
               >
-                <ArrowLeft className="h-4 w-4 text-emerald-700" />
+                <ArrowLeft className="h-4 w-4 transform group-hover:-translate-x-0.5 transition-transform" />
                 <span>Back to Student Profile</span>
               </button>
-
-              {!editMode ? (
-                <button
-                  onClick={handleStartEdit}
-                  className="rounded-xl bg-emerald-800 hover:bg-emerald-900 px-4 py-2 text-xs font-bold text-white transition shadow-sm"
+              
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider font-black text-slate-400">Select Semester:</span>
+                <select
+                  value={selectedSemester}
+                  onChange={(e) => setSelectedSemester(e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-800 shadow-xs focus:border-emerald-600 focus:outline-none cursor-pointer"
                 >
-                  Edit Marks & Grades
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleCancelEdit}
-                    disabled={saving}
-                    className="rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveMarks}
-                    disabled={saving}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 px-4 py-2 text-xs font-bold text-white transition shadow-sm"
-                  >
-                    {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                    <span>Save Changes</span>
-                  </button>
-                </div>
-              )}
+                  <option value="All">All Semesters</option>
+                  <option value="1">Sem 1 (1-1)</option>
+                  <option value="2">Sem 2 (1-2)</option>
+                  <option value="3">Sem 3 (2-1)</option>
+                  <option value="4">Sem 4 (2-2)</option>
+                  <option value="5">Sem 5 (3-1)</option>
+                  <option value="6">Sem 6 (3-2)</option>
+                  <option value="7">Sem 7 (4-1)</option>
+                  <option value="8">Sem 8 (4-2)</option>
+                </select>
+              </div>
             </div>
 
             {loading ? (
-              <div className="portal-card flex h-64 items-center justify-center">
-                <div className="flex items-center gap-3 text-slate-500 font-bold">
-                  <Loader2 className="h-6 w-6 animate-spin text-emerald-600" />
-                  <span>Loading academic records...</span>
+              <div className="portal-card flex h-[350px] items-center justify-center">
+                <div className="flex flex-col items-center gap-3 text-slate-500">
+                  <Loader2 className="h-10 w-10 animate-spin text-emerald-600" />
+                  <span className="text-sm font-semibold">Loading student academic ledger...</span>
                 </div>
               </div>
             ) : error ? (
-              <div className="portal-card p-6 border-rose-200 bg-rose-50 text-rose-800 font-bold text-sm">
-                {error}
+              <div className="portal-card flex flex-col items-center justify-center text-rose-800 p-8 text-center">
+                <AlertTriangle className="h-12 w-12 text-rose-500 mb-3" />
+                <p className="font-bold text-lg">Error Loading Academics</p>
+                <p className="text-sm mt-1 text-rose-600 max-w-md">{error}</p>
               </div>
             ) : (
               <div className="space-y-6">
-
-                {/* Scorecard Header */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <h2 className="text-xl font-extrabold text-slate-900">{studentName}</h2>
-                      <p className="text-xs font-bold text-emerald-800 uppercase mt-0.5">ROLL NO: {studentRoll}</p>
-                    </div>
-
+                
+                {/* Student Overview Header Card */}
+                <div className="rounded-[24px] border border-slate-200 bg-gradient-to-r from-[#1c5644] to-[#12382c] p-6 text-white shadow-md">
+                  <div className="flex flex-wrap items-center justify-between gap-6">
                     <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center min-w-[90px]">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">CGPA</span>
-                        {editMode && editedProfile ? (
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={editedProfile.cgpa}
-                            onChange={(e) => setEditedProfile({ ...editedProfile, cgpa: e.target.value })}
-                            className="w-16 text-center font-black text-sm text-emerald-800 rounded border border-slate-300 px-1 py-0.5 mt-0.5"
-                          />
-                        ) : (
-                          <span className="text-base font-black text-emerald-800">{Number(profile.cgpa || 7.96).toFixed(2)}</span>
-                        )}
+                      {profile.profile_photo ? (
+                        <img
+                          src={profile.profile_photo}
+                          alt={student.name}
+                          className="h-16 w-16 rounded-2xl object-cover border-2 border-white/20 shadow-md"
+                        />
+                      ) : (
+                        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 text-xl font-black text-white border border-white/20">
+                          {student.name ? student.name.substring(0, 2).toUpperCase() : 'ST'}
+                        </div>
+                      )}
+                      <div>
+                        <h1 className="text-xl font-black tracking-tight">{student.name}</h1>
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-emerald-100 font-semibold">
+                          <span>{profile.roll_number || 'N/A'}</span>
+                          <span>•</span>
+                          <span>{profile.branch || 'B.Tech'}</span>
+                          <span>•</span>
+                          <span>Year {profile.academic_year || '4'}</span>
+                          {profile.section && (
+                            <>
+                              <span>•</span>
+                              <span>Section {profile.section}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-center min-w-[90px]">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Backlogs</span>
-                        {editMode && editedProfile ? (
-                          <input
-                            type="number"
-                            value={editedProfile.backlogs}
-                            onChange={(e) => setEditedProfile({ ...editedProfile, backlogs: e.target.value })}
-                            className="w-12 text-center font-black text-sm text-amber-700 rounded border border-slate-300 px-1 py-0.5 mt-0.5"
-                          />
-                        ) : (
-                          <span className="text-base font-black text-amber-700">{profile.backlogs || 0}</span>
-                        )}
+                    </div>
+
+                    {/* Summary Metric Pills */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
+                        <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Overall CGPA</div>
+                        <div className="text-lg font-black text-white">
+                          {editMode ? (
+                            <input type="number" step="0.01" value={editedProfile?.cgpa ?? cgpaVal} onChange={(e) => handleProfileFieldChange('cgpa', e.target.value)} className="w-20 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
+                          ) : (
+                            cgpaVal.toFixed(2)
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
+                        <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Selected SGPA</div>
+                        <div className="text-lg font-black text-emerald-300">
+                          {editMode ? (
+                            <input type="number" step="0.01" value={editedProfile?.sgpa ?? getSelectedSemSGPA()} onChange={(e) => handleProfileFieldChange('sgpa', e.target.value)} className="w-20 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-emerald-300" />
+                          ) : (
+                            getSelectedSemSGPA()
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
+                        <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Backlogs</div>
+                        <div className={`text-lg font-black ${((editedProfile?.backlogs ?? backlogsVal) === 0) ? 'text-emerald-300' : 'text-rose-300'}`}>
+                          {editMode ? (
+                            <input type="number" value={editedProfile?.backlogs ?? backlogsVal} onChange={(e) => handleProfileFieldChange('backlogs', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-emerald-300" />
+                          ) : (
+                            backlogsVal
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
+                        <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Attendance</div>
+                        <div className="text-lg font-black text-white">
+                          {editMode ? (
+                            <input type="number" value={editedProfile?.attendance_percentage ?? attendanceVal} onChange={(e) => handleProfileFieldChange('attendance_percentage', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
+                          ) : (
+                            `${attendanceVal}%`
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Semester Filter Tabs */}
-                <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3">
-                  {['All', '1-1', '1-2', '2-1', '2-2', '3-1', '3-2', '4-1', '4-2'].map((sem) => (
-                    <button
-                      key={sem}
-                      onClick={() => setSelectedSemester(sem)}
-                      className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-                        selectedSemester === sem
-                          ? 'bg-emerald-800 text-white shadow-sm'
-                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {sem === 'All' ? 'All Semesters' : sem}
-                    </button>
-                  ))}
-                </div>
+                {/* Main Ledger Table Card */}
+                <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+                  <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-2xl bg-emerald-50 p-2.5 text-[#1c5644] border border-emerald-100">
+                        <BookOpen className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h2 className="text-base font-extrabold text-slate-900">Academic Semester Ledger</h2>
+                        <p className="text-xs font-semibold text-slate-400">
+                          {selectedSemester === 'All' 
+                            ? 'Showing all semester subject details, internal & external marks' 
+                            : `Displaying detailed ledger for Semester ${normalizeSem(selectedSemester)}`}
+                        </p>
+                      </div>
+                    </div>
 
-                {/* Subjects Table */}
-                <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <h3 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                      <BookOpen className="h-4 w-4 text-emerald-700" />
-                      <span>Course Subjects & Marks Ledger ({filteredRecords.length})</span>
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700">
+                        <TrendingUp className="h-4 w-4 text-[#1c5644]" />
+                        <span>Total Courses: {filteredSubjects.length}</span>
+                      </div>
+
+                      {!editMode ? (
+                        <button
+                          onClick={beginEdit}
+                          className="rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white px-3.5 py-1.5 text-xs font-bold transition cursor-pointer shadow-xs"
+                        >
+                          Edit Marks
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={saveEdits}
+                            disabled={saving}
+                            className="rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white px-3.5 py-1.5 text-xs font-bold transition cursor-pointer shadow-xs"
+                          >
+                            {saving ? 'Saving...' : 'Save Changes'}
+                          </button>
+                          <button
+                            onClick={cancelEdit}
+                            disabled={saving}
+                            className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* Table */}
+                  <div className="overflow-x-auto rounded-2xl border border-slate-200/80 shadow-xs">
                     <table className="w-full text-left text-xs font-semibold text-slate-700">
-                      <thead className="bg-slate-100/80 text-[10px] uppercase tracking-wider text-slate-500 font-bold border-b border-slate-200">
+                      <thead className="bg-slate-50/90 text-[10px] uppercase tracking-wider text-slate-500 font-black border-b border-slate-200">
                         <tr>
-                          <th className="px-4 py-3">Code</th>
-                          <th className="px-4 py-3">Subject Name</th>
-                          <th className="px-4 py-3 text-center">Semester</th>
-                          <th className="px-4 py-3 text-center">Grade</th>
-                          <th className="px-4 py-3 text-center">Grade Points</th>
-                          <th className="px-4 py-3 text-center">Credits</th>
-                          <th className="px-4 py-3 text-center">Result</th>
+                          <th className="px-4 py-3.5">Subject Code</th>
+                          <th className="px-4 py-3.5">Subject Name</th>
+                          <th className="px-4 py-3.5 text-center">Semester</th>
+                          <th className="px-4 py-3.5 text-center">Credits</th>
+                          <th className="px-4 py-3.5 text-center">Mid-1</th>
+                          <th className="px-4 py-3.5 text-center">Mid-2</th>
+                          <th className="px-4 py-3.5 text-center">Int (40)</th>
+                          <th className="px-4 py-3.5 text-center">Ext (60)</th>
+                          <th className="px-4 py-3.5 text-center">Total</th>
+                          <th className="px-4 py-3.5 text-center">Grade Secured</th>
+                          <th className="px-4 py-3.5 text-center">Result</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 bg-white">
-                        {filteredRecords.length === 0 ? (
+                        { displaySubjects.length > 0 ? (
+                          displaySubjects.map((sub: any, idx: number) => {
+                            const subCode = sub.code || sub.subject_code || sub.subjectCode || '—';
+                            const subName = sub.name || sub.subject_name || sub.subjectName || 'Subject';
+                            const subSem = sub.sem || sub.semester || '1-1';
+                            const subCredits = sub.credits ?? '3';
+                            const subMid1 = sub.mid1 ?? sub.mid_1 ?? '-';
+                            const subMid2 = sub.mid2 ?? sub.mid_2 ?? '-';
+                            const subInt = sub.internal_marks ?? sub.internal ?? sub.int ?? '-';
+                            const subExt = sub.external_marks ?? sub.external ?? sub.ext ?? '-';
+                            const subTotal = sub.total_marks ?? sub.totalMarks ?? sub.total ?? '-';
+                            const subGrade = sub.gpa ?? sub.grade ?? sub.gradeSecured ?? 'A';
+                            const subResult = (sub.result || sub.status || (subGrade === 'F' ? 'F' : 'P')).toString().toUpperCase();
+                            const isPass = subResult === 'P' || subResult === 'PASS';
+
+                            return (
+                              <tr key={idx} className="hover:bg-emerald-50/20 transition duration-150">
+                                <td className="px-4 py-3.5 font-mono font-bold text-slate-800">{subCode}</td>
+                                <td className="px-4 py-3.5 font-bold text-slate-900">{subName}</td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-600">{subSem}</td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">{subCredits}</td>
+                                <td className="px-4 py-3.5 text-center text-slate-500">
+                                  {editMode ? (
+                                    <input type="number" value={subMid1 ?? ''} onChange={(e) => handleFieldChange(idx, 'mid1', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subMid1}
+                                </td>
+                                <td className="px-4 py-3.5 text-center text-slate-500">
+                                  {editMode ? (
+                                    <input type="number" value={subMid2 ?? ''} onChange={(e) => handleFieldChange(idx, 'mid2', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subMid2}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                                  {editMode ? (
+                                    <input type="number" value={subInt ?? ''} onChange={(e) => handleFieldChange(idx, 'internal_marks', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subInt}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-bold text-slate-700">
+                                  {editMode ? (
+                                    <input type="number" value={subExt ?? ''} onChange={(e) => handleFieldChange(idx, 'external_marks', Number(e.target.value) || 0)} className="w-16 text-center rounded-md border border-slate-200 px-2 py-1 text-xs" />
+                                  ) : subExt}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-black text-slate-900">
+                                  {editMode ? (Number(subMid1 || 0) + Number(subMid2 || 0) + Number(subInt || 0) + Number(subExt || 0)) : subTotal}
+                                </td>
+                                <td className="px-4 py-3.5 text-center font-black text-[#1c5644]">{subGrade}</td>
+                                <td className="px-4 py-3.5 text-center">
+                                  <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black shadow-xs ${
+                                    isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                  }`}>
+                                    {isPass ? 'P' : 'F'}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        ) : (
                           <tr>
-                            <td colSpan={7} className="px-4 py-8 text-center text-slate-400 italic font-medium">
-                              No subject records found for {selectedSemester === 'All' ? 'this student' : `Semester ${selectedSemester}`}.
+                            <td colSpan={11} className="px-4 py-12 text-center text-xs text-slate-400 italic">
+                              No course subjects recorded for this semester filter.
                             </td>
                           </tr>
-                        ) : (
-                          filteredRecords.map((rec: any, idx: number) => (
-                            <tr key={rec.id || idx} className="hover:bg-slate-50/60 transition">
-                              <td className="px-4 py-3 font-mono font-bold text-slate-800">{rec.subject_code || 'CS601'}</td>
-                              <td className="px-4 py-3 font-bold text-slate-900">{rec.subject_name}</td>
-                              <td className="px-4 py-3 text-center font-bold text-emerald-800">{getSemesterDisplay(rec.semester)}</td>
-                              
-                              <td className="px-4 py-3 text-center font-bold">
-                                {editMode ? (
-                                  <input
-                                    type="text"
-                                    value={rec.grade || ''}
-                                    onChange={(e) => handleSubjectChange(idx, 'grade', e.target.value)}
-                                    className="w-12 text-center rounded border border-slate-300 px-1 py-0.5 font-bold uppercase"
-                                  />
-                                ) : (
-                                  <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-black text-slate-800">
-                                    {rec.grade || 'A+'}
-                                  </span>
-                                )}
-                              </td>
-
-                              <td className="px-4 py-3 text-center font-black text-slate-800">
-                                {editMode ? (
-                                  <input
-                                    type="number"
-                                    value={rec.grade_points || 0}
-                                    onChange={(e) => handleSubjectChange(idx, 'grade_points', e.target.value)}
-                                    className="w-12 text-center rounded border border-slate-300 px-1 py-0.5 font-bold"
-                                  />
-                                ) : (
-                                  rec.grade_points !== undefined ? rec.grade_points : 9
-                                )}
-                              </td>
-
-                              <td className="px-4 py-3 text-center font-black text-slate-800">
-                                {editMode ? (
-                                  <input
-                                    type="number"
-                                    value={rec.credits || 0}
-                                    onChange={(e) => handleSubjectChange(idx, 'credits', e.target.value)}
-                                    className="w-12 text-center rounded border border-slate-300 px-1 py-0.5 font-bold"
-                                  />
-                                ) : (
-                                  rec.credits !== undefined ? rec.credits : 4
-                                )}
-                              </td>
-
-                              <td className="px-4 py-3 text-center">
-                                {editMode ? (
-                                  <select
-                                    value={rec.result || 'PASS'}
-                                    onChange={(e) => handleSubjectChange(idx, 'result', e.target.value)}
-                                    className="rounded border border-slate-300 px-1 py-0.5 text-xs font-bold"
-                                  >
-                                    <option value="PASS">PASS</option>
-                                    <option value="FAIL">FAIL</option>
-                                  </select>
-                                ) : (
-                                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${
-                                    rec.result === 'FAIL' ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
-                                  }`}>
-                                    {rec.result || 'PASS'}
-                                  </span>
-                                )}
-                              </td>
-                            </tr>
-                          ))
                         )}
                       </tbody>
                     </table>

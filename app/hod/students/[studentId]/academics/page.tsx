@@ -156,7 +156,7 @@ export default function HodStudentAcademicsPage() {
         if (editedProfile.attendance_percentage !== undefined) payload.attendance_percentage = editedProfile.attendance_percentage;
       }
 
-      const { data, error: upErr } = await supabase
+      const { error: upErr } = await supabase
         .from('student_profiles')
         .update(payload)
         .eq('user_id', studentUserId);
@@ -210,7 +210,7 @@ export default function HodStudentAcademicsPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <button
                 onClick={() => router.push(`/hod/students/${studentUserId}` as any)}
-                className="group inline-flex items-center gap-2 text-xs font-bold text-emerald-800 hover:text-emerald-900 transition-all bg-emerald-50 hover:bg-emerald-100/70 px-4 py-2 rounded-xl border border-emerald-200 shadow-xs"
+                className="group inline-flex items-center gap-2 text-xs font-bold text-emerald-800 hover:text-emerald-900 transition-all bg-emerald-50 hover:bg-emerald-100/70 px-4 py-2 rounded-xl border border-emerald-200 shadow-xs cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4 transform group-hover:-translate-x-0.5 transition-transform" />
                 <span>Back to Student Profile</span>
@@ -221,7 +221,7 @@ export default function HodStudentAcademicsPage() {
                 <select
                   value={selectedSemester}
                   onChange={(e) => setSelectedSemester(e.target.value)}
-                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-800 shadow-xs focus:border-emerald-600 focus:outline-none"
+                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-800 shadow-xs focus:border-emerald-600 focus:outline-none cursor-pointer"
                 >
                   <option value="All">All Semesters</option>
                   <option value="1">Sem 1 (1-1)</option>
@@ -351,15 +351,16 @@ export default function HodStudentAcademicsPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700">
-                      <TrendingUp className="h-4 w-4 text-[#1c5644]" />
-                      <span>Total Courses: {filteredSubjects.length}</span>
-                    </div>
                     <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700">
+                        <TrendingUp className="h-4 w-4 text-[#1c5644]" />
+                        <span>Total Courses: {filteredSubjects.length}</span>
+                      </div>
+
                       {!editMode ? (
                         <button
                           onClick={beginEdit}
-                          className="rounded-xl bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold"
+                          className="rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white px-3.5 py-1.5 text-xs font-bold transition cursor-pointer shadow-xs"
                         >
                           Edit Marks
                         </button>
@@ -368,14 +369,14 @@ export default function HodStudentAcademicsPage() {
                           <button
                             onClick={saveEdits}
                             disabled={saving}
-                            className="rounded-xl bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold"
+                            className="rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white px-3.5 py-1.5 text-xs font-bold transition cursor-pointer shadow-xs"
                           >
                             {saving ? 'Saving...' : 'Save Changes'}
                           </button>
                           <button
                             onClick={cancelEdit}
                             disabled={saving}
-                            className="rounded-xl bg-white border border-slate-200 px-3 py-1.5 text-xs font-bold"
+                            className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 text-xs font-bold transition cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -445,7 +446,7 @@ export default function HodStudentAcademicsPage() {
                                   ) : subExt}
                                 </td>
                                 <td className="px-4 py-3.5 text-center font-black text-slate-900">
-                                  {editMode ? ((Number(subMid1 || 0) + Number(subMid2 || 0) + Number(subInt || 0) + Number(subExt || 0)) ) : subTotal}
+                                  {editMode ? (Number(subMid1 || 0) + Number(subMid2 || 0) + Number(subInt || 0) + Number(subExt || 0)) : subTotal}
                                 </td>
                                 <td className="px-4 py-3.5 text-center font-black text-[#1c5644]">{subGrade}</td>
                                 <td className="px-4 py-3.5 text-center">
