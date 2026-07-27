@@ -13,6 +13,7 @@ import {
 
 const hodSidebarItems = [
   { href: '/hod', label: 'HOD Dashboard' },
+  { href: '/hod/faculty', label: 'Faculty & Mentors' },
   { href: '/hod/students', label: 'Students' },
   { href: '/hod/queries', label: 'Student Queries' }
 ];
