@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 import { PageShell } from '@/components/page-shell';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -23,6 +24,7 @@ const adminSidebarItems = [
 ];
 
 export default function AdminStudentsPage() {
+  const router = useRouter();
   const [students, setStudents] = useState<any[]>([]);
   const [facultyList, setFacultyList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1341,7 +1343,10 @@ export default function AdminStudentsPage() {
                       <tr key={student.id} className="hover:bg-slate-50/50">
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center shrink-0">
+                            <div 
+                              onClick={() => router.push(`/admin/students/${student.id}` as any)}
+                              className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:border-emerald-500 transition"
+                            >
                               {profile.profile_photo ? (
                                 <img
                                   src={profile.profile_photo}
@@ -1356,7 +1361,12 @@ export default function AdminStudentsPage() {
                               )}
                             </div>
                             <div>
-                              <div className="font-semibold text-slate-900">{student.name}</div>
+                              <button 
+                                onClick={() => router.push(`/admin/students/${student.id}` as any)}
+                                className="font-bold text-slate-900 hover:text-emerald-700 hover:underline text-left cursor-pointer focus:outline-none"
+                              >
+                                {student.name}
+                              </button>
                               <div className="text-xs text-slate-500">{student.email}</div>
                             </div>
                           </div>
