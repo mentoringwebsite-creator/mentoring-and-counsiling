@@ -920,7 +920,10 @@ export default function StudentDetailsPage() {
                       
                       {/* SGPA Semester Trend */}
                       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0">
+                        <div 
+                          onClick={() => router.push(`/faculty/students/${studentUserId}/academics` as any)}
+                          className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                        >
                           <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
                             <TrendingUp className="h-4 w-4 text-emerald-805" />
                             <span>SGPA Semester Trend</span>
@@ -1018,7 +1021,10 @@ export default function StudentDetailsPage() {
 
                       {/* Backlog Overview */}
                       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0">
+                        <div 
+                          onClick={() => router.push(`/faculty/students/${studentUserId}/academics` as any)}
+                          className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                        >
                           <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
                             <ShieldAlert className="h-4 w-4 text-rose-605" />
                             <span>Backlog Overview</span>

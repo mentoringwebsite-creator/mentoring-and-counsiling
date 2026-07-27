@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { 
   ResponsiveContainer, BarChart, Bar,
-  PieChart, Pie, Cell, Tooltip, CartesianGrid, XAxis, YAxis
+  PieChart, Pie, Cell, Tooltip, CartesianGrid, XAxis, YAxis, LabelList, Legend
 } from 'recharts';
 
 const hodSidebarItems = [
@@ -89,9 +89,9 @@ export default function HodStudentDetailsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars'>('academics');
   const [selectedCert, setSelectedCert] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showSkillsPie, setShowSkillsPie] = useState(true);
   const [mentorName, setMentorName] = useState<string>('Loading...');
   const [hodName, setHodName] = useState<string>('Loading...');
-  const [selectedLedgerSem, setSelectedLedgerSem] = useState<string | null>(null);
 
   const profileRaw = student?.student_profiles?.[0] || {};
   let alternatePhoneVal = profileRaw.alternate_phone || '';
@@ -117,22 +117,6 @@ export default function HodStudentDetailsPage() {
   };
 
   const subjects = profile.academic_subjects || [];
-
-  const normalizeSem = (val: string | number | undefined | null): string => {
-    if (!val) return '';
-    const s = String(val).trim();
-    const map: Record<string, string> = {
-      '1': '1-1', '1-1': '1-1',
-      '2': '1-2', '1-2': '1-2',
-      '3': '2-1', '2-1': '2-1',
-      '4': '2-2', '2-2': '2-2',
-      '5': '3-1', '3-1': '3-1',
-      '6': '3-2', '3-2': '3-2',
-      '7': '4-1', '4-1': '4-1',
-      '8': '4-2', '4-2': '4-2'
-    };
-    return map[s] || s;
-  };
 
   const rawInterests = profile.interests || '';
   let parsedInterests = rawInterests;
@@ -231,30 +215,31 @@ export default function HodStudentDetailsPage() {
   const risk = getRiskLevel(cgpaVal, backlogsVal);
 
   const sgpaTrendData = [
-    { sem: 'Sem 1', sgpa: 8.36, semNum: '1' },
-    { sem: 'Sem 2', sgpa: 7.84, semNum: '2' },
-    { sem: 'Sem 3', sgpa: 8.11, semNum: '3' },
-    { sem: 'Sem 4', sgpa: 8.17, semNum: '4' },
-    { sem: 'Sem 5', sgpa: 7.89, semNum: '5' },
-    { sem: 'Sem 6', sgpa: 7.62, semNum: '6' },
+    { name: 'Sem 1', sgpa: 8.36, semNum: '1', Student: 8.36 },
+    { name: 'Sem 2', sgpa: 7.84, semNum: '2', Student: 7.84 },
+    { name: 'Sem 3', sgpa: 8.11, semNum: '3', Student: 8.11 },
+    { name: 'Sem 4', sgpa: 8.17, semNum: '4', Student: 8.17 },
+    { name: 'Sem 5', sgpa: 7.89, semNum: '5', Student: 7.89 },
+    { name: 'Sem 6', sgpa: 7.62, semNum: '6', Student: 7.62 },
   ];
 
   if (student?.semester_sgpa && student.semester_sgpa.length > 0) {
     student.semester_sgpa.forEach((item: any) => {
-      const idx = sgpaTrendData.findIndex(s => s.semNum === String(item.semester) || s.sem === `Sem ${item.semester}`);
+      const idx = sgpaTrendData.findIndex(s => s.semNum === String(item.semester) || s.name === `Sem ${item.semester}`);
       if (idx !== -1 && item.sgpa) {
         sgpaTrendData[idx].sgpa = Number(item.sgpa);
+        sgpaTrendData[idx].Student = Number(item.sgpa);
       }
     });
   }
 
   const backlogChartData = [
-    { name: 'Sem 1', backlogs: 0 },
-    { name: 'Sem 2', backlogs: 0 },
-    { name: 'Sem 3', backlogs: 0 },
-    { name: 'Sem 4', backlogs: 0 },
-    { name: 'Sem 5', backlogs: 0 },
-    { name: 'Sem 6', backlogs: backlogsVal },
+    { name: 'Sem 1', Backlogs: 0 },
+    { name: 'Sem 2', Backlogs: 0 },
+    { name: 'Sem 3', Backlogs: 0 },
+    { name: 'Sem 4', Backlogs: 0 },
+    { name: 'Sem 5', Backlogs: 0 },
+    { name: 'Sem 6', Backlogs: backlogsVal },
   ];
 
   const clubs = profile.clubs || DEFAULT_CLUBS;
@@ -276,7 +261,7 @@ export default function HodStudentDetailsPage() {
             <div className="flex items-center justify-between">
               <button 
                 onClick={() => router.push('/hod/students')} 
-                className="group inline-flex items-center gap-2 text-xs font-bold text-emerald-805 hover:text-emerald-955 transition-all duration-250 bg-emerald-50/50 hover:bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-150 shadow-sm select-none"
+                className="group inline-flex items-center gap-2 text-xs font-bold text-emerald-805 hover:text-emerald-955 transition-all duration-250 bg-emerald-50/50 hover:bg-emerald-50 px-3.5 py-1.5 rounded-full border border-emerald-150 shadow-sm select-none cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4 transform group-hover:-translate-x-0.5 transition-transform" />
                 <span>Back to Students</span>
@@ -305,13 +290,12 @@ export default function HodStudentDetailsPage() {
             ) : (
               <div className="space-y-5 animate-fade-in">
                 
-                {/* Redesigned Premium Profile Header */}
+                {/* Header Profile Card */}
                 <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden relative">
                   <div className="h-24 bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-855" />
                   
                   <div className="px-6 pb-6 pt-0">
                     <div className="flex flex-col md:flex-row gap-6 items-center md:items-center -mt-12 md:-mt-16 relative z-10">
-                      {/* Avatar container */}
                       <div className="h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] md:h-[185px] md:w-[185px] lg:h-[210px] lg:w-[210px] xl:h-[230px] xl:w-[230px] rounded-[32px] overflow-hidden border-[5px] border-white shadow-lg bg-slate-100 flex items-center justify-center shrink-0">
                         {profile.profile_photo ? (
                           <img
@@ -329,7 +313,6 @@ export default function HodStudentDetailsPage() {
                         )}
                       </div>
 
-                      {/* Header Details */}
                       <div className="flex-1 w-full text-center md:text-left pb-1">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-4 border-b border-slate-100/90">
                           <div className="flex flex-col items-start justify-center">
@@ -353,7 +336,6 @@ export default function HodStudentDetailsPage() {
                           </div>
                         </div>
 
-                        {/* Demographics Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 mt-1 text-left">
                           <div className="space-y-2">
                             <div className="flex items-center justify-between text-xs border-b border-slate-50/60 pb-1.5">
@@ -392,41 +374,38 @@ export default function HodStudentDetailsPage() {
                   </div>
                 </div>
 
-                {/* Sticky Sub-Tab Navigation Bar */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
-                  <div className="flex flex-wrap sm:flex-nowrap gap-1">
+                {/* Sub-Tab Navigation Bar with Proper Active Color */}
+                <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur border-b border-slate-200 -mx-4 px-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0 py-2.5 transition-all">
+                  <div className="flex bg-white rounded-xl p-1 border border-slate-200 max-w-lg shadow-sm">
                     <button
                       onClick={() => setActiveTab('profile')}
-                      className={`flex-1 rounded-xl py-2.5 px-4 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                      className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
                         activeTab === 'profile'
-                          ? 'bg-emerald-805 text-white shadow-sm font-extrabold'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                          ? 'bg-emerald-800 text-white shadow'
+                          : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      <User className="h-4 w-4" />
-                      <span>General Profile</span>
+                      General Profile
                     </button>
                     <button
                       onClick={() => setActiveTab('academics')}
-                      className={`flex-1 rounded-xl py-2.5 px-4 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                      className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
                         activeTab === 'academics'
-                          ? 'bg-emerald-805 text-white shadow-sm font-extrabold'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                          ? 'bg-emerald-800 text-white shadow'
+                          : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      <BarChart3 className="h-4 w-4" />
-                      <span>Academics & Analytics</span>
+                      Academics & Analytics
                     </button>
                     <button
                       onClick={() => setActiveTab('extracurriculars')}
-                      className={`flex-1 rounded-xl py-2.5 px-4 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 ${
+                      className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
                         activeTab === 'extracurriculars'
-                          ? 'bg-emerald-805 text-white shadow-sm font-extrabold'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                          ? 'bg-emerald-800 text-white shadow'
+                          : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      <Award className="h-4 w-4" />
-                      <span>Extracurriculars & Goals</span>
+                      Extracurriculars & Goals
                     </button>
                   </div>
                 </div>
@@ -436,69 +415,65 @@ export default function HodStudentDetailsPage() {
                   
                   {/* GENERAL PROFILE TAB */}
                   {activeTab === 'profile' && (
-                    <div className="space-y-5">
-                      <div className="grid gap-5 md:grid-cols-2">
-                        {/* Personal Demographics */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                            <User className="h-4.5 w-4.5 text-emerald-805" />
-                            <span>Personal Demographics</span>
-                          </h3>
-                          <div className="space-y-3 text-xs">
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Full Name</span>
-                              <span className="font-bold text-slate-800">{student?.name}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Roll Number</span>
-                              <span className="font-mono font-bold text-slate-800">{profile.roll_number || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Branch / Department</span>
-                              <span className="font-bold text-slate-800">{profile.branch || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Section</span>
-                              <span className="font-bold text-slate-800">{profile.section || '-'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Date of Birth</span>
-                              <span className="font-bold text-slate-800">{profile.dob || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5">
-                              <span className="font-bold text-slate-400">Academic Year</span>
-                              <span className="font-bold text-emerald-805">{profile.academic_year || 'N/A'}</span>
-                            </div>
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                          <User className="h-4.5 w-4.5 text-emerald-805" />
+                          <span>Personal Demographics</span>
+                        </h3>
+                        <div className="space-y-3 text-xs">
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Full Name</span>
+                            <span className="font-bold text-slate-800">{student?.name}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Roll Number</span>
+                            <span className="font-mono font-bold text-slate-800">{profile.roll_number || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Branch / Department</span>
+                            <span className="font-bold text-slate-800">{profile.branch || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Section</span>
+                            <span className="font-bold text-slate-800">{profile.section || '-'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Date of Birth</span>
+                            <span className="font-bold text-slate-800">{profile.dob || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5">
+                            <span className="font-bold text-slate-400">Academic Year</span>
+                            <span className="font-bold text-emerald-805">{profile.academic_year || 'N/A'}</span>
                           </div>
                         </div>
+                      </div>
 
-                        {/* Directory & Contact */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                          <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-                            <Phone className="h-4.5 w-4.5 text-emerald-805" />
-                            <span>Contact & Directory Info</span>
-                          </h3>
-                          <div className="space-y-3 text-xs">
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Email Address</span>
-                              <span className="font-semibold text-emerald-700">{student?.email || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Student Phone</span>
-                              <span className="font-mono font-bold text-slate-800">{profile.phone || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Parent / Guardian Contact</span>
-                              <span className="font-mono font-bold text-slate-800">{profile.parent_phone || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5 border-b border-slate-100">
-                              <span className="font-bold text-slate-400">Assigned Mentor</span>
-                              <span className="font-bold text-slate-800">{mentorName}</span>
-                            </div>
-                            <div className="flex justify-between py-1.5">
-                              <span className="font-bold text-slate-400">Assigned HOD</span>
-                              <span className="font-bold text-slate-800">{hodName}</span>
-                            </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+                          <Phone className="h-4.5 w-4.5 text-emerald-805" />
+                          <span>Contact & Directory Info</span>
+                        </h3>
+                        <div className="space-y-3 text-xs">
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Email Address</span>
+                            <span className="font-semibold text-emerald-700">{student?.email || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Student Phone</span>
+                            <span className="font-mono font-bold text-slate-800">{profile.phone || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Parent / Guardian Contact</span>
+                            <span className="font-mono font-bold text-slate-800">{profile.parent_phone || 'N/A'}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5 border-b border-slate-100">
+                            <span className="font-bold text-slate-400">Assigned Mentor</span>
+                            <span className="font-bold text-slate-800">{mentorName}</span>
+                          </div>
+                          <div className="flex justify-between py-1.5">
+                            <span className="font-bold text-slate-400">Assigned HOD</span>
+                            <span className="font-bold text-slate-800">{hodName}</span>
                           </div>
                         </div>
                       </div>
@@ -509,77 +484,88 @@ export default function HodStudentDetailsPage() {
                   {activeTab === 'academics' && (
                     <div className="space-y-5">
                       <div className="grid gap-5 md:grid-cols-2">
-                        {/* SGPA Semester Trend */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                              <TrendingUp className="h-4.5 w-4.5 text-emerald-805" />
+                        {/* SGPA Semester Trend - Card Header & Bar Click Navigate to Academic Marks */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
+                          <div 
+                            onClick={() => router.push(`/hod/students/${studentUserId}/academics` as any)}
+                            className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                          >
+                            <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                              <TrendingUp className="h-4 w-4 text-emerald-805" />
                               <span>SGPA Semester Trend</span>
-                            </h3>
-                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                            </h4>
+                            <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg">
                               CGPA: {cgpaVal.toFixed(2)}
                             </span>
                           </div>
-
-                          <div className="h-56 w-full">
+                          <div className="flex-1 min-h-0 w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={sgpaTrendData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                <XAxis dataKey="sem" stroke="#94a3b8" fontSize={10} fontWeight="bold" />
-                                <YAxis domain={[0, 10]} stroke="#94a3b8" fontSize={10} fontWeight="bold" />
-                                <Tooltip formatter={(val: any) => [`${Number(val).toFixed(2)} SGPA`, 'SGPA']} />
+                              <BarChart data={sgpaTrendData} margin={{ top: 10, right: 5, left: -28, bottom: 2 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
+                                <YAxis stroke="#94a3b8" domain={[0, 10]} fontSize={8} fontWeight={600} />
+                                <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
                                 <Bar 
-                                  dataKey="sgpa" 
-                                  fill="#1c5644" 
-                                  radius={[6, 6, 0, 0]} 
-                                  className="cursor-pointer hover:opacity-80 transition"
-                                  onClick={(data: any) => {
-                                    if (data && data.name) {
-                                      const semNum = data.name.replace('Sem ', '').trim();
+                                  onClick={(data: any) => { 
+                                    if (data && data.name) { 
+                                      const semNum = data.name.replace('Sem ', '').trim(); 
                                       router.push(`/hod/students/${studentUserId}/academics?semester=${semNum}` as any);
+                                    } else {
+                                      router.push(`/hod/students/${studentUserId}/academics` as any);
                                     }
-                                  }}
-                                />
+                                  }} 
+                                  style={{ cursor: 'pointer' }}
+                                  name="Student" 
+                                  dataKey="Student" 
+                                  fill="#1c5644" 
+                                  radius={[3, 3, 0, 0]} 
+                                  barSize={14}
+                                >
+                                  <LabelList dataKey="Student" position="top" style={{ fontSize: '8px', fill: '#1c5644', fontWeight: 'bold' }} />
+                                </Bar>
                               </BarChart>
                             </ResponsiveContainer>
                           </div>
                         </div>
 
                         {/* Skills Breakdown */}
-                        <div 
-                          onClick={() => setActiveTab('extracurriculars')}
-                          className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between min-h-[280px] cursor-pointer hover:border-emerald-300 transition"
-                        >
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                              <Award className="h-4.5 w-4.5 text-emerald-805" />
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0">
+                            <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                              <Trophy className="h-4 w-4 text-emerald-850" />
                               <span>Skills Breakdown</span>
-                            </h3>
-                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                            </h4>
+                            <button 
+                              onClick={() => setActiveTab('extracurriculars')}
+                              className="text-[9px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 transition select-none shadow-sm cursor-pointer"
+                            >
                               Show Certs & Clubs
-                            </span>
+                            </button>
                           </div>
-
-                          <div className="flex-1 h-48">
+                          <div className="flex-1 min-h-0 w-full cursor-pointer" onClick={() => setActiveTab('extracurriculars')}>
                             <ResponsiveContainer width="100%" height="100%">
                               <PieChart>
                                 <Pie
                                   data={skillsList.slice(0, 6)}
                                   cx="50%"
-                                  cy="50%"
-                                  innerRadius={40}
+                                  cy="42%"
+                                  innerRadius={45}
                                   outerRadius={70}
-                                  paddingAngle={4}
+                                  paddingAngle={3}
                                   dataKey="level"
                                   nameKey="name"
                                   onClick={() => setActiveTab('extracurriculars')}
-                                  className="cursor-pointer"
+                                  style={{ cursor: 'pointer' }}
                                 >
                                   {skillsList.slice(0, 6).map((entry: any, index: number) => (
-                                    <Cell key={`cell-${index}`} fill={SKILLS_COLORS[index % SKILLS_COLORS.length]} />
+                                    <Cell 
+                                      key={`cell-${index}`} 
+                                      fill={SKILLS_COLORS[index % SKILLS_COLORS.length]}
+                                      style={{ cursor: 'pointer' }}
+                                    />
                                   ))}
                                 </Pie>
-                                <Tooltip formatter={(val: any) => [`${val}% Proficiency`, 'Level']} />
+                                <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
                               </PieChart>
                             </ResponsiveContainer>
                           </div>
@@ -588,55 +574,68 @@ export default function HodStudentDetailsPage() {
 
                       {/* Backlog Overview & Placement Eligibility Side by Side */}
                       <div className="grid gap-5 md:grid-cols-2">
-                        {/* Backlog Overview */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                              <ShieldAlert className="h-4.5 w-4.5 text-amber-600" />
+                        {/* Backlog Overview - Header & Bar Click Navigate to Academic Marks */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col hover:shadow-md transition duration-200">
+                          <div 
+                            onClick={() => router.push(`/hod/students/${studentUserId}/academics` as any)}
+                            className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3 shrink-0 cursor-pointer hover:bg-slate-50 p-1 rounded-lg transition"
+                          >
+                            <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                              <ShieldAlert className="h-4 w-4 text-rose-605" />
                               <span>Backlog Overview</span>
-                            </h3>
-                            <span className="text-[10px] font-bold text-slate-400">Click bar for semester</span>
+                            </h4>
+                            <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[9px] font-bold border ${
+                              backlogsVal === 0 ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
+                            }`}>
+                              <AlertTriangle className="h-3 w-3" />
+                              <span>{backlogsVal === 0 ? 'Clear (0)' : `${backlogsVal} Active`}</span>
+                            </span>
                           </div>
-
-                          <div className="h-48 w-full">
+                          <div className="flex-1 min-h-0 w-full">
                             <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={backlogChartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} fontWeight="bold" />
-                                <YAxis allowDecimals={false} stroke="#94a3b8" fontSize={10} fontWeight="bold" />
-                                <Tooltip />
+                              <BarChart data={backlogChartData} margin={{ top: 15, right: 10, left: -25, bottom: 2 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#f8fafc" />
+                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={8} fontWeight={600} />
+                                <YAxis stroke="#94a3b8" fontSize={8} fontWeight={600} allowDecimals={false} domain={[0, 'dataMax + 1']} />
+                                <Tooltip contentStyle={{ borderRadius: '10px', fontSize: '9px' }} />
                                 <Bar 
-                                  dataKey="backlogs" 
-                                  fill="#f59e0b" 
-                                  radius={[6, 6, 0, 0]} 
-                                  className="cursor-pointer hover:opacity-80 transition"
-                                  onClick={(data: any) => {
-                                    if (data && data.name) {
-                                      const semNum = data.name.replace('Sem ', '').trim();
+                                  onClick={(data: any) => { 
+                                    if (data && data.name) { 
+                                      const semNum = data.name.replace('Sem ', '').trim(); 
                                       router.push(`/hod/students/${studentUserId}/academics?semester=${semNum}` as any);
+                                    } else {
+                                      router.push(`/hod/students/${studentUserId}/academics` as any);
                                     }
-                                  }}
-                                />
+                                  }} 
+                                  style={{ cursor: 'pointer' }}
+                                  name="Backlogs" 
+                                  dataKey="Backlogs" 
+                                  fill="#f59e0b" 
+                                  radius={[3, 3, 0, 0]} 
+                                  barSize={12}
+                                >
+                                  <LabelList dataKey="Backlogs" position="top" style={{ fontSize: '8px', fill: '#f59e0b', fontWeight: 'bold' }} />
+                                </Bar>
                               </BarChart>
                             </ResponsiveContainer>
                           </div>
                         </div>
 
-                        {/* Placement Eligibility Card */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm flex flex-col justify-between">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-                            <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                              <Briefcase className="h-4.5 w-4.5 text-emerald-805" />
+                        {/* Placement Eligibility */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col justify-between hover:shadow-md transition duration-200">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 shrink-0">
+                            <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
+                              <Briefcase className="h-4 w-4 text-[#1c5644]" />
                               <span>Placement Eligibility</span>
-                            </h3>
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${
-                              placementEligible ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                            </h4>
+                            <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[9px] font-extrabold border ${
+                              placementEligible ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
                             }`}>
-                              {placementEligible ? 'Eligible' : 'Not Eligible'}
+                              <span>{placementEligible ? 'Eligible' : 'Not Eligible'}</span>
                             </span>
                           </div>
 
-                          <div className="grid grid-cols-3 gap-3 text-center">
+                          <div className="grid grid-cols-3 gap-3 text-center my-auto">
                             <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">CGPA</div>
                               <div className="text-sm font-black text-slate-800 mt-0.5">{cgpaVal.toFixed(2)}</div>
@@ -660,7 +659,6 @@ export default function HodStudentDetailsPage() {
                   {activeTab === 'extracurriculars' && (
                     <div className="space-y-5">
                       <div className="grid gap-5 md:grid-cols-2">
-                        {/* Clubs Card */}
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                           <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
                             <Users className="h-4.5 w-4.5 text-emerald-805" />
@@ -679,11 +677,10 @@ export default function HodStudentDetailsPage() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-slate-450 italic">Student has not joined any clubs.</p>
+                            <p className="text-xs text-slate-455 italic">Student has not joined any clubs.</p>
                           )}
                         </div>
 
-                        {/* Certifications Card */}
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                           <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
                             <Award className="h-4.5 w-4.5 text-emerald-805" />
@@ -719,12 +716,11 @@ export default function HodStudentDetailsPage() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-slate-450 italic">No certifications recorded.</p>
+                            <p className="text-xs text-slate-455 italic">No certifications recorded.</p>
                           )}
                         </div>
                       </div>
 
-                      {/* Aspirations & Goals */}
                       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
                           <Sparkles className="h-4.5 w-4.5 text-emerald-705" />
