@@ -112,27 +112,64 @@ export default function AdminHodPage() {
         .update({ name: editForm.name })
         .eq('id', editingHod.id);
 
-      if (userErr) throw userErr;
+      if (userErr) {
+        console.warn('User table update warning:', userErr);
+      }
 
-      // 2. Upsert hod_profiles table
-      const { error: profileErr } = await supabase
+      // 2. Update/Insert hod_profiles table
+      const profilePayload = {
+        user_id: editingHod.id,
+        faculty_id: editForm.faculty_id,
+        department: editForm.department,
+        designation: editForm.designation,
+        contact_number: editForm.contact_number
+      };
+
+      const { data: existingHodProfile } = await supabase
         .from('hod_profiles')
-        .upsert({
-          user_id: editingHod.id,
-          faculty_id: editForm.faculty_id,
-          department: editForm.department,
-          designation: editForm.designation,
-          contact_number: editForm.contact_number
-        }, { onConflict: 'user_id' });
+        .select('id')
+        .eq('user_id', editingHod.id)
+        .maybeSingle();
 
-      if (profileErr) throw profileErr;
+      if (existingHodProfile) {
+        const { error: updateHpErr } = await supabase
+          .from('hod_profiles')
+          .update(profilePayload)
+          .eq('user_id', editingHod.id);
+        if (updateHpErr) throw updateHpErr;
+      } else {
+        const { error: insertHpErr } = await supabase
+          .from('hod_profiles')
+          .insert(profilePayload);
+        if (insertHpErr) throw insertHpErr;
+      }
 
-      setFeedback({ type: 'success', message: `Updated details for ${editForm.name} successfully.` });
+      // 3. Update faculty_profiles if existing for this user_id
+      const { data: existingFp } = await supabase
+        .from('faculty_profiles')
+        .select('id')
+        .eq('user_id', editingHod.id)
+        .maybeSingle();
+
+      if (existingFp) {
+        await supabase
+          .from('faculty_profiles')
+          .update({
+            faculty_id: editForm.faculty_id,
+            department: editForm.department,
+            designation: editForm.designation,
+            contact_number: editForm.contact_number
+          })
+          .eq('user_id', editingHod.id);
+      }
+
+      setFeedback({ type: 'success', message: `Updated details for HOD ${editForm.name} successfully.` });
       closeEditModal();
-      fetchHod();
+      await fetchHod();
     } catch (err: any) {
       console.error('Failed to update HOD details:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to update HOD details.' });
+    } finally {
       setSavingEdit(false);
     }
   };
