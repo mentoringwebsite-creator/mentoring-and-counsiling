@@ -21,6 +21,7 @@ import {
 } from 'recharts';
 
 import { getStudentAcademicData } from '@/lib/studentAcademicService';
+import { PlacementEligibilityCard } from '@/components/placement-eligibility-card';
 
 const hodSidebarItems = [
   { href: '/hod', label: 'HOD Dashboard' },
@@ -636,34 +637,12 @@ export default function HodStudentDetailsPage() {
                         </div>
 
                         {/* Placement Eligibility */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm h-[290px] flex flex-col justify-between hover:shadow-md transition duration-200">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 shrink-0">
-                            <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5">
-                              <Briefcase className="h-4 w-4 text-[#1c5644]" />
-                              <span>Placement Eligibility</span>
-                            </h4>
-                            <span className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-[9px] font-extrabold border ${
-                              placementEligible ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-rose-50 border-rose-100 text-rose-800'
-                            }`}>
-                              <span>{placementEligible ? 'Eligible' : 'Not Eligible'}</span>
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-3 text-center my-auto">
-                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">CGPA</div>
-                              <div className="text-sm font-black text-slate-800 mt-0.5">{cgpaVal !== null ? cgpaVal.toFixed(2) : 'N/A'}</div>
-                            </div>
-                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Backlogs</div>
-                              <div className="text-sm font-black text-slate-800 mt-0.5">{backlogsVal !== null ? backlogsVal : 'N/A'}</div>
-                            </div>
-                            <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
-                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Attendance</div>
-                              <div className="text-sm font-black text-emerald-800 mt-0.5">{attendanceVal !== null ? `${attendanceVal}%` : 'N/A'}</div>
-                            </div>
-                          </div>
-                        </div>
+                        <PlacementEligibilityCard 
+                          cgpa={cgpaVal} 
+                          backlogs={backlogsVal} 
+                          attendance={attendanceVal}
+                          className="h-[290px]"
+                        />
                       </div>
 
                     </div>

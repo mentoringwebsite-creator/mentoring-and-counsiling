@@ -6,6 +6,8 @@ import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
 import { Phone, Smartphone, Edit2, Loader2, X, User, GraduationCap, Mail, Calendar, ArrowLeft, Linkedin, FileText } from 'lucide-react';
+import { getStudentAcademicData } from '@/lib/studentAcademicService';
+import { PlacementEligibilityCard } from '@/components/placement-eligibility-card';
 
 const studentSidebarItems = [
   { href: '/student', label: 'Profile' },
@@ -66,6 +68,7 @@ export default function StudentProfilePage() {
 
   const [mentorName, setMentorName] = useState<string>('Not Assigned');
   const [hodName, setHodName] = useState<string>('Not Assigned');
+  const [academicSummary, setAcademicSummary] = useState<any>(null);
 
   async function loadProfile() {
     try {
@@ -91,6 +94,11 @@ export default function StudentProfilePage() {
 
       if (profileError) {
         console.error('Error reading student profile:', profileError);
+      }
+
+      if (profileDb) {
+        const summary = getStudentAcademicData(profileDb);
+        setAcademicSummary(summary);
       }
 
       const parsed = parseAcademicYear(profileDb?.academic_year || '');
@@ -668,6 +676,14 @@ export default function StudentProfilePage() {
                         </div>
                       </div>
 
+                      {/* Placement Eligibility Card */}
+                      {academicSummary && (
+                        <PlacementEligibilityCard 
+                          cgpa={academicSummary.cgpaVal} 
+                          backlogs={academicSummary.backlogsVal} 
+                          attendance={academicSummary.attendanceVal}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
