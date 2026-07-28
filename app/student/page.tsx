@@ -675,15 +675,6 @@ export default function StudentProfilePage() {
                           </div>
                         </div>
                       </div>
-
-                      {/* Placement Eligibility Card */}
-                      {academicSummary && (
-                        <PlacementEligibilityCard 
-                          cgpa={academicSummary.cgpaVal} 
-                          backlogs={academicSummary.backlogsVal} 
-                          attendance={academicSummary.attendanceVal}
-                        />
-                      )}
                     </div>
                   </div>
                 </div>

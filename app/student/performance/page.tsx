@@ -701,7 +701,7 @@ export default function PerformancePage() {
                           <div className="space-y-2 flex-1 min-h-0 overflow-y-auto scrollbar-none">
                             <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
                               <span className="text-slate-550 font-bold text-[10px]">Academic CGPA</span>
-                              <span className="font-extrabold text-slate-800 text-[11px]">{cgpa} / 10.0</span>
+                              <span className="font-extrabold text-slate-800 text-[11px]">{cgpa > 0 ? Number(cgpa).toFixed(2) : 'N/A'} / 10.0</span>
                             </div>
                             <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
                               <span className="text-slate-550 font-bold text-[10px]">Attendance Status</span>
@@ -715,8 +715,8 @@ export default function PerformancePage() {
                             </div>
                             <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
                               <span className="text-slate-550 font-bold text-[10px]">Placement Eligibility</span>
-                              <span className={`font-extrabold text-[10px] ${backlogs === 0 && cgpa >= 6.0 ? 'text-emerald-800 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded' : 'text-rose-800 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded'}`}>
-                                {backlogs === 0 && cgpa >= 6.0 ? 'Eligible' : 'Ineligible'}
+                              <span className={`font-extrabold text-[10px] ${backlogs === 0 && cgpa >= 6.5 && (studentAttendance === null || studentAttendance >= 75) ? 'text-emerald-800 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded' : 'text-rose-800 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded'}`}>
+                                {backlogs === 0 && cgpa >= 6.5 && (studentAttendance === null || studentAttendance >= 75) ? 'Eligible' : 'Not Eligible'}
                               </span>
                             </div>
                           </div>
