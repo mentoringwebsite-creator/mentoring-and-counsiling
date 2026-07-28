@@ -57,6 +57,7 @@ export default function AcademicPage() {
   const [highlightSubject, setHighlightSubject] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [classAverage, setClassAverage] = useState<number>(7.80);
+  const [sgpaTrendState, setSgpaTrendState] = useState<any[]>([]);
 
   const loadAcademicProfile = async () => {
     try {
@@ -77,6 +78,7 @@ export default function AcademicPage() {
       setSubjects(subjectsList);
 
       const academicSummary = getStudentAcademicData(data);
+      setSgpaTrendState(academicSummary.sgpaTrendData);
       if (academicSummary.hasAcademicData) {
         setSgpa(academicSummary.sgpaVal ?? 0);
         setCgpa(academicSummary.cgpaVal ?? 0);
@@ -313,7 +315,7 @@ export default function AcademicPage() {
     }).filter(d => d.Student !== null || Number(d.name.split(' ')[1]) <= maxSem);
   };
 
-  const sgpaTrendData = getSgpaTrendData();
+  const sgpaTrendData = sgpaTrendState;
 
   // CGPA Progress Area Chart
   const getCgpaProgressData = () => {

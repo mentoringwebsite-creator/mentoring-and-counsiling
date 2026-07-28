@@ -6,6 +6,7 @@ import { PageShell } from '@/components/page-shell';
 import { Sidebar } from '@/components/sidebar';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { supabase } from '@/lib/supabase';
+import { getStudentAcademicData, SgpaTrendItem, BacklogTrendItem } from '@/lib/studentAcademicService';
 import { 
   Loader2, 
   TrendingUp, 
@@ -127,6 +128,8 @@ export default function PerformancePage() {
   const [rollNumber, setRollNumber] = useState<string>('');
   const [attendancePct, setAttendancePct] = useState<number | null>(null);
   const [classAverage, setClassAverage] = useState<number>(7.80);
+  const [sgpaTrendState, setSgpaTrendState] = useState<SgpaTrendItem[]>([]);
+  const [backlogTrendState, setBacklogTrendState] = useState<BacklogTrendItem[]>([]);
   
   // Semester filter for Subject Marks Analysis Chart
   const [chartSemester, setChartSemester] = useState<string>('6');
@@ -147,41 +150,19 @@ export default function PerformancePage() {
 
       if (!profileDb) return;
 
-      const subjectsList = profileDb.academic_subjects || [];
+      const academicSummary = getStudentAcademicData(profileDb);
+
+      const subjectsList = academicSummary.subjects;
       setSubjects(subjectsList);
-      setClubs(profileDb.clubs || []);
-      setCertifications(profileDb.certifications || []);
+      setClubs(academicSummary.clubs);
+      setCertifications(academicSummary.certifications);
       setRollNumber(profileDb.roll_number || '');
-      if (profileDb.attendance_percentage !== undefined && profileDb.attendance_percentage !== null) {
-        setAttendancePct(Number(profileDb.attendance_percentage));
-      }
-
-      const rawInterests = profileDb.interests || '';
-      const parsedSkills = parseSkillsFromInterests(rawInterests);
-      setSkills(parsedSkills);
-
-      // Compute dynamic CGPA/Backlog stats
-      let backlogCount = 0;
-      let totalCgpaCredits = 0;
-      let totalCgpaPoints = 0;
-
-      subjectsList.forEach((sub: any) => {
-        const gp = convertGradeToGP(sub.gpa);
-        const credits = parseFloat(sub.credits) || 0;
-        if (gp !== null && credits > 0) {
-          totalCgpaCredits += credits;
-          totalCgpaPoints += gp * credits;
-        }
-        const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
-        if (isF) backlogCount++;
-      });
-
-      const calculatedCgpa = totalCgpaCredits > 0 ? Number((totalCgpaPoints / totalCgpaCredits).toFixed(2)) : 0;
-      const finalCgpa = profileDb.cgpa ? parseFloat(profileDb.cgpa) : calculatedCgpa;
-      const finalBacklogs = profileDb.backlogs !== null && profileDb.backlogs !== undefined ? Number(profileDb.backlogs) : backlogCount;
-
-      setCgpa(finalCgpa);
-      setBacklogs(finalBacklogs);
+      setAttendancePct(academicSummary.attendanceVal);
+      setSkills(academicSummary.skillsList);
+      setCgpa(academicSummary.cgpaVal || 0);
+      setBacklogs(academicSummary.backlogsVal || 0);
+      setSgpaTrendState(academicSummary.sgpaTrendData);
+      setBacklogTrendState(academicSummary.backlogChartData);
 
       // Helper functions for semester normalization
       const normalizeSem = (val: string | number | undefined | null): string => {
@@ -492,10 +473,10 @@ export default function PerformancePage() {
     return 'Encouraged to join special mentoring sessions. Focus needed in core mathematics & programming subjects.';
   };
 
-  const sgpaTrendData = getSgpaTrendData();
+  const sgpaTrendData = sgpaTrendState;
   const subjectMarksData = getSubjectMarksData();
   const extracurricularData = getExtracurricularData();
-  const backlogData = getSemesterBacklogsData();
+  const backlogData = backlogTrendState;
 
   const studentAttendance = getStudentAttendance();
   const studentInternalPct = getStudentInternalMarksPct();
@@ -563,7 +544,7 @@ export default function PerformancePage() {
                         </h2>
                       </div>
                       <span className="text-[9px] font-bold text-slate-500 bg-slate-50 border px-1.5 py-0.5 rounded-lg">
-                        CGPA: {cgpa}
+                        CGPA: {cgpa > 0 ? Number(cgpa).toFixed(2) : 'Not Set'}
                       </span>
                     </div>
 

@@ -58,6 +58,24 @@ export const convertGradeToGP = (gpaStr: string | number | undefined | null): nu
   }
 };
 
+export const normalizeSemesterIndex = (val: any): number => {
+  if (!val) return 0;
+  const str = String(val).trim();
+  const map: Record<string, number> = {
+    '1': 1, '1-1': 1,
+    '2': 2, '1-2': 2,
+    '3': 3, '2-1': 3,
+    '4': 4, '2-2': 4,
+    '5': 5, '3-1': 5,
+    '6': 6, '3-2': 6,
+    '7': 7, '4-1': 7,
+    '8': 8, '4-2': 8
+  };
+  if (map[str]) return map[str];
+  const parsed = parseInt(str);
+  return (!isNaN(parsed) && parsed >= 1 && parsed <= 8) ? parsed : 0;
+};
+
 export const parseSkillsFromInterests = (rawInterests: string): Array<{ name: string; level: number }> => {
   if (!rawInterests || !rawInterests.includes('||skills:')) return [];
   const parts = rawInterests.split('||skills:');
@@ -116,7 +134,7 @@ export const getStudentAcademicData = (profileRaw: any): StudentAcademicSummary 
 
   // Prioritize stored profile values if present, else fallback to calculated
   const cgpaVal = profile.cgpa !== undefined && profile.cgpa !== null && profile.cgpa !== '' 
-    ? Number(profile.cgpa) 
+    ? Number(parseFloat(profile.cgpa).toFixed(2)) 
     : calculatedCgpa;
 
   const backlogsVal = profile.backlogs !== undefined && profile.backlogs !== null && profile.backlogs !== '' 
@@ -127,57 +145,80 @@ export const getStudentAcademicData = (profileRaw: any): StudentAcademicSummary 
     ? Number(profile.attendance_percentage) 
     : null;
 
-  // 2. Generate SGPA Trend Data
+  // 2. Generate SGPA Trend Data strictly for available semesters
   const semMap: Record<number, any[]> = {};
+  const validSemIndices: number[] = [];
+
   subjects.forEach((sub: any) => {
-    const sem = parseInt(sub.semester || sub.sem);
-    if (!isNaN(sem)) {
-      semMap[sem] = semMap[sem] || [];
-      semMap[sem].push(sub);
+    const semIdx = normalizeSemesterIndex(sub.semester || sub.sem);
+    if (semIdx > 0) {
+      semMap[semIdx] = semMap[semIdx] || [];
+      semMap[semIdx].push(sub);
+      validSemIndices.push(semIdx);
     }
   });
 
-  const maxSemInSubjects = Math.max(...subjects.map((s: any) => parseInt(s.semester || s.sem) || 0), 0);
-  const chartLength = Math.max(maxSemInSubjects, subjects.length > 0 ? 4 : 0);
+  const maxSemInSubjects = validSemIndices.length > 0 ? Math.max(...validSemIndices) : 0;
 
-  const sgpaTrendData: SgpaTrendItem[] = Array.from({ length: chartLength }, (_, i) => {
-    const semNum = i + 1;
-    const subjectsInSem = semMap[semNum] || [];
-    let studentSGPA: number | null = null;
+  const sgpaTrendData: SgpaTrendItem[] = [];
+  if (maxSemInSubjects > 0) {
+    for (let semNum = 1; semNum <= maxSemInSubjects; semNum++) {
+      const subjectsInSem = semMap[semNum] || [];
+      let studentSGPA: number | null = null;
 
-    const firstSubWithSgpa = subjectsInSem.find((sub: any) => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
-    if (firstSubWithSgpa) {
-      studentSGPA = Number(parseFloat(firstSubWithSgpa.sgpa).toFixed(2));
-    } else if (subjectsInSem.length > 0) {
-      const validGPs = subjectsInSem
-        .map((sub: any) => convertGradeToGP(sub.gpa ?? sub.grade ?? sub.gradeSecured))
-        .filter((gp: any): gp is number => gp !== null);
+      const firstSubWithSgpa = subjectsInSem.find((sub: any) => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
+      if (firstSubWithSgpa) {
+        studentSGPA = Number(parseFloat(firstSubWithSgpa.sgpa).toFixed(2));
+      } else if (subjectsInSem.length > 0) {
+        let totalCredits = 0;
+        let weightedGPsum = 0;
+        let validGPsCount = 0;
 
-      if (validGPs.length > 0) {
-        studentSGPA = Number((validGPs.reduce((a, b) => a + b, 0) / validGPs.length).toFixed(2));
+        subjectsInSem.forEach((sub: any) => {
+          const gp = convertGradeToGP(sub.gpa ?? sub.grade ?? sub.gradeSecured);
+          const credits = parseFloat(sub.credits) || 0;
+          if (gp !== null) {
+            validGPsCount++;
+            if (credits > 0) {
+              weightedGPsum += gp * credits;
+              totalCredits += credits;
+            }
+          }
+        });
+
+        if (validGPsCount > 0) {
+          if (totalCredits === 0) {
+            const validGPs = subjectsInSem
+              .map((sub: any) => convertGradeToGP(sub.gpa ?? sub.grade ?? sub.gradeSecured))
+              .filter((gp: any): gp is number => gp !== null);
+            studentSGPA = Number((validGPs.reduce((a, b) => a + b, 0) / validGPs.length).toFixed(2));
+          } else {
+            studentSGPA = Number((weightedGPsum / totalCredits).toFixed(2));
+          }
+        }
       }
-    }
 
-    return {
-      name: `Sem ${semNum}`,
-      Student: studentSGPA,
-      ClassAvg: Number((7.4 + Math.sin(semNum) * 0.2 + semNum * 0.05).toFixed(2))
-    };
-  });
+      sgpaTrendData.push({
+        name: `Sem ${semNum}`,
+        Student: studentSGPA,
+        ClassAvg: Number((7.4 + Math.sin(semNum) * 0.2 + semNum * 0.05).toFixed(2))
+      });
+    }
+  }
 
   // 3. Generate Backlog Trend Data
   const backlogSemMap: Record<number, number> = {};
-  if (chartLength > 0) {
-    for (let i = 1; i <= chartLength; i++) {
+  if (maxSemInSubjects > 0) {
+    for (let i = 1; i <= maxSemInSubjects; i++) {
       backlogSemMap[i] = 0;
     }
   }
 
   subjects.forEach((sub: any) => {
-    const sem = parseInt(sub.semester || sub.sem);
+    const sem = normalizeSemesterIndex(sub.semester || sub.sem);
     const gp = convertGradeToGP(sub.gpa ?? sub.grade ?? sub.gradeSecured);
     const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
-    if (!isNaN(sem) && sem > 0) {
+    if (sem > 0) {
       if (isF) {
         backlogSemMap[sem] = (backlogSemMap[sem] || 0) + 1;
       }
@@ -272,7 +313,7 @@ export const getStudentAcademicData = (profileRaw: any): StudentAcademicSummary 
 
   let sgpaVal: number | null = null;
   if (profileRaw?.sgpa !== undefined && profileRaw?.sgpa !== null && profileRaw.sgpa !== '') {
-    sgpaVal = Number(profileRaw.sgpa);
+    sgpaVal = Number(parseFloat(profileRaw.sgpa).toFixed(2));
   } else {
     const validSgpas = sgpaTrendData.map(s => s.Student).filter((s): s is number => s !== null);
     if (validSgpas.length > 0) {
