@@ -422,16 +422,9 @@ export default function PerformancePage() {
     }));
   };
 
-  // Dynamic Attendance evaluation based on roll number
   const getStudentAttendance = () => {
     if (attendancePct !== null && attendancePct !== undefined) return attendancePct;
-    if (!rollNumber) return 85.0;
-    let hash = 0;
-    for (let i = 0; i < rollNumber.length; i++) {
-      hash = rollNumber.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const pct = 72.0 + (Math.abs(hash) % 240) / 10.0;
-    return Number(pct.toFixed(1));
+    return null;
   };
 
   // Dynamic Internal Marks calculation from subjects
@@ -476,9 +469,9 @@ export default function PerformancePage() {
   };
 
   // Faculty review data
-  const getFacultyReviewData = (attendance: number, internalPct: number) => {
+  const getFacultyReviewData = (attendance: number | null, internalPct: number) => {
     return [
-      { name: 'Attendance Rate (%)', Student: attendance, Required: 75.0, ClassAvg: 81.2 },
+      { name: 'Attendance Rate (%)', Student: attendance ?? 0, Required: 75.0, ClassAvg: 81.2 },
       { name: 'Internal Marks Avg (%)', Student: internalPct, Required: 40.0, ClassAvg: 76.5 }
     ];
   };
@@ -731,8 +724,8 @@ export default function PerformancePage() {
                             </div>
                             <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">
                               <span className="text-slate-550 font-bold text-[10px]">Attendance Status</span>
-                              <span className={`font-extrabold text-[11px] ${studentAttendance >= 85 ? 'text-emerald-800' : studentAttendance >= 75 ? 'text-slate-700' : 'text-rose-800'}`}>
-                                {studentAttendance}% ({studentAttendance >= 85 ? 'Excellent' : studentAttendance >= 75 ? 'Good' : 'Critical'})
+                              <span className={`font-extrabold text-[11px] ${studentAttendance !== null ? (studentAttendance >= 85 ? 'text-emerald-800' : studentAttendance >= 75 ? 'text-slate-700' : 'text-rose-800') : 'text-slate-500'}`}>
+                                {studentAttendance !== null ? `${studentAttendance}% (${studentAttendance >= 85 ? 'Excellent' : studentAttendance >= 75 ? 'Good' : 'Critical'})` : 'Not Set'}
                               </span>
                             </div>
                             <div className="flex items-center justify-between p-2 rounded-lg bg-white border shadow-sm">

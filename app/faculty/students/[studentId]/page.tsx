@@ -21,6 +21,8 @@ import {
   PieChart, Pie, Cell, LabelList, Legend
 } from 'recharts';
 
+import { getStudentAcademicData } from '@/lib/studentAcademicService';
+
 const facultySidebarItems = [
   { href: '/faculty', label: 'Mentor Dashboard' },
   { href: '/faculty/students', label: 'My Students' },
@@ -146,7 +148,7 @@ export default function StudentDetailsPage() {
 
   const rawInterests = profile.interests || '';
   let parsedInterests = rawInterests;
-  let parsedSkills: any[] = [];
+  let parsedSkillsFromRaw: any[] = [];
   if (rawInterests.includes('||skills:')) {
     const parts = rawInterests.split('||skills:');
     parsedInterests = parts[0];
@@ -155,13 +157,13 @@ export default function StudentDetailsPage() {
       try {
         const parsed = JSON.parse(skillStr);
         if (Array.isArray(parsed)) {
-          parsedSkills = parsed.map((item: any) => {
+          parsedSkillsFromRaw = parsed.map((item: any) => {
             if (typeof item === 'string') return { name: item, level: 80 };
             return { name: item.name || '', level: item.level || 80 };
           }).filter((item: any) => item.name);
         }
       } catch (e) {
-        parsedSkills = skillStr.split(',').map((s: string) => {
+        parsedSkillsFromRaw = skillStr.split(',').map((s: string) => {
           const item = s.trim();
           if (item.includes(':')) {
             const [name, lvl] = item.split(':');
@@ -267,103 +269,27 @@ export default function StudentDetailsPage() {
     }
   };
 
-  const dynamicStats = (() => {
-    if (subjects.length === 0) {
-      return { sgpa: 0, cgpa: 0, backlogs: 0 };
-    }
+  const academicSummary = getStudentAcademicData(profile);
+  const {
+    cgpaVal,
+    backlogsVal,
+    attendanceVal,
+    sgpaTrendData,
+    backlogChartData: backlogData,
+    placementEligibility,
+    skillsList: parsedSkills,
+    clubs,
+    certifications,
+    hasAcademicData
+  } = academicSummary;
 
-    let totalCgpaCredits = 0;
-    let totalCgpaPoints = 0;
-    let backlogCount = 0;
-
-    subjects.forEach((sub: any) => {
-      const gp = convertGradeToGP(sub.gpa);
-      const credits = parseFloat(sub.credits) || 0;
-      if (gp !== null && credits > 0) {
-        totalCgpaCredits += credits;
-        totalCgpaPoints += gp * credits;
-      }
-      const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
-      if (isF) backlogCount++;
-    });
-
-    const calculatedCgpa = totalCgpaCredits > 0 ? Number((totalCgpaPoints / totalCgpaCredits).toFixed(2)) : 0;
-
-    const semesters = subjects.map((s: any) => parseInt(s.semester)).filter((s: any) => !isNaN(s));
-    const latestSem = semesters.length > 0 ? Math.max(...semesters) : 1;
-
-    let totalSgpaCredits = 0;
-    let totalSgpaPoints = 0;
-
-    subjects.forEach((sub: any) => {
-      if (parseInt(sub.semester) === latestSem) {
-        const gp = convertGradeToGP(sub.gpa);
-        const credits = parseFloat(sub.credits) || 0;
-        if (gp !== null && credits > 0) {
-          totalSgpaCredits += credits;
-          totalSgpaPoints += gp * credits;
-        }
-      }
-    });
-
-    const calculatedSgpa = totalSgpaCredits > 0 ? Number((totalSgpaPoints / totalSgpaCredits).toFixed(2)) : 0;
-
-    return {
-      sgpa: calculatedSgpa,
-      cgpa: calculatedCgpa,
-      backlogs: backlogCount
-    };
-  })();
-
-  const cgpaVal = profile.cgpa !== undefined && profile.cgpa !== null ? Number(profile.cgpa) : dynamicStats.cgpa;
-  const backlogsVal = profile.backlogs !== undefined && profile.backlogs !== null ? Number(profile.backlogs) : dynamicStats.backlogs;
-  const risk = getRiskLevel(cgpaVal, backlogsVal);
-
-  const getSgpaTrendData = () => {
-    const semMap: Record<number, any[]> = {};
-
-    subjects.forEach((sub: any) => {
-      const sem = parseInt(sub.semester);
-      if (!isNaN(sem)) {
-        semMap[sem] = semMap[sem] || [];
-        semMap[sem].push(sub);
-      }
-    });
-
-    const maxSem = Math.max(...subjects.map((s: any) => parseInt(s.semester) || 0), 4);
-    const chartLength = Math.max(maxSem, 4);
-
-    return Array.from({ length: chartLength }, (_, i) => {
-      const semNum = i + 1;
-      const subjectsInSem = semMap[semNum] || [];
-      let studentSGPA: number | null = null;
-
-      const firstSubWithSgpa = subjectsInSem.find((sub: any) => sub.sgpa && !isNaN(parseFloat(sub.sgpa)));
-      if (firstSubWithSgpa) {
-        studentSGPA = Number(parseFloat(firstSubWithSgpa.sgpa).toFixed(2));
-      } else if (subjectsInSem.length > 0) {
-        const validGPs = subjectsInSem
-          .map((sub: any) => convertGradeToGP(sub.gpa))
-          .filter((gp: any): gp is number => gp !== null);
-
-        if (validGPs.length > 0) {
-          studentSGPA = Number((validGPs.reduce((a, b) => a + b, 0) / validGPs.length).toFixed(2));
-        }
-      }
-
-      return {
-        name: `Sem ${semNum}`,
-        Student: studentSGPA,
-        ClassAvg: Number((7.4 + Math.sin(semNum) * 0.2 + semNum * 0.05).toFixed(2))
-      };
-    }).filter((d: any) => d.Student !== null || Number(d.name.split(' ')[1]) <= maxSem);
-  };
+  const risk = getRiskLevel(cgpaVal ?? 8.0, backlogsVal ?? 0);
 
   const getSubjectMarksData = () => {
-    const semSubjects = subjects.filter((s: any) => s.semester?.toString() === chartSemester);
+    const semSubjects = subjects.filter((s: any) => s.semester?.toString() === chartSemester || s.sem?.toString() === chartSemester);
     return semSubjects.map((sub: any) => {
-      const subName = sub.name || 'Subject';
-      const marks = parseInt(sub.total_marks) || 0;
+      const subName = sub.name || sub.subject_name || 'Subject';
+      const marks = parseInt(sub.total_marks ?? sub.totalMarks ?? sub.total) || 0;
       return {
         name: subName.length > 10 ? subName.substring(0, 8) + '...' : subName,
         fullName: subName,
@@ -372,49 +298,17 @@ export default function StudentDetailsPage() {
     }).filter((d: any) => d.Marks > 0);
   };
 
-  const getSemesterBacklogsData = () => {
-    const semMap: { [key: number]: number } = {};
-    for (let i = 1; i <= 6; i++) {
-      semMap[i] = 0;
-    }
-
-    subjects.forEach((sub: any) => {
-      const sem = parseInt(sub.semester);
-      const gp = convertGradeToGP(sub.gpa);
-      const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
-      if (!isNaN(sem)) {
-        if (isF) {
-          semMap[sem] = (semMap[sem] || 0) + 1;
-        }
-      }
-    });
-
-    const maxSemInDb = Math.max(...subjects.map((s: any) => parseInt(s.semester) || 1), 6);
-    for (let i = 7; i <= maxSemInDb; i++) {
-      if (semMap[i] === undefined) semMap[i] = 0;
-    }
-
-    return Object.keys(semMap).map(Number).sort((a, b) => a - b).map((sem: number) => ({
-      name: `Sem ${sem}`,
-      Backlogs: semMap[sem]
-    }));
-  };
-
   const getExtracurricularData = () => {
     if (showSkillsPie) {
-      return parsedSkills.map(s => ({
+      return parsedSkills.map((s: any) => ({
         name: s.name,
         value: s.level || 80
       }));
     } else {
-      const clubsCount = clubs.length;
-      const certsCount = certifications.length;
-      const skillsCount = parsedSkills.length;
-
       return [
-        { name: 'Clubs Joined', value: clubsCount },
-        { name: 'Certifications', value: certsCount },
-        { name: 'Skills & Tech', value: skillsCount }
+        { name: 'Clubs Joined', value: clubs.length },
+        { name: 'Certifications', value: certifications.length },
+        { name: 'Skills & Tech', value: parsedSkills.length }
       ];
     }
   };
@@ -424,7 +318,7 @@ export default function StudentDetailsPage() {
     let clearedC = 0;
     subjects.forEach((sub: any) => {
       const credits = parseFloat(sub.credits) || 0;
-      const gp = convertGradeToGP(sub.gpa);
+      const gp = convertGradeToGP(sub.gpa ?? sub.grade ?? sub.gradeSecured);
       if (credits > 0) {
         totalC += credits;
         if (gp !== null && gp >= 4.0) {
@@ -435,97 +329,19 @@ export default function StudentDetailsPage() {
     return { totalCredits: totalC, clearedCredits: clearedC };
   };
 
-  const getStudentAttendance = () => {
-    if (profile.attendance_percentage !== undefined && profile.attendance_percentage !== null) {
-      return Number(profile.attendance_percentage);
-    }
-    const roll = profile.roll_number || '';
-    if (!roll) return 85.0;
-    let hash = 0;
-    for (let i = 0; i < roll.length; i++) {
-      hash = roll.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const pct = 72.0 + (Math.abs(hash) % 240) / 10.0;
-    return Number(pct.toFixed(1));
-  };
-
   const { totalCredits, clearedCredits } = getCreditsClearancePct();
-  const attendanceVal = getStudentAttendance();
-  const semestersList = subjects.map((s: any) => parseInt(s.semester)).filter((s: any) => !isNaN(s));
+  const semestersList = subjects.map((s: any) => parseInt(s.semester || s.sem)).filter((s: any) => !isNaN(s));
   const latestSem = semestersList.length > 0 ? Math.max(...semestersList) : 1;
 
-  const sgpaTrendData = getSgpaTrendData();
   const subjectMarksData = getSubjectMarksData();
-  const backlogData = getSemesterBacklogsData();
   const extracurricularData = getExtracurricularData();
-
-  const getPlacementEligibility = () => {
-    const minCgpa = 6.5;
-    const maxBacklogs = 0;
-    const minAttendance = 75;
-
-    const hasCgpaOk = cgpaVal >= minCgpa;
-    const hasBacklogsOk = backlogsVal <= maxBacklogs;
-    const hasAttendanceOk = attendanceVal >= minAttendance;
-
-    let status: 'Eligible' | 'Conditional' | 'Ineligible' = 'Eligible';
-    let statusColor = 'text-emerald-700 bg-emerald-50/50 border-emerald-200';
-    let statusText = 'Eligible for Campus Placements';
-    let reason = 'Meets all academic, attendance, and backlog clearance criteria.';
-
-    if (!hasCgpaOk && !hasBacklogsOk) {
-      status = 'Ineligible';
-      statusColor = 'text-rose-700 bg-rose-50/50 border-rose-200';
-      statusText = 'Currently Ineligible';
-      reason = 'Does not meet CGPA criteria and has active backlogs.';
-    } else if (!hasBacklogsOk) {
-      if (backlogsVal <= 2) {
-        status = 'Conditional';
-        statusColor = 'text-amber-700 bg-amber-50/50 border-amber-205';
-        statusText = 'Conditional Eligibility';
-        reason = 'Eligible for select companies. Must clear active backlogs.';
-      } else {
-        status = 'Ineligible';
-        statusColor = 'text-rose-700 bg-rose-50/50 border-rose-200';
-        statusText = 'Currently Ineligible';
-        reason = 'Ineligible due to multiple (>2) active backlogs.';
-      }
-    } else if (!hasCgpaOk) {
-      if (cgpaVal >= 6.0) {
-        status = 'Conditional';
-        statusColor = 'text-amber-700 bg-amber-50/50 border-amber-205';
-        statusText = 'Conditional Eligibility';
-        reason = 'Eligible for mass recruiters. Needs to improve CGPA to >= 6.5.';
-      } else {
-        status = 'Ineligible';
-        statusColor = 'text-rose-700 bg-rose-50/50 border-rose-200';
-        statusText = 'Currently Ineligible';
-        reason = 'CGPA is below the minimum placement threshold of 6.0.';
-      }
-    } else if (!hasAttendanceOk) {
-      status = 'Conditional';
-      statusColor = 'text-amber-700 bg-amber-50/50 border-amber-205';
-      statusText = 'Conditional Eligibility';
-      reason = 'Attendance is below 75%. Subject to Department approval.';
-    }
-
-    return {
-      status,
-      statusColor,
-      statusText,
-      reason,
-      checks: [
-        { label: `CGPA Metric (Min ${minCgpa})`, value: `${cgpaVal.toFixed(2)}`, passed: hasCgpaOk, warning: !hasCgpaOk && cgpaVal >= 6.0 },
-        { label: 'Active Backlogs (Max 0)', value: `${backlogsVal}`, passed: hasBacklogsOk, warning: !hasBacklogsOk && backlogsVal <= 2 },
-        { label: `Class Attendance (Min ${minAttendance}%)`, value: `${attendanceVal}%`, passed: hasAttendanceOk, warning: !hasAttendanceOk && attendanceVal >= 65 }
-      ]
-    };
-  };
 
   const getRecommendedRoles = () => {
     const branch = String(profile.branch || '').toUpperCase();
-    const isHighPerformer = cgpaVal >= 8.5 && backlogsVal === 0;
-    const isMediumPerformer = !isHighPerformer && cgpaVal >= 7.0 && backlogsVal <= 1;
+    const currCgpa = cgpaVal ?? 0;
+    const currBacklogs = backlogsVal ?? 0;
+    const isHighPerformer = currCgpa >= 8.5 && currBacklogs === 0;
+    const isMediumPerformer = !isHighPerformer && currCgpa >= 7.0 && currBacklogs <= 1;
 
     let roles: { title: string; match: number; type: string; skills: string[] }[] = [];
 
@@ -594,11 +410,7 @@ export default function StudentDetailsPage() {
     return roles;
   };
 
-  const placementEligibility = getPlacementEligibility();
   const recommendedRoles = getRecommendedRoles();
-
-  const clubs = profile.clubs || DEFAULT_CLUBS;
-  const certifications = profile.certifications || DEFAULT_CERTS;
 
   if (!mounted) {
     return (
@@ -929,7 +741,7 @@ export default function StudentDetailsPage() {
                             <span>SGPA Semester Trend</span>
                           </h4>
                           <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg">
-                            CGPA: {cgpaVal.toFixed(2)}
+                            CGPA: {cgpaVal !== null ? cgpaVal.toFixed(2) : 'N/A'}
                           </span>
                         </div>
                         <div className="flex-1 min-h-0 w-full">
@@ -1100,19 +912,19 @@ export default function StudentDetailsPage() {
                             <div className="p-2 rounded-xl bg-white border border-slate-150 text-center shadow-xs">
                               <div className="text-slate-400 font-bold">CGPA</div>
                               <div className={`font-black mt-0.5 ${placementEligibility.checks[0].passed ? 'text-emerald-700' : 'text-rose-600'}`}>
-                                {cgpaVal.toFixed(2)}
+                                {cgpaVal !== null ? cgpaVal.toFixed(2) : 'N/A'}
                               </div>
                             </div>
                             <div className="p-2 rounded-xl bg-white border border-slate-150 text-center shadow-xs">
                               <div className="text-slate-400 font-bold">Backlogs</div>
                               <div className={`font-black mt-0.5 ${placementEligibility.checks[1].passed ? 'text-emerald-700' : 'text-rose-600'}`}>
-                                {backlogsVal}
+                                {backlogsVal !== null ? backlogsVal : 'N/A'}
                               </div>
                             </div>
                             <div className="p-2 rounded-xl bg-white border border-slate-150 text-center shadow-xs">
                               <div className="text-slate-400 font-bold">Attendance</div>
                               <div className={`font-black mt-0.5 ${placementEligibility.checks[2].passed ? 'text-emerald-700' : 'text-rose-600'}`}>
-                                {attendanceVal}%
+                                {attendanceVal !== null ? `${attendanceVal}%` : 'N/A'}
                               </div>
                             </div>
                           </div>

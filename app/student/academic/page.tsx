@@ -19,8 +19,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Zap,
-  Target
 } from 'lucide-react';
+import { getStudentAcademicData } from '@/lib/studentAcademicService';
 import { 
   LineChart, 
   Line, 
@@ -76,52 +76,11 @@ export default function AcademicPage() {
       const subjectsList = data.academic_subjects || [];
       setSubjects(subjectsList);
 
-      // Compute dynamic stats if subjects exist
-      if (subjectsList.length > 0) {
-        let totalCgpaCredits = 0;
-        let totalCgpaPoints = 0;
-        let backlogCount = 0;
-
-        subjectsList.forEach((sub: any) => {
-          const gp = convertGradeToGP(sub.gpa);
-          const credits = parseFloat(sub.credits) || 0;
-          if (gp !== null && credits > 0) {
-            totalCgpaCredits += credits;
-            totalCgpaPoints += gp * credits;
-          }
-          const isF = sub.gpa === 'F' || sub.result === 'F' || sub.result === 'FAIL' || (gp !== null && gp < 4.0);
-          if (isF) backlogCount++;
-        });
-
-        const calculatedCgpa = totalCgpaCredits > 0 ? Number((totalCgpaPoints / totalCgpaCredits).toFixed(2)) : 0;
-
-        const semesters = subjectsList.map((s: any) => parseInt(s.semester)).filter((s: any) => !isNaN(s));
-        const latestSem = semesters.length > 0 ? Math.max(...semesters) : 1;
-
-        let totalSgpaCredits = 0;
-        let totalSgpaPoints = 0;
-
-        subjectsList.forEach((sub: any) => {
-          if (parseInt(sub.semester) === latestSem) {
-            const gp = convertGradeToGP(sub.gpa);
-            const credits = parseFloat(sub.credits) || 0;
-            if (gp !== null && credits > 0) {
-              totalSgpaCredits += credits;
-              totalSgpaPoints += gp * credits;
-            }
-          }
-        });
-
-        const calculatedSgpa = totalSgpaCredits > 0 ? Number((totalSgpaPoints / totalSgpaCredits).toFixed(2)) : 0;
-
-        // Check if latest semester has a saved SGPA in subjects
-        const latestSemSubjects = subjectsList.filter((s: any) => parseInt(s.semester) === latestSem);
-        const latestSemSgpaSub = latestSemSubjects.find((s: any) => s.sgpa && !isNaN(parseFloat(s.sgpa)));
-        const finalSgpa = latestSemSgpaSub ? parseFloat(latestSemSgpaSub.sgpa) : calculatedSgpa;
-
-        setSgpa(data.sgpa ? parseFloat(data.sgpa) : finalSgpa);
-        setCgpa(data.cgpa ? parseFloat(data.cgpa) : calculatedCgpa);
-        setBacklogs(data.backlogs !== null && data.backlogs !== undefined ? Number(data.backlogs) : backlogCount);
+      const academicSummary = getStudentAcademicData(data);
+      if (academicSummary.hasAcademicData) {
+        setSgpa(academicSummary.sgpaVal ?? 0);
+        setCgpa(academicSummary.cgpaVal ?? 0);
+        setBacklogs(academicSummary.backlogsVal ?? 0);
       } else {
         setSgpa(data.sgpa ? parseFloat(data.sgpa) : 0);
         setCgpa(data.cgpa ? parseFloat(data.cgpa) : 0);

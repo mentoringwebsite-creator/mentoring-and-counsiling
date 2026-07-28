@@ -20,6 +20,8 @@ import {
   PieChart, Pie, Cell, Tooltip, CartesianGrid, XAxis, YAxis, LabelList, Legend
 } from 'recharts';
 
+import { getStudentAcademicData } from '@/lib/studentAcademicService';
+
 const adminSidebarItems = [
   { href: '/admin', label: 'Overview' },
   { href: '/admin/pending', label: 'Pending Approvals' },
@@ -181,21 +183,9 @@ export default function AdminStudentDetailsPage() {
           setHodName('Unassigned');
         }
 
-        const { data: subjectsDb } = await supabase
-          .from('academic_records')
-          .select('*')
-          .eq('student_id', studentUserId);
-
-        const { data: sgpaDb } = await supabase
-          .from('semester_sgpa')
-          .select('*')
-          .eq('student_id', studentUserId);
-
         setStudent({
           ...userDb,
-          student_profiles: [profileData],
-          academic_records: subjectsDb || [],
-          semester_sgpa: sgpaDb || []
+          student_profiles: [profileData]
         });
 
       } catch (err: any) {
@@ -211,43 +201,22 @@ export default function AdminStudentDetailsPage() {
     }
   }, [studentUserId]);
 
-  const cgpaVal = profile.cgpa !== undefined && profile.cgpa !== null ? Number(profile.cgpa) : 7.96;
-  const backlogsVal = profile.backlogs !== undefined && profile.backlogs !== null ? Number(profile.backlogs) : 0;
-  const risk = getRiskLevel(cgpaVal, backlogsVal);
+  const academicSummary = getStudentAcademicData(profile);
+  const {
+    cgpaVal,
+    backlogsVal,
+    attendanceVal,
+    sgpaTrendData,
+    backlogChartData,
+    placementEligibility,
+    skillsList,
+    clubs,
+    certifications,
+    hasAcademicData
+  } = academicSummary;
 
-  const sgpaTrendData = [
-    { name: 'Sem 1', sgpa: 8.36, semNum: '1', Student: 8.36 },
-    { name: 'Sem 2', sgpa: 7.84, semNum: '2', Student: 7.84 },
-    { name: 'Sem 3', sgpa: 8.11, semNum: '3', Student: 8.11 },
-    { name: 'Sem 4', sgpa: 8.17, semNum: '4', Student: 8.17 },
-    { name: 'Sem 5', sgpa: 7.89, semNum: '5', Student: 7.89 },
-    { name: 'Sem 6', sgpa: 7.62, semNum: '6', Student: 7.62 },
-  ];
-
-  if (student?.semester_sgpa && student.semester_sgpa.length > 0) {
-    student.semester_sgpa.forEach((item: any) => {
-      const idx = sgpaTrendData.findIndex(s => s.semNum === String(item.semester) || s.name === `Sem ${item.semester}`);
-      if (idx !== -1 && item.sgpa) {
-        sgpaTrendData[idx].sgpa = Number(item.sgpa);
-        sgpaTrendData[idx].Student = Number(item.sgpa);
-      }
-    });
-  }
-
-  const backlogChartData = [
-    { name: 'Sem 1', Backlogs: 0 },
-    { name: 'Sem 2', Backlogs: 0 },
-    { name: 'Sem 3', Backlogs: 0 },
-    { name: 'Sem 4', Backlogs: 0 },
-    { name: 'Sem 5', Backlogs: 0 },
-    { name: 'Sem 6', Backlogs: backlogsVal },
-  ];
-
-  const clubs = profile.clubs || DEFAULT_CLUBS;
-  const certifications = profile.certifications || DEFAULT_CERTS;
-  const skillsList = parsedSkills && parsedSkills.length > 0 ? parsedSkills : DEFAULT_SKILLS;
-
-  const placementEligible = cgpaVal >= 6.5 && backlogsVal === 0;
+  const risk = getRiskLevel(cgpaVal ?? 8.0, backlogsVal ?? 0);
+  const placementEligible = placementEligibility.status === 'Eligible';
 
   if (!mounted) return null;
 
@@ -542,7 +511,7 @@ export default function AdminStudentDetailsPage() {
                               <span>SGPA Semester Trend</span>
                             </h4>
                             <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg">
-                              CGPA: {cgpaVal.toFixed(2)}
+                              CGPA: {cgpaVal !== null ? cgpaVal.toFixed(2) : 'N/A'}
                             </span>
                           </div>
                           <div className="flex-1 min-h-0 w-full">
@@ -684,15 +653,15 @@ export default function AdminStudentDetailsPage() {
                           <div className="grid grid-cols-3 gap-3 text-center my-auto">
                             <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">CGPA</div>
-                              <div className="text-sm font-black text-slate-800 mt-0.5">{cgpaVal.toFixed(2)}</div>
+                              <div className="text-sm font-black text-slate-800 mt-0.5">{cgpaVal !== null ? cgpaVal.toFixed(2) : 'N/A'}</div>
                             </div>
                             <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Backlogs</div>
-                              <div className="text-sm font-black text-slate-800 mt-0.5">{backlogsVal}</div>
+                              <div className="text-sm font-black text-slate-800 mt-0.5">{backlogsVal !== null ? backlogsVal : 'N/A'}</div>
                             </div>
                             <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                               <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Attendance</div>
-                              <div className="text-sm font-black text-emerald-800 mt-0.5">85%</div>
+                              <div className="text-sm font-black text-emerald-800 mt-0.5">{attendanceVal !== null ? `${attendanceVal}%` : 'N/A'}</div>
                             </div>
                           </div>
                         </div>

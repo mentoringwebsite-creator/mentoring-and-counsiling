@@ -10,6 +10,7 @@ import {
   Loader2, ArrowLeft, BookOpen, GraduationCap, 
   Award, AlertTriangle, CheckCircle2, TrendingUp, Briefcase, User
 } from 'lucide-react';
+import { getStudentAcademicData } from '@/lib/studentAcademicService';
 
 const adminSidebarItems = [
   { href: '/admin', label: 'Overview' },
@@ -83,10 +84,8 @@ export default function AdminStudentAcademicsPage() {
   if (!mounted) return null;
 
   const profile = student?.student_profiles?.[0] || {};
-  const subjects = profile.academic_subjects || [];
-  const cgpaVal = parseFloat(profile.cgpa) || 0;
-  const backlogsVal = parseInt(profile.backlogs) || 0;
-  const attendanceVal = parseInt(profile.attendance_percentage) || 85;
+  const academicSummary = getStudentAcademicData(profile);
+  const { cgpaVal, backlogsVal, attendanceVal, subjects } = academicSummary;
 
   const normalizeSem = (val: string | number | undefined | null): string => {
     if (!val) return '';
@@ -178,7 +177,7 @@ export default function AdminStudentAcademicsPage() {
   };
 
   const getSelectedSemSGPA = () => {
-    if (selectedSemester === 'All' || filteredSubjects.length === 0) return cgpaVal.toFixed(2);
+    if (selectedSemester === 'All' || filteredSubjects.length === 0) return (cgpaVal ?? 0).toFixed(2);
     let totalGradePoints = 0;
     let totalCredits = 0;
 
@@ -194,7 +193,7 @@ export default function AdminStudentAcademicsPage() {
       totalCredits += credits;
     });
 
-    return totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : cgpaVal.toFixed(2);
+    return totalCredits > 0 ? (totalGradePoints / totalCredits).toFixed(2) : (cgpaVal ?? 0).toFixed(2);
   };
 
   return (
@@ -294,7 +293,7 @@ export default function AdminStudentAcademicsPage() {
                           {editMode ? (
                             <input type="number" step="0.01" value={editedProfile?.cgpa ?? cgpaVal} onChange={(e) => handleProfileFieldChange('cgpa', e.target.value)} className="w-20 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
                           ) : (
-                            cgpaVal.toFixed(2)
+                            cgpaVal !== null ? cgpaVal.toFixed(2) : 'N/A'
                           )}
                         </div>
                       </div>
@@ -312,11 +311,11 @@ export default function AdminStudentAcademicsPage() {
 
                       <div className="rounded-2xl bg-white/10 backdrop-blur-md px-4 py-2.5 border border-white/15 text-center">
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Backlogs</div>
-                        <div className={`text-lg font-black ${((editedProfile?.backlogs ?? backlogsVal) === 0) ? 'text-emerald-300' : 'text-rose-300'}`}>
+                        <div className={`text-lg font-black ${((editedProfile?.backlogs ?? backlogsVal) === 0 || (editedProfile?.backlogs ?? backlogsVal) === null) ? 'text-emerald-300' : 'text-rose-300'}`}>
                           {editMode ? (
-                            <input type="number" value={editedProfile?.backlogs ?? backlogsVal} onChange={(e) => handleProfileFieldChange('backlogs', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-emerald-300" />
+                            <input type="number" value={editedProfile?.backlogs ?? (backlogsVal ?? 0)} onChange={(e) => handleProfileFieldChange('backlogs', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-emerald-300" />
                           ) : (
-                            backlogsVal
+                            backlogsVal !== null ? backlogsVal : 'N/A'
                           )}
                         </div>
                       </div>
@@ -325,9 +324,9 @@ export default function AdminStudentAcademicsPage() {
                         <div className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider">Attendance</div>
                         <div className="text-lg font-black text-white">
                           {editMode ? (
-                            <input type="number" value={editedProfile?.attendance_percentage ?? attendanceVal} onChange={(e) => handleProfileFieldChange('attendance_percentage', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
+                            <input type="number" value={editedProfile?.attendance_percentage ?? (attendanceVal ?? 0)} onChange={(e) => handleProfileFieldChange('attendance_percentage', Number(e.target.value))} className="w-16 text-center rounded-md border border-white/20 px-2 py-1 text-sm bg-transparent text-white" />
                           ) : (
-                            `${attendanceVal}%`
+                            attendanceVal !== null ? `${attendanceVal}%` : 'N/A'
                           )}
                         </div>
                       </div>
