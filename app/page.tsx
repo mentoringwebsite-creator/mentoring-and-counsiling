@@ -20,6 +20,7 @@ export default function HomePage() {
               <nav className="hidden items-center gap-8 text-[13px] font-bold uppercase tracking-wider text-slate-700 md:flex">
                 <a className="hover:text-emerald-700 transition-colors" href="#home">HOME</a>
                 <a className="hover:text-emerald-700 transition-colors" href="#about">ABOUT</a>
+                <a className="hover:text-emerald-700 transition-colors text-emerald-700" href="/presentation">PRESENTATION</a>
                 <PortalButton href="/login" className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-wider text-[11px] uppercase transition-all shadow-md">
                   LOGIN TO PORTAL
                 </PortalButton>
