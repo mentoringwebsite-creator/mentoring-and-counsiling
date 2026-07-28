@@ -20,7 +20,6 @@ export default function HomePage() {
               <nav className="hidden items-center gap-8 text-[13px] font-bold uppercase tracking-wider text-slate-700 md:flex">
                 <a className="hover:text-emerald-700 transition-colors" href="#home">HOME</a>
                 <a className="hover:text-emerald-700 transition-colors" href="#about">ABOUT</a>
-                <a className="hover:text-emerald-700 transition-colors text-emerald-700" href="/presentation">PRESENTATION</a>
                 <PortalButton href="/login" className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold tracking-wider text-[11px] uppercase transition-all shadow-md">
                   LOGIN TO PORTAL
                 </PortalButton>
@@ -41,9 +40,6 @@ export default function HomePage() {
 
             <div className="relative z-10 mx-auto flex h-full max-w-[1300px] items-center px-6 py-16 md:px-12">
               <div className="max-w-2xl text-white">
-                <p className="inline-flex items-center rounded-full border border-white/15 bg-amber-500/15 px-4 py-2 text-sm font-semibold uppercase tracking-[0.24em] text-amber-100 shadow-sm shadow-black/10">
-                  Empowering Students for Success
-                </p>
                 <h1 className="mt-8 text-4xl font-black tracking-tight text-white sm:text-5xl md:text-6xl lg:text-[4.5rem] leading-[1.02]">
                   Empowering Students for a Successful Future
                 </h1>
