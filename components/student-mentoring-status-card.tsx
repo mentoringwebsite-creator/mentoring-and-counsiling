@@ -5,11 +5,8 @@ import { supabase } from '@/lib/supabase';
 import { 
   Calendar, CheckCircle2, XCircle, Clock, MessageSquare, 
   HelpCircle, Loader2, UserCheck, ShieldCheck, CheckCircle,
-  TrendingUp, BarChart3, PieChart as PieIcon, Award, Activity
+  X, ChevronRight, Send, AlertCircle
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend 
-} from 'recharts';
 
 const WEEKS_LIST = Array.from({ length: 16 }, (_, i) => `Week ${i + 1}`);
 
@@ -29,18 +26,31 @@ interface StudentMentoringStatusCardProps {
   role?: 'faculty' | 'hod' | 'admin';
 }
 
-const QUERY_PIE_COLORS = ['#10b981', '#f59e0b'];
-
 export function StudentMentoringStatusCard({ studentId, mentorId, role = 'faculty' }: StudentMentoringStatusCardProps) {
   const [loading, setLoading] = useState(true);
   const [queries, setQueries] = useState<any[]>([]);
   const [weeklyAttendanceList, setWeeklyAttendanceList] = useState<any[]>([]);
+  const [studentName, setStudentName] = useState<string>('Student');
+
+  // Selected Week Modal State
+  const [selectedWeekData, setSelectedWeekData] = useState<any | null>(null);
+  const [weekQueriesMessages, setWeekQueriesMessages] = useState<{ [queryId: string]: any[] }>({});
+  const [loadingModalMessages, setLoadingModalMessages] = useState(false);
 
   const loadData = async () => {
     try {
       setLoading(true);
 
-      // 1. Fetch student queries from Supabase
+      // 1. Fetch student user info
+      const { data: userData } = await supabase
+        .from('users')
+        .select('name')
+        .eq('id', studentId)
+        .maybeSingle();
+
+      if (userData?.name) setStudentName(userData.name);
+
+      // 2. Fetch student queries from Supabase
       const { data: queriesData } = await supabase
         .from('queries')
         .select(`
@@ -51,7 +61,7 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
 
       setQueries(queriesData || []);
 
-      // 2. Fetch weekly mentoring attendance from Supabase
+      // 3. Fetch weekly mentoring attendance from Supabase
       let supabaseSessions: any = {};
       
       let effectiveMentorId = mentorId;
@@ -110,23 +120,44 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
     if (studentId) loadData();
   }, [studentId, mentorId]);
 
+  // Fetch conversation messages when modal opens
+  const openWeekDetailsModal = async (weekItem: any) => {
+    setSelectedWeekData(weekItem);
+    setLoadingModalMessages(true);
+    try {
+      if (queries.length > 0) {
+        const queryIds = queries.map((q) => q.id);
+        const { data: msgs, error } = await supabase
+          .from('query_messages')
+          .select(`
+            id, query_id, sender_id, message, created_at,
+            users:sender_id ( name, role )
+          `)
+          .in('query_id', queryIds)
+          .order('created_at', { ascending: true });
+
+        if (!error && msgs) {
+          const grouped: { [key: string]: any[] } = {};
+          msgs.forEach((m: any) => {
+            if (!grouped[m.query_id]) grouped[m.query_id] = [];
+            grouped[m.query_id].push(m);
+          });
+          setWeekQueriesMessages(grouped);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching query messages for week:', err);
+    } finally {
+      setLoadingModalMessages(false);
+    }
+  };
+
   const totalClassesRecorded = weeklyAttendanceList.filter((w) => w.hasRecord).length;
   const attendedClassesCount = weeklyAttendanceList.filter((w) => w.hasRecord && w.isPresent).length;
   const missedClassesCount = totalClassesRecorded - attendedClassesCount;
 
   const totalQueriesCount = queries.length;
   const solvedQueriesCount = queries.filter((q) => q.status === 'Resolved' || q.status === 'Closed').length;
-  const pendingQueriesCount = totalQueriesCount - solvedQueriesCount;
-
-  // Chart Data: Query Breakdown (Solved vs Pending)
-  const queryPieData = [
-    { name: 'Solved Queries', value: solvedQueriesCount },
-    { name: 'Pending Queries', value: pendingQueriesCount }
-  ].filter(d => d.value > 0);
-
-  if (queryPieData.length === 0) {
-    queryPieData.push({ name: 'No Queries Raised', value: 1 });
-  }
 
   if (loading) {
     return (
@@ -160,231 +191,231 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
         </div>
       </div>
 
-      {/* Visual Analytics Row: 16-Week Attendance Heatmap Grid + Query Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left (2 cols): 16-Week Attendance Visual Grid */}
-        <div className="lg:col-span-2 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <Calendar className="h-4.5 w-4.5 text-emerald-700" />
-                <span>16-Week Mentoring Attendance Progress</span>
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Live attendance status per weekly class session.</p>
-            </div>
-            <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-              {attendedClassesCount} Attended
-            </span>
+      {/* 16-Week Mentoring Attendance Progress Grid */}
+      <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <Calendar className="h-4.5 w-4.5 text-emerald-700" />
+              <span>16-Week Mentoring Attendance & Details</span>
+            </h3>
+            <p className="text-[11px] text-slate-500 mt-0.5">Click any week card below to inspect full session details, queries raised, and solutions.</p>
           </div>
+          <span className="text-xs font-black text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            {attendedClassesCount} Attended
+          </span>
+        </div>
 
-          {/* 16-Week Cards Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-            {weeklyAttendanceList.map((w) => {
-              const isPresent = w.hasRecord && w.isPresent;
-              const isAbsent = w.hasRecord && !w.isPresent;
+        {/* 16-Week Clickable Cards Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+          {weeklyAttendanceList.map((w) => {
+            const isPresent = w.hasRecord && w.isPresent;
+            const isAbsent = w.hasRecord && !w.isPresent;
 
-              return (
-                <div 
-                  key={w.week}
-                  className={`p-3 rounded-2xl border transition-all ${
-                    isPresent
-                      ? 'bg-emerald-50/70 border-emerald-300 shadow-2xs'
-                      : isAbsent
-                      ? 'bg-rose-50/70 border-rose-300 shadow-2xs'
-                      : 'bg-slate-50/60 border-slate-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-900">{w.week}</span>
-                    {isPresent ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                    ) : isAbsent ? (
-                      <XCircle className="h-4 w-4 text-rose-600 shrink-0" />
-                    ) : (
-                      <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                    )}
-                  </div>
-                  
-                  <div className="text-[10px] font-mono text-slate-500 mt-1 truncate">
-                    {w.date}
-                  </div>
-
-                  <div className="mt-2">
-                    <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                      isPresent
-                        ? 'bg-emerald-700 text-white'
-                        : isAbsent
-                        ? 'bg-rose-700 text-white'
-                        : 'bg-slate-200 text-slate-600'
-                    }`}>
-                      {isPresent ? 'PRESENT' : isAbsent ? 'ABSENT' : 'SCHEDULED'}
-                    </span>
-                  </div>
+            return (
+              <div 
+                key={w.week}
+                onClick={() => openWeekDetailsModal(w)}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md ${
+                  isPresent
+                    ? 'bg-emerald-50/70 border-emerald-300 shadow-2xs hover:border-emerald-500'
+                    : isAbsent
+                    ? 'bg-rose-50/70 border-rose-300 shadow-2xs hover:border-rose-500'
+                    : 'bg-slate-50/60 border-slate-200 hover:border-slate-400'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-black text-slate-900">{w.week}</span>
+                  {isPresent ? (
+                    <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
+                  ) : isAbsent ? (
+                    <XCircle className="h-4.5 w-4.5 text-rose-600 shrink-0" />
+                  ) : (
+                    <Clock className="h-4 w-4 text-slate-400 shrink-0" />
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        </div>
+                
+                <div className="text-[10px] font-mono text-slate-500 mt-1 truncate">
+                  Date: {w.date}
+                </div>
 
-        {/* Right (1 col): Query Breakdown Donut Chart */}
-        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4 flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                <MessageSquare className="h-4.5 w-4.5 text-emerald-700" />
-                <span>Queries Breakdown</span>
-              </h3>
-              <p className="text-[11px] text-slate-500 mt-0.5">Solved vs pending student queries.</p>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className={`inline-block px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                    isPresent
+                      ? 'bg-emerald-700 text-white'
+                      : isAbsent
+                      ? 'bg-rose-700 text-white'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {isPresent ? 'PRESENT' : isAbsent ? 'ABSENT' : 'SCHEDULED'}
+                  </span>
+
+                  <span className="text-[10px] font-extrabold text-emerald-700 hover:underline flex items-center gap-0.5">
+                    <span>Details</span>
+                    <ChevronRight className="h-3 w-3" />
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Week Details Modal */}
+      {selectedWeekData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
+          <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-[32px] border border-slate-200 bg-white p-6 shadow-2xl space-y-6">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                  Mentoring Session Details
+                </span>
+                <h3 className="text-xl font-extrabold text-slate-900 mt-1 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-emerald-700" />
+                  <span>{selectedWeekData.week} Details - {studentName}</span>
+                </h3>
+              </div>
+
+              <button
+                onClick={() => setSelectedWeekData(null)}
+                className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            <span className="text-xs font-black text-teal-800 bg-teal-50 px-3 py-1 rounded-full border border-teal-200">
-              {solvedQueriesCount} / {totalQueriesCount} Solved
-            </span>
-          </div>
 
-          <div className="h-56 w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={queryPieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={75}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {queryPieData.map((entry, index) => (
-                    <Cell key={`query-cell-${index}`} fill={QUERY_PIE_COLORS[index % QUERY_PIE_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: any) => [`${value} Queries`, 'Count']}
-                  contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 700 }}
-                />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 700 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+            {/* Session Info Bar */}
+            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
+              <div>
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Session Date</span>
+                <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">{selectedWeekData.date}</span>
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Attendance Status</span>
+                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase mt-1 ${
+                  selectedWeekData.isPresent && selectedWeekData.hasRecord
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : selectedWeekData.hasRecord
+                    ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                    : 'bg-slate-200 text-slate-700'
+                }`}>
+                  {selectedWeekData.isPresent && selectedWeekData.hasRecord ? '✓ PRESENT' : selectedWeekData.hasRecord ? '✗ ABSENT' : '🕒 SCHEDULED'}
+                </span>
+              </div>
+            </div>
 
-      </div>
+            {/* Queries & Solutions Resolution Section */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase text-slate-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                <HelpCircle className="h-4 w-4 text-emerald-700" />
+                <span>Student Queries & Mentor Resolutions</span>
+              </h4>
 
-      {/* Weekly Mentoring Class Attendance Roster Table */}
-      <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-            <Calendar className="h-4.5 w-4.5 text-emerald-700" />
-            <span>Weekly Mentoring Class Attendance Roster</span>
-          </h3>
-          <span className="text-xs font-bold text-slate-500">
-            {attendedClassesCount} Present • {missedClassesCount} Absent
-          </span>
-        </div>
+              {loadingModalMessages ? (
+                <div className="p-8 text-center text-slate-400 flex items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
+                  <span className="text-xs font-semibold">Loading queries & conversation history...</span>
+                </div>
+              ) : queries.length === 0 ? (
+                <div className="p-6 rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-400 font-semibold">
+                  No student queries recorded.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {queries.map((q) => {
+                    const messagesList = weekQueriesMessages[q.id] || [];
+                    const isSolved = q.status === 'Resolved' || q.status === 'Closed';
 
-        <div className="overflow-x-auto rounded-2xl border border-slate-200">
-          <table className="w-full text-left text-xs font-semibold text-slate-700">
-            <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 font-extrabold border-b border-slate-200">
-              <tr>
-                <th className="px-5 py-3.5">Week Number</th>
-                <th className="px-5 py-3.5">Session Date</th>
-                <th className="px-5 py-3.5 text-center">Attendance Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {weeklyAttendanceList.map((w) => (
-                <tr key={w.week} className="hover:bg-slate-50/60 transition">
-                  <td className="px-5 py-3.5 font-bold text-slate-900">{w.week}</td>
-                  <td className="px-5 py-3.5 font-mono text-slate-600">{w.date}</td>
-                  <td className="px-5 py-3.5 text-center">
-                    {w.hasRecord ? (
-                      w.isPresent ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black bg-emerald-50 border border-emerald-200 text-emerald-800 uppercase">
-                          <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                          <span>PRESENT</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black bg-rose-50 border border-rose-200 text-rose-800 uppercase">
-                          <XCircle className="h-3 w-3 text-rose-600" />
-                          <span>ABSENT</span>
-                        </span>
-                      )
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-500 uppercase">
-                        <Clock className="h-3 w-3" />
-                        <span>SCHEDULED</span>
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    return (
+                      <div key={q.id} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-2xs">
+                        
+                        {/* Query Header */}
+                        <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                          <div>
+                            <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                              {q.type || 'Academic Query'}
+                            </span>
+                            <h5 className="text-sm font-extrabold text-slate-900 mt-1">{q.subject}</h5>
+                            <span className="text-[10px] font-mono text-slate-400">Date Raised: {new Date(q.created_at).toLocaleDateString()}</span>
+                          </div>
 
-      {/* Student Queries & Solutions History Table */}
-      <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-            <HelpCircle className="h-4.5 w-4.5 text-emerald-700" />
-            <span>Queries & Solutions Breakdown</span>
-          </h3>
-          <span className="text-xs font-bold text-slate-500">
-            {solvedQueriesCount} Solved • {pendingQueriesCount} Pending
-          </span>
-        </div>
-
-        {queries.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 font-semibold">
-            No queries recorded for this student yet.
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-2xl border border-slate-200">
-            <table className="w-full text-left text-xs font-semibold text-slate-700">
-              <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 font-extrabold border-b border-slate-200">
-                <tr>
-                  <th className="px-5 py-3.5">Category</th>
-                  <th className="px-5 py-3.5">Subject</th>
-                  <th className="px-5 py-3.5">Date Raised</th>
-                  <th className="px-5 py-3.5 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
-                {queries.map((q) => {
-                  const isSolved = q.status === 'Resolved' || q.status === 'Closed';
-
-                  return (
-                    <tr key={q.id} className="hover:bg-slate-50/60 transition">
-                      <td className="px-5 py-4">
-                        <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
-                          {q.type || 'Academic Query'}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="font-extrabold text-slate-900">{q.subject}</div>
-                        <div className="text-[11px] text-slate-500 font-normal italic mt-0.5 truncate max-w-md">
-                          "{q.description}"
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border shrink-0 ${
+                            isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
+                          }`}>
+                            {isSolved ? 'SOLVED' : 'PENDING'}
+                          </span>
                         </div>
-                      </td>
-                      <td className="px-5 py-4 font-mono text-slate-600">
-                        {new Date(q.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="px-5 py-4 text-center">
-                        <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
-                          isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
-                        }`}>
-                          {isSolved ? 'SOLVED' : 'PENDING'}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+
+                        {/* Question Description */}
+                        {q.description && (
+                          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-700 italic">
+                            <span className="font-bold not-italic text-slate-900 block text-[10px] uppercase mb-0.5">Student Question:</span>
+                            "{q.description}"
+                          </div>
+                        )}
+
+                        {/* Conversation Thread / How It Was Resolved */}
+                        <div className="pt-2">
+                          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-2">
+                            Mentor Resolution & Discussion History ({messagesList.length} Messages):
+                          </span>
+
+                          {messagesList.length === 0 ? (
+                            <div className="p-3 rounded-xl bg-slate-50 text-[11px] text-slate-400 italic">
+                              No mentor responses or chat messages logged for this query yet.
+                            </div>
+                          ) : (
+                            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                              {messagesList.map((m: any) => {
+                                const isFaculty = m.users?.role === 'faculty' || m.sender_id !== studentId;
+
+                                return (
+                                  <div 
+                                    key={m.id} 
+                                    className={`p-3 rounded-xl text-xs space-y-1 ${
+                                      isFaculty 
+                                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-950 font-medium' 
+                                        : 'bg-slate-100 border border-slate-200 text-slate-800 font-medium'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between text-[10px]">
+                                      <span className={`font-black uppercase ${isFaculty ? 'text-emerald-800' : 'text-slate-600'}`}>
+                                        {isFaculty ? '👨‍🏫 Mentor Response' : `👤 Student (${m.users?.name || studentName})`}
+                                      </span>
+                                      <span className="font-mono text-slate-400">
+                                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                    <p className="whitespace-pre-wrap leading-relaxed">{m.message}</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                onClick={() => setSelectedWeekData(null)}
+                className="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
+              >
+                Close Details
+              </button>
+            </div>
+
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
     </div>
   );
