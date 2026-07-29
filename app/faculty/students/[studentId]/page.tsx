@@ -914,6 +914,48 @@ export default function StudentDetailsPage() {
                         className="h-[290px]"
                       />
 
+                      {/* Monthly Mentoring Status Graph Card */}
+                      <div 
+                        onClick={() => setActiveTab('mentoring')}
+                        className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:shadow-md transition duration-200 cursor-pointer md:col-span-2 group"
+                      >
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
+                          <div>
+                            <h4 className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 group-hover:text-emerald-700 transition">
+                              <Calendar className="h-4 w-4 text-emerald-800" />
+                              <span>Monthly Mentoring Status & Attendance Trend</span>
+                            </h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5 font-medium">Click graph to open full 16-week mentoring status & session details</p>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200 group-hover:bg-emerald-100 transition">
+                            <span>Open Mentoring Status Page</span>
+                            <ArrowUpRight className="h-3.5 w-3.5" />
+                          </div>
+                        </div>
+
+                        <div className="h-44 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart 
+                              data={[
+                                { month: 'Month 1 (W1-W4)', Sessions: 4 },
+                                { month: 'Month 2 (W5-W8)', Sessions: 4 },
+                                { month: 'Month 3 (W9-W12)', Sessions: 4 },
+                                { month: 'Month 4 (W13-W16)', Sessions: 4 },
+                              ]} 
+                              margin={{ top: 15, right: 10, left: -25, bottom: 0 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
+                              <XAxis dataKey="month" tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }} />
+                              <YAxis domain={[0, 4]} ticks={[0, 1, 2, 3, 4]} tick={{ fontSize: 9, fill: '#94a3b8' }} />
+                              <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '10px', fontWeight: 700 }} />
+                              <Bar dataKey="Sessions" fill="#10b981" radius={[4, 4, 0, 0]} barSize={32}>
+                                <LabelList dataKey="Sessions" position="top" style={{ fontSize: '9px', fill: '#10b981', fontWeight: 'bold' }} />
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 )}
