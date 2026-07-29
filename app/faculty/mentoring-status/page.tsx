@@ -22,6 +22,23 @@ const facultySidebarItems = [
 
 const WEEKS_LIST = Array.from({ length: 16 }, (_, i) => `Week ${i + 1}`);
 
+const parseQueryMetadata = (description: string) => {
+  let raisedBy = 'Student';
+  let raisedTo = 'Faculty';
+  let cleanDesc = description || '';
+
+  if (cleanDesc.includes('Raised By:')) {
+    const byMatch = cleanDesc.match(/Raised By:\s*([^\n]*)/);
+    if (byMatch) raisedBy = byMatch[1].trim();
+    
+    const toMatch = cleanDesc.match(/Raised To:\s*([^\n]*)/);
+    if (toMatch) raisedTo = toMatch[1].trim();
+    
+    cleanDesc = cleanDesc.replace(/Raised By:.*\nRaised To:.*\n\n?/, '').trim();
+  }
+  return { raisedBy, raisedTo, cleanDesc };
+};
+
 const getStoredAttendance = () => {
   if (typeof window === 'undefined') return {};
   try {
@@ -101,7 +118,20 @@ export default function FacultyMentoringStatusPage() {
           .in('student_id', studentIds)
           .order('created_at', { ascending: false });
 
-        setQueries(queriesData || []);
+        // Filter OUT queries raised to HOD — ONLY show queries raised to Faculty / Mentor
+        const mentorOnlyQueries = (queriesData || []).filter((q: any) => {
+          const { raisedTo } = parseQueryMetadata(q.description);
+          const targetRole = (q.raised_to_role || raisedTo || 'Faculty').toUpperCase();
+          return targetRole !== 'HOD';
+        }).map((q: any) => {
+          const { cleanDesc } = parseQueryMetadata(q.description);
+          return {
+            ...q,
+            cleanDescription: cleanDesc
+          };
+        });
+
+        setQueries(mentorOnlyQueries);
       }
 
       // 3. Fetch weekly attendance records from Supabase
@@ -120,7 +150,7 @@ export default function FacultyMentoringStatusPage() {
         });
       }
 
-      // Merge Supabase sessions with local storage fallback
+      // Merge Supabase sessions with local storage backup
       const localStored = getStoredAttendance();
       const mergedSessions = { ...localStored, ...supabaseSessions };
       setAllSessionsData(mergedSessions);
@@ -486,7 +516,7 @@ export default function FacultyMentoringStatusPage() {
 
               {queries.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
-                  No student queries recorded yet.
+                  No student mentor queries recorded yet.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -519,7 +549,7 @@ export default function FacultyMentoringStatusPage() {
                         </div>
 
                         <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-100 italic flex items-center justify-between">
-                          <span className="truncate">"{q.description || 'No description provided'}"</span>
+                          <span className="truncate">"{q.cleanDescription || q.description || 'No description provided'}"</span>
                           <ExternalLink className="h-3.5 w-3.5 text-emerald-600 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition" />
                         </p>
                       </div>

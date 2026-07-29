@@ -20,6 +20,23 @@ const facultySidebarItems = [
   { href: '/faculty/mentoring-status', label: 'Mentoring Status' }
 ];
 
+const parseQueryMetadata = (description: string) => {
+  let raisedBy = 'Student';
+  let raisedTo = 'Faculty';
+  let cleanDesc = description || '';
+
+  if (cleanDesc.includes('Raised By:')) {
+    const byMatch = cleanDesc.match(/Raised By:\s*([^\n]*)/);
+    if (byMatch) raisedBy = byMatch[1].trim();
+    
+    const toMatch = cleanDesc.match(/Raised To:\s*([^\n]*)/);
+    if (toMatch) raisedTo = toMatch[1].trim();
+    
+    cleanDesc = cleanDesc.replace(/Raised By:.*\nRaised To:.*\n\n?/, '').trim();
+  }
+  return { raisedBy, raisedTo, cleanDesc };
+};
+
 export default function StudentQueryDetailsPage({ params }: { params: Promise<{ studentId: string }> }) {
   const resolvedParams = use(params);
   const studentId = resolvedParams.studentId;
@@ -50,7 +67,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
       if (userError || !userData) throw new Error('Student not found.');
       setStudent(userData);
 
-      // 2. Load Queries from this student (without updated_at column to prevent Supabase errors)
+      // 2. Load Queries from this student
       const { data: queriesData, error: queriesError } = await supabase
         .from('queries')
         .select(`
@@ -61,8 +78,16 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
       if (queriesError) throw queriesError;
 
+      // Filter OUT queries raised to HOD — ONLY show queries raised to Faculty / Mentor
+      const mentorOnlyQueries = (queriesData || []).filter((q: any) => {
+        const { raisedTo } = parseQueryMetadata(q.description);
+        const targetRole = (q.raised_to_role || raisedTo || 'Faculty').toUpperCase();
+        return targetRole !== 'HOD';
+      });
+
       // 3. Load replies/messages for each query
-      const queriesWithMessages = await Promise.all((queriesData || []).map(async (q: any) => {
+      const queriesWithMessages = await Promise.all((mentorOnlyQueries || []).map(async (q: any) => {
+        const { cleanDesc } = parseQueryMetadata(q.description);
         try {
           const { data: msgData } = await supabase
             .from('query_messages')
@@ -72,11 +97,13 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
           return {
             ...q,
+            cleanDescription: cleanDesc,
             messages: msgData || []
           };
         } catch {
           return {
             ...q,
+            cleanDescription: cleanDesc,
             messages: []
           };
         }
@@ -113,7 +140,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
       if (msgError) throw msgError;
 
-      // 2. Update query status to Resolved (without updating non-existent updated_at column)
+      // 2. Update query status to Resolved
       const { error: updateError } = await supabase
         .from('queries')
         .update({ status: 'Resolved' })
@@ -121,7 +148,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
       if (updateError) throw updateError;
 
-      setFeedback({ type: 'success', message: 'Solution submitted and query marked as Resolved in Supabase!' });
+      setFeedback({ type: 'success', message: 'Solution submitted and query marked as Resolved!' });
       setReplyTextMap(prev => ({ ...prev, [queryId]: '' }));
       loadStudentQueries();
     } catch (err: any) {
@@ -170,7 +197,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
   return (
     <ProtectedRoute role="faculty">
-      <PageShell title={`${student.name} - Queries & Solutions`} subtitle="Review queries raised by this student and provide mentor solutions">
+      <PageShell title={`${student.name} - Queries & Solutions`} subtitle="Review queries raised by this student to mentor and provide solutions">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/faculty/mentoring-status" items={facultySidebarItems} />
 
@@ -221,7 +248,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
                   <div className="flex items-center gap-3">
                     <div className="bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl px-4 py-2 text-center">
-                      <span className="text-[10px] font-black uppercase text-emerald-200 block tracking-wider">Total Queries</span>
+                      <span className="text-[10px] font-black uppercase text-emerald-200 block tracking-wider font-extrabold">Mentor Queries</span>
                       <span className="text-xl font-black text-white">{totalQueriesCount}</span>
                     </div>
                     <div className="bg-white/10 border border-white/20 backdrop-blur-md rounded-2xl px-4 py-2 text-center">
@@ -248,7 +275,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
               {queries.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-xs text-slate-400 font-semibold">
-                  No queries raised by {student.name} yet.
+                  No mentor queries raised by {student.name} yet.
                 </div>
               ) : (
                 queries.map((q) => {
@@ -281,7 +308,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
                       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Student Question</span>
                         <p className="text-xs font-semibold text-slate-800 whitespace-pre-line">
-                          "{q.description || 'No description provided.'}"
+                          "{q.cleanDescription || q.description || 'No description provided.'}"
                         </p>
                       </div>
 
