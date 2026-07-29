@@ -22,6 +22,7 @@ import {
 
 import { getStudentAcademicData } from '@/lib/studentAcademicService';
 import { PlacementEligibilityCard } from '@/components/placement-eligibility-card';
+import { StudentMentoringStatusCard } from '@/components/student-mentoring-status-card';
 
 const hodSidebarItems = [
   { href: '/hod', label: 'HOD Dashboard' },
@@ -89,7 +90,7 @@ export default function HodStudentDetailsPage() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [student, setStudent] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars'>('academics');
+  const [activeTab, setActiveTab] = useState<'profile' | 'academics' | 'extracurriculars' | 'mentoring'>('academics');
   const [selectedCert, setSelectedCert] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showSkillsPie, setShowSkillsPie] = useState(true);
@@ -346,10 +347,10 @@ export default function HodStudentDetailsPage() {
 
                 {/* Sub-Tab Navigation Bar with Mentor Portal Styling */}
                 <div className="sticky top-0 z-20 bg-slate-50/95 backdrop-blur border-b border-slate-200 -mx-4 px-4 sm:-mx-6 sm:px-6 md:mx-0 md:px-0 py-2.5 transition-all">
-                  <div className="flex bg-white rounded-xl p-1 border border-slate-200 max-w-lg shadow-sm">
+                  <div className="flex bg-white rounded-xl p-1 border border-slate-200 max-w-xl shadow-sm overflow-x-auto">
                     <button
                       onClick={() => setActiveTab('profile')}
-                      className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                      className={`flex-1 text-center py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
                         activeTab === 'profile'
                           ? 'bg-emerald-800 text-white shadow'
                           : 'text-slate-500 hover:text-slate-800'
@@ -359,7 +360,7 @@ export default function HodStudentDetailsPage() {
                     </button>
                     <button
                       onClick={() => setActiveTab('academics')}
-                      className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                      className={`flex-1 text-center py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
                         activeTab === 'academics'
                           ? 'bg-emerald-800 text-white shadow'
                           : 'text-slate-500 hover:text-slate-800'
@@ -369,7 +370,7 @@ export default function HodStudentDetailsPage() {
                     </button>
                     <button
                       onClick={() => setActiveTab('extracurriculars')}
-                      className={`flex-1 text-center py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
+                      className={`flex-1 text-center py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
                         activeTab === 'extracurriculars'
                           ? 'bg-emerald-800 text-white shadow'
                           : 'text-slate-500 hover:text-slate-800'
@@ -377,12 +378,31 @@ export default function HodStudentDetailsPage() {
                     >
                       Extracurriculars & Goals
                     </button>
+                    <button
+                      onClick={() => setActiveTab('mentoring')}
+                      className={`flex-1 text-center py-2 px-3 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                        activeTab === 'mentoring'
+                          ? 'bg-emerald-800 text-white shadow'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      Mentoring Status
+                    </button>
                   </div>
                 </div>
 
-                {/* TAB CONTENT VIEWS */}
-                <div className="space-y-5">
+                {/* Tab Content Space */}
+                <div className="mt-4 transition-all duration-300">
                   
+                  {/* Tab 4: Mentoring Status */}
+                  {activeTab === 'mentoring' && (
+                    <StudentMentoringStatusCard 
+                      studentId={studentUserId} 
+                      mentorId={profile.mentor_id} 
+                      role="hod" 
+                    />
+                  )}
+
                   {/* GENERAL PROFILE TAB (Matches Mentor Portal layout) */}
                   {activeTab === 'profile' && (
                     <div className="grid gap-5 md:grid-cols-3">
