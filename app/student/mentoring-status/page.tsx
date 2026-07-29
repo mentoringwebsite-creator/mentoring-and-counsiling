@@ -211,7 +211,6 @@ export default function StudentMentoringStatusPage() {
                       <tr>
                         <th className="px-5 py-3.5">Week Number</th>
                         <th className="px-5 py-3.5">Session Date</th>
-                        <th className="px-5 py-3.5">Mentoring Topic / Focus</th>
                         <th className="px-5 py-3.5 text-center">Attendance Status</th>
                       </tr>
                     </thead>
@@ -220,7 +219,6 @@ export default function StudentMentoringStatusPage() {
                         <tr key={w.week} className="hover:bg-slate-50/60 transition">
                           <td className="px-5 py-3.5 font-bold text-slate-900">{w.week}</td>
                           <td className="px-5 py-3.5 font-mono text-slate-600">{w.date}</td>
-                          <td className="px-5 py-3.5 text-slate-800">{w.topic}</td>
                           <td className="px-5 py-3.5 text-center">
                             {w.hasRecord ? (
                               w.isPresent ? (
