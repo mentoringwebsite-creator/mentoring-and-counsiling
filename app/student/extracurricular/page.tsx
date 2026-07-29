@@ -36,7 +36,8 @@ const studentSidebarItems = [
   { href: '/student/attendance-forms', label: 'Attendance Forms' },
   { href: '/student/extracurricular', label: 'Extracurricular Activities' },
   { href: '/student/performance', label: 'Performance' },
-  { href: '/student/queries', label: 'Problems / Queries' }
+  { href: '/student/queries', label: 'Problems / Queries' },
+  { href: '/student/mentoring-status', label: 'Mentoring Status' }
 ];
 
 export default function ExtracurricularPage() {

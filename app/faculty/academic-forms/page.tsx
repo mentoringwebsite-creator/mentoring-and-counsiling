@@ -22,7 +22,8 @@ const facultySidebarItems = [
   { href: '/faculty/students', label: 'My Students' },
   { href: '/faculty/academic-forms', label: 'Academic Forms' },
   { href: '/faculty/attendance-forms', label: 'Attendance Forms' },
-  { href: '/faculty/queries', label: 'Student Queries' }
+  { href: '/faculty/queries', label: 'Student Queries' },
+  { href: '/faculty/mentoring-status', label: 'Mentoring Status' }
 ];
 
 const SEMESTERS = ['1-1', '1-2', '2-1', '2-2', '3-1', '3-2', '4-1', '4-2'];

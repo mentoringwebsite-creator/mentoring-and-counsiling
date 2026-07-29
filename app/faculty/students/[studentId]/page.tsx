@@ -30,7 +30,8 @@ const facultySidebarItems = [
   { href: '/faculty/students', label: 'My Students' },
   { href: '/faculty/academic-forms', label: 'Academic Forms' },
   { href: '/faculty/attendance-forms', label: 'Attendance Forms' },
-  { href: '/faculty/queries', label: 'Student Queries' }
+  { href: '/faculty/queries', label: 'Student Queries' },
+  { href: '/faculty/mentoring-status', label: 'Mentoring Status' }
 ];
 
 const getStudentBTechYear = (roll: string, acYear: string) => {
