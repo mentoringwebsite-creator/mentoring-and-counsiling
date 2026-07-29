@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { 
   Calendar, CheckCircle2, XCircle, Clock, MessageSquare, 
   HelpCircle, Loader2, UserCheck, ShieldCheck, CheckCircle,
-  X, ChevronRight, Send, AlertCircle
+  X, ChevronRight, Send, AlertCircle, Maximize2, Minimize2
 } from 'lucide-react';
 
 const WEEKS_LIST = Array.from({ length: 16 }, (_, i) => `Week ${i + 1}`);
@@ -32,8 +32,9 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
   const [weeklyAttendanceList, setWeeklyAttendanceList] = useState<any[]>([]);
   const [studentName, setStudentName] = useState<string>('Student');
 
-  // Selected Week Modal State
+  // Selected Week Modal State & Fullscreen Toggle
   const [selectedWeekData, setSelectedWeekData] = useState<any | null>(null);
+  const [isFullscreenModal, setIsFullscreenModal] = useState(false);
   const [weekQueriesMessages, setWeekQueriesMessages] = useState<{ [queryId: string]: any[] }>({});
   const [loadingModalMessages, setLoadingModalMessages] = useState(false);
 
@@ -123,6 +124,7 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
   // Fetch conversation messages when modal opens
   const openWeekDetailsModal = async (weekItem: any) => {
     setSelectedWeekData(weekItem);
+    setIsFullscreenModal(false);
     setLoadingModalMessages(true);
     try {
       if (queries.length > 0) {
@@ -261,13 +263,17 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
         </div>
       </div>
 
-      {/* Week Details Modal */}
+      {/* Week Details Modal with Fullscreen Toggle */}
       {selectedWeekData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-fade-in">
-          <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-[32px] border border-slate-200 bg-white p-6 shadow-2xl space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-3 md:p-6 animate-fade-in">
+          <div className={`relative flex flex-col transition-all duration-300 overflow-hidden bg-white border border-slate-200 shadow-2xl p-6 space-y-6 ${
+            isFullscreenModal 
+              ? 'w-[98vw] max-w-none h-[96vh] max-h-none rounded-[28px]' 
+              : 'w-full max-w-4xl max-h-[90vh] rounded-[32px]'
+          }`}>
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
               <div>
                 <span className="text-[10px] font-black uppercase text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
                   Mentoring Session Details
@@ -278,136 +284,173 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
                 </h3>
               </div>
 
-              <button
-                onClick={() => setSelectedWeekData(null)}
-                className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
+              {/* Header Action Buttons: Fullscreen & Close */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsFullscreenModal(!isFullscreenModal)}
+                  className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition cursor-pointer flex items-center gap-1.5 text-xs font-bold border border-slate-200"
+                  title={isFullscreenModal ? "Exit Fullscreen" : "Full Screen"}
+                >
+                  {isFullscreenModal ? (
+                    <>
+                      <Minimize2 className="h-4 w-4 text-emerald-700" />
+                      <span className="hidden sm:inline">Exit Fullscreen</span>
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="h-4 w-4 text-emerald-700" />
+                      <span className="hidden sm:inline">Full Screen</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setSelectedWeekData(null);
+                    setIsFullscreenModal(false);
+                  }}
+                  className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer border border-slate-200"
+                  title="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
-            {/* Session Info Bar */}
-            <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
-              <div>
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Session Date</span>
-                <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">{selectedWeekData.date}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Attendance Status</span>
-                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase mt-1 ${
-                  selectedWeekData.isPresent && selectedWeekData.hasRecord
-                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                    : selectedWeekData.hasRecord
-                    ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                    : 'bg-slate-200 text-slate-700'
-                }`}>
-                  {selectedWeekData.isPresent && selectedWeekData.hasRecord ? '✓ PRESENT' : selectedWeekData.hasRecord ? '✗ ABSENT' : '🕒 SCHEDULED'}
-                </span>
-              </div>
-            </div>
-
-            {/* Queries & Solutions Resolution Section */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase text-slate-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
-                <HelpCircle className="h-4 w-4 text-emerald-700" />
-                <span>Student Queries & Mentor Resolutions</span>
-              </h4>
-
-              {loadingModalMessages ? (
-                <div className="p-8 text-center text-slate-400 flex items-center justify-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
-                  <span className="text-xs font-semibold">Loading queries & conversation history...</span>
+            {/* Scrollable Modal Content Body */}
+            <div className="flex-1 overflow-y-auto space-y-6 pr-1">
+              
+              {/* Session Info Bar */}
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Session Date</span>
+                  <span className="font-mono font-bold text-slate-900 text-sm mt-0.5 block">{selectedWeekData.date}</span>
                 </div>
-              ) : queries.length === 0 ? (
-                <div className="p-6 rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-400 font-semibold">
-                  No student queries recorded.
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Attendance Status</span>
+                  <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black uppercase mt-1 ${
+                    selectedWeekData.isPresent && selectedWeekData.hasRecord
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : selectedWeekData.hasRecord
+                      ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}>
+                    {selectedWeekData.isPresent && selectedWeekData.hasRecord ? '✓ PRESENT' : selectedWeekData.hasRecord ? '✗ ABSENT' : '🕒 SCHEDULED'}
+                  </span>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {queries.map((q) => {
-                    const messagesList = weekQueriesMessages[q.id] || [];
-                    const isSolved = q.status === 'Resolved' || q.status === 'Closed';
+              </div>
 
-                    return (
-                      <div key={q.id} className="rounded-2xl border border-slate-200 bg-white p-4 space-y-3 shadow-2xs">
-                        
-                        {/* Query Header */}
-                        <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
-                          <div>
-                            <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                              {q.type || 'Academic Query'}
-                            </span>
-                            <h5 className="text-sm font-extrabold text-slate-900 mt-1">{q.subject}</h5>
-                            <span className="text-[10px] font-mono text-slate-400">Date Raised: {new Date(q.created_at).toLocaleDateString()}</span>
-                          </div>
+              {/* Queries & Solutions Resolution Section */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-black uppercase text-slate-800 tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                  <HelpCircle className="h-4 w-4 text-emerald-700" />
+                  <span>Student Queries & Mentor Resolutions</span>
+                </h4>
 
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase border shrink-0 ${
-                            isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
-                          }`}>
-                            {isSolved ? 'SOLVED' : 'PENDING'}
-                          </span>
-                        </div>
+                {loadingModalMessages ? (
+                  <div className="p-8 text-center text-slate-400 flex items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
+                    <span className="text-xs font-semibold">Loading queries & conversation history...</span>
+                  </div>
+                ) : queries.length === 0 ? (
+                  <div className="p-6 rounded-2xl border border-dashed border-slate-200 text-center text-xs text-slate-400 font-semibold">
+                    No student queries recorded.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {queries.map((q) => {
+                      const messagesList = weekQueriesMessages[q.id] || [];
+                      const isSolved = q.status === 'Resolved' || q.status === 'Closed';
 
-                        {/* Question Description */}
-                        {q.description && (
-                          <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-700 italic">
-                            <span className="font-bold not-italic text-slate-900 block text-[10px] uppercase mb-0.5">Student Question:</span>
-                            "{q.description}"
-                          </div>
-                        )}
-
-                        {/* Conversation Thread / How It Was Resolved */}
-                        <div className="pt-2">
-                          <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-2">
-                            Mentor Resolution & Discussion History ({messagesList.length} Messages):
-                          </span>
-
-                          {messagesList.length === 0 ? (
-                            <div className="p-3 rounded-xl bg-slate-50 text-[11px] text-slate-400 italic">
-                              No mentor responses or chat messages logged for this query yet.
+                      return (
+                        <div key={q.id} className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3 shadow-2xs">
+                          
+                          {/* Query Header */}
+                          <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div>
+                              <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                                {q.type || 'Academic Query'}
+                              </span>
+                              <h5 className="text-base font-extrabold text-slate-900 mt-1">{q.subject}</h5>
+                              <span className="text-[10px] font-mono text-slate-400">Date Raised: {new Date(q.created_at).toLocaleDateString()}</span>
                             </div>
-                          ) : (
-                            <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                              {messagesList.map((m: any) => {
-                                const isFaculty = m.users?.role === 'faculty' || m.sender_id !== studentId;
 
-                                return (
-                                  <div 
-                                    key={m.id} 
-                                    className={`p-3 rounded-xl text-xs space-y-1 ${
-                                      isFaculty 
-                                        ? 'bg-emerald-50 border border-emerald-200 text-emerald-950 font-medium' 
-                                        : 'bg-slate-100 border border-slate-200 text-slate-800 font-medium'
-                                    }`}
-                                  >
-                                    <div className="flex items-center justify-between text-[10px]">
-                                      <span className={`font-black uppercase ${isFaculty ? 'text-emerald-800' : 'text-slate-600'}`}>
-                                        {isFaculty ? '👨‍🏫 Mentor Response' : `👤 Student (${m.users?.name || studentName})`}
-                                      </span>
-                                      <span className="font-mono text-slate-400">
-                                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                      </span>
-                                    </div>
-                                    <p className="whitespace-pre-wrap leading-relaxed">{m.message}</p>
-                                  </div>
-                                );
-                              })}
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border shrink-0 ${
+                              isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
+                            }`}>
+                              {isSolved ? 'SOLVED' : 'PENDING'}
+                            </span>
+                          </div>
+
+                          {/* Question Description */}
+                          {q.description && (
+                            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs text-slate-700 italic">
+                              <span className="font-bold not-italic text-slate-900 block text-[10px] uppercase mb-1">Student Question:</span>
+                              "{q.description}"
                             </div>
                           )}
-                        </div>
 
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                          {/* Conversation Thread / How It Was Resolved */}
+                          <div className="pt-2">
+                            <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-2">
+                              Mentor Resolution & Discussion History ({messagesList.length} Messages):
+                            </span>
+
+                            {messagesList.length === 0 ? (
+                              <div className="p-3 rounded-xl bg-slate-50 text-[11px] text-slate-400 italic">
+                                No mentor responses or chat messages logged for this query yet.
+                              </div>
+                            ) : (
+                              <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                                {messagesList.map((m: any) => {
+                                  const isFaculty = m.users?.role === 'faculty' || m.sender_id !== studentId;
+
+                                  return (
+                                    <div 
+                                      key={m.id} 
+                                      className={`p-3.5 rounded-xl text-xs space-y-1 ${
+                                        isFaculty 
+                                          ? 'bg-emerald-50 border border-emerald-200 text-emerald-950 font-medium' 
+                                          : 'bg-slate-100 border border-slate-200 text-slate-800 font-medium'
+                                      }`}
+                                    >
+                                      <div className="flex items-center justify-between text-[10px]">
+                                        <span className={`font-black uppercase ${isFaculty ? 'text-emerald-800' : 'text-slate-600'}`}>
+                                          {isFaculty ? '👨‍🏫 Mentor Response' : `👤 Student (${m.users?.name || studentName})`}
+                                        </span>
+                                        <span className="font-mono text-slate-400">
+                                          {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                      </div>
+                                      <p className="whitespace-pre-wrap leading-relaxed">{m.message}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-end pt-2 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0">
+              <span className="text-xs text-slate-400 font-medium hidden sm:inline">
+                {isFullscreenModal ? "Press Exit Fullscreen to minimize view" : "Click Full Screen to expand modal width"}
+              </span>
+              
               <button
-                onClick={() => setSelectedWeekData(null)}
-                className="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
+                onClick={() => {
+                  setSelectedWeekData(null);
+                  setIsFullscreenModal(false);
+                }}
+                className="px-6 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
               >
                 Close Details
               </button>
