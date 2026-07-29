@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageShell } from '@/components/page-shell';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 import { supabase } from '@/lib/supabase';
+import { getRiskLevel } from '@/lib/risk';
 import { 
-  Loader2, Trash2, ShieldAlert, X, User, Users, Search,
-  Plus, ExternalLink, GripVertical, CheckCircle2
+  Loader2, ArrowLeft, User, Mail, Phone, BookOpen, 
+  GraduationCap, Building, ShieldCheck, Users, UserCheck, ExternalLink, Search,
+  Plus, Check, X, GripVertical, CheckCircle2, ShieldAlert, Trash2
 } from 'lucide-react';
 
 const adminSidebarItems = [
@@ -40,16 +42,19 @@ const getStudentBTechYear = (acYear: string, roll: string) => {
   return 'I Year';
 };
 
-export default function AdminFacultyPage() {
+export default function AdminMentorDetailPage({ params }: { params: Promise<{ facultyId: string }> }) {
+  const resolvedParams = use(params);
+  const facultyId = resolvedParams.facultyId;
   const router = useRouter();
-  const [facultyList, setFacultyList] = useState<any[]>([]);
-  const [hodList, setHodList] = useState<any[]>([]);
-  const [mentorStudentCounts, setMentorStudentCounts] = useState<{ [key: string]: number }>({});
+
+  const [mentor, setMentor] = useState<any | null>(null);
+  const [hodName, setHodName] = useState<string>('Unassigned');
+  const [assignedMentees, setAssignedMentees] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Drag & Drop Student Assignment Modal State
-  const [assigningMentor, setAssigningMentor] = useState<any | null>(null);
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState<boolean>(false);
   const [allStudentsList, setAllStudentsList] = useState<any[]>([]);
   const [assignedStudentUserIds, setAssignedStudentUserIds] = useState<string[]>([]);
   const [loadingAssignModal, setLoadingAssignModal] = useState<boolean>(false);
@@ -57,64 +62,81 @@ export default function AdminFacultyPage() {
   const [assignSearchQuery, setAssignSearchQuery] = useState<string>('');
   const [draggedUserId, setDraggedUserId] = useState<string | null>(null);
 
-  const fetchFaculty = async () => {
+  const loadMentorData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select(`
           id, name, email, role, status,
           faculty_profiles!user_id (
-            faculty_id, department, designation, qualification, subjects, contact_number, profile_photo, hod_id
+            faculty_id, department, designation, qualification, subjects, contact_number, profile_photo, hod_id, year_joined
           )
         `)
-        .eq('role', 'faculty')
-        .eq('status', 'Approved');
+        .eq('id', facultyId)
+        .single();
 
-      if (error) throw error;
-      setFacultyList(data || []);
+      if (userError || !userData) throw new Error('Mentor not found.');
 
-      // Fetch student count per mentor
-      const { data: studentProfiles } = await supabase
+      setMentor(userData);
+
+      const fProfile = userData.faculty_profiles?.[0] || {};
+      if (fProfile.hod_id) {
+        const { data: hodData } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', fProfile.hod_id)
+          .maybeSingle();
+        if (hodData) setHodName(hodData.name);
+      } else {
+        setHodName('Unassigned');
+      }
+
+      // Fetch assigned students
+      const { data: menteeProfiles, error: menteeError } = await supabase
         .from('student_profiles')
-        .select('mentor_id');
+        .select(`
+          user_id, roll_number, branch, section, cgpa, backlogs, academic_year, attendance_percentage,
+          users!user_id ( id, name, email )
+        `)
+        .eq('mentor_id', facultyId);
 
-      const countMap: { [key: string]: number } = {};
-      (studentProfiles || []).forEach((sp: any) => {
-        if (sp.mentor_id) {
-          countMap[sp.mentor_id] = (countMap[sp.mentor_id] || 0) + 1;
-        }
+      if (menteeError) throw menteeError;
+
+      const processedMentees = (menteeProfiles || []).map((sp: any) => {
+        const u = sp.users || {};
+        const cgpaVal = sp.cgpa !== null && sp.cgpa !== undefined ? parseFloat(sp.cgpa) : 0;
+        const backlogsVal = sp.backlogs !== null && sp.backlogs !== undefined ? Number(sp.backlogs) : 0;
+        const riskLevel = getRiskLevel(cgpaVal, backlogsVal);
+
+        return {
+          userId: sp.user_id,
+          name: u.name || 'Student',
+          email: u.email || '',
+          rollNumber: sp.roll_number || 'N/A',
+          branch: sp.branch || 'N/A',
+          section: sp.section || '',
+          btechYear: getStudentBTechYear(sp.academic_year, sp.roll_number),
+          cgpa: cgpaVal,
+          backlogs: backlogsVal,
+          riskLevel: riskLevel
+        };
       });
-      setMentorStudentCounts(countMap);
+
+      setAssignedMentees(processedMentees);
     } catch (err: any) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to load faculty.' });
+      setFeedback({ type: 'error', message: err.message || 'Failed to load mentor details.' });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchHodList = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, name')
-        .eq('role', 'hod')
-        .eq('status', 'Approved');
-      if (error) throw error;
-      setHodList(data || []);
-    } catch (err: any) {
-      console.error('Error fetching HOD list:', err);
-    }
-  };
-
   useEffect(() => {
-    fetchFaculty();
-    fetchHodList();
-  }, []);
+    loadMentorData();
+  }, [facultyId]);
 
-  // Open Drag & Drop Assignment Modal
-  const openAssignStudentsModal = async (faculty: any) => {
-    setAssigningMentor(faculty);
+  const openAssignModal = async () => {
+    setIsAssignModalOpen(true);
     setLoadingAssignModal(true);
     setAssignSearchQuery('');
     try {
@@ -140,7 +162,7 @@ export default function AdminFacultyPage() {
 
       setAllStudentsList(formatted);
       const currentlyAssigned = formatted
-        .filter((s: any) => s.mentorId === faculty.id)
+        .filter((s: any) => s.mentorId === facultyId)
         .map((s: any) => s.userId);
       setAssignedStudentUserIds(currentlyAssigned);
     } catch (err) {
@@ -161,12 +183,11 @@ export default function AdminFacultyPage() {
   };
 
   const handleSaveStudentAssignments = async () => {
-    if (!assigningMentor) return;
     setSavingAssignments(true);
     setFeedback(null);
     try {
       const previousAssigned = allStudentsList
-        .filter((s) => s.mentorId === assigningMentor.id)
+        .filter((s) => s.mentorId === facultyId)
         .map((s) => s.userId);
 
       const removedIds = previousAssigned.filter((id) => !assignedStudentUserIds.includes(id));
@@ -181,16 +202,16 @@ export default function AdminFacultyPage() {
       if (newlyAddedIds.length > 0) {
         await supabase
           .from('student_profiles')
-          .update({ mentor_id: assigningMentor.id })
+          .update({ mentor_id: facultyId })
           .in('user_id', newlyAddedIds);
       }
 
       setFeedback({ 
         type: 'success', 
-        message: `Updated student assignments for ${assigningMentor.name} (${assignedStudentUserIds.length} assigned students).` 
+        message: `Updated student assignments for ${mentor.name} (${assignedStudentUserIds.length} assigned students).` 
       });
-      setAssigningMentor(null);
-      fetchFaculty();
+      setIsAssignModalOpen(false);
+      loadMentorData();
     } catch (err: any) {
       console.error('Failed to save student assignments:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to save student assignments.' });
@@ -199,41 +220,24 @@ export default function AdminFacultyPage() {
     }
   };
 
-  const handleHodChange = async (facultyUserId: string, newHodId: string) => {
-    try {
-      setFeedback(null);
-      const { error } = await supabase
-        .from('faculty_profiles')
-        .update({ hod_id: newHodId || null })
-        .eq('user_id', facultyUserId);
-
-      if (error) throw error;
-
-      setFeedback({ type: 'success', message: 'Faculty HOD updated successfully.' });
-      fetchFaculty();
-    } catch (err: any) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to update faculty HOD.' });
-    }
-  };
-
-  const handleStatusUpdate = async (userId: string, newStatus: 'Pending' | 'Rejected') => {
+  const handleStatusUpdate = async (newStatus: 'Pending' | 'Rejected') => {
     try {
       const { error } = await supabase
         .from('users')
         .update({ status: newStatus })
-        .eq('id', userId);
+        .eq('id', facultyId);
 
       if (error) throw error;
 
-      setFeedback({ type: 'success', message: `Faculty status changed to ${newStatus}.` });
-      fetchFaculty();
+      setFeedback({ type: 'success', message: `Mentor status changed to ${newStatus}.` });
+      loadMentorData();
     } catch (err: any) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to update faculty status.' });
+      setFeedback({ type: 'error', message: err.message || 'Failed to update mentor status.' });
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to completely delete this faculty account? This action cannot be undone.')) {
+  const handleDeleteUser = async () => {
+    if (!confirm('Are you sure you want to completely delete this mentor account? This action cannot be undone.')) {
       return;
     }
 
@@ -241,180 +245,245 @@ export default function AdminFacultyPage() {
       const { error } = await supabase
         .from('users')
         .delete()
-        .eq('id', userId);
+        .eq('id', facultyId);
 
       if (error) throw error;
 
-      setFeedback({ type: 'success', message: 'Faculty account deleted successfully.' });
-      fetchFaculty();
+      router.push('/admin/faculty');
     } catch (err: any) {
-      setFeedback({ type: 'error', message: err.message || 'Failed to delete faculty.' });
+      setFeedback({ type: 'error', message: err.message || 'Failed to delete mentor.' });
     }
   };
 
+  if (loading) {
+    return (
+      <ProtectedRoute role="admin">
+        <PageShell title="Mentor Details" subtitle="Loading mentor profile...">
+          <div className="flex h-64 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-700" />
+          </div>
+        </PageShell>
+      </ProtectedRoute>
+    );
+  }
+
+  if (!mentor) {
+    return (
+      <ProtectedRoute role="admin">
+        <PageShell title="Mentor Details" subtitle="Mentor not found">
+          <div className="p-8 text-center">
+            <p className="text-slate-500 font-semibold mb-4">The requested mentor profile could not be found.</p>
+            <button
+              onClick={() => router.push('/admin/faculty')}
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back to Manage Mentors</span>
+            </button>
+          </div>
+        </PageShell>
+      </ProtectedRoute>
+    );
+  }
+
+  const profile = mentor.faculty_profiles?.[0] || {};
+
   return (
     <ProtectedRoute role="admin">
-      <PageShell title="Manage Mentors" subtitle="View and manage approved mentor accounts & student assignments">
+      <PageShell title={`${mentor.name} - Mentor Details`} subtitle="Manage mentor details, qualifications, and assigned student roster">
         <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[260px_minmax(0,1fr)] w-full min-w-0">
           <Sidebar active="/admin/faculty" items={adminSidebarItems} />
 
           <div className="space-y-6 w-full min-w-0">
-            <div className="portal-card">
-              <h2 className="text-2xl font-semibold">Approved Mentors</h2>
-              <p className="mt-2 text-slate-600">Review, assign students, suspend, or delete mentor profiles currently active in the system.</p>
+            {/* Top Navigation Bar */}
+            <div className="flex items-center justify-between gap-4">
+              <button
+                onClick={() => router.push('/admin/faculty')}
+                className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-2xs cursor-pointer"
+              >
+                <ArrowLeft className="h-4 w-4 text-emerald-700" />
+                <span>Back to Manage Mentors</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleStatusUpdate('Pending')}
+                  className="inline-flex items-center gap-1.5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 transition cursor-pointer"
+                >
+                  <ShieldAlert className="h-4 w-4" />
+                  <span>Suspend Account</span>
+                </button>
+                <button
+                  onClick={handleDeleteUser}
+                  className="inline-flex items-center gap-1.5 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-800 hover:bg-rose-100 transition cursor-pointer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span>Delete Faculty</span>
+                </button>
+              </div>
             </div>
 
             {feedback && (
               <div className={`rounded-3xl border px-4 py-3 text-sm font-semibold shadow-sm ${
-                feedback.type === 'success' 
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800' 
-                  : 'border-rose-200 bg-rose-50 text-rose-800'
+                feedback.type === 'success' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'
               }`}>
                 {feedback.message}
               </div>
             )}
 
-            <div className="overflow-x-auto w-full rounded-[28px] border border-slate-200 bg-white shadow-sm">
-              <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-                <thead className="bg-slate-50 text-slate-700">
-                  <tr>
-                    <th className="px-5 py-4 font-semibold">Mentor Name / Email</th>
-                    <th className="px-5 py-4 font-semibold">Mentor ID</th>
-                    <th className="px-5 py-4 font-semibold">Department & Designation</th>
-                    <th className="px-5 py-4 font-semibold">Assigned HOD</th>
-                    <th className="px-5 py-4 font-semibold">Assigned Students</th>
-                    <th className="px-5 py-4 font-semibold text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {loading ? (
-                    <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={6}>
-                        <div className="flex items-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin text-emerald-700" />
-                          <span>Loading faculty…</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : facultyList.length === 0 ? (
-                    <tr>
-                      <td className="px-5 py-8 text-slate-500" colSpan={6}>No approved faculty found.</td>
-                    </tr>
-                  ) : null}
-                  {facultyList.map((faculty) => {
-                    const profile = faculty.faculty_profiles?.[0] || {};
-                    const studentCount = mentorStudentCounts[faculty.id] || 0;
+            {/* Profile Header Banner */}
+            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+              <div className="relative bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 p-6 md:p-8 text-white">
+                <div className="flex flex-wrap items-center gap-6">
+                  <div className="h-20 w-20 overflow-hidden rounded-2xl border-2 border-white/80 bg-white/10 flex items-center justify-center shrink-0 shadow-lg">
+                    {profile.profile_photo ? (
+                      <img src={profile.profile_photo} alt={mentor.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-10 w-10 text-white/90" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-2xl md:text-3xl font-black">{mentor.name}</h1>
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/20 border border-white/20 px-3 py-0.5 text-xs font-extrabold uppercase tracking-wider text-emerald-100 backdrop-blur-md">
+                        <ShieldCheck className="h-3.5 w-3.5" /> Faculty Mentor
+                      </span>
+                    </div>
+                    <p className="text-sm font-semibold text-emerald-100/90 mt-1 flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-emerald-300" />
+                      <span>{mentor.email}</span>
+                      {profile.contact_number && (
+                        <>
+                          <span>•</span>
+                          <Phone className="h-4 w-4 text-emerald-300" />
+                          <span>{profile.contact_number}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-                    return (
-                      <tr key={faculty.id} className="hover:bg-slate-50/50">
-                        <td className="px-5 py-4">
-                          <div 
-                            onClick={() => router.push(`/admin/faculty/${faculty.id}` as any)}
-                            className="flex items-center gap-3 cursor-pointer group"
-                            title="Click to open dedicated mentor details page"
-                          >
-                            <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center shrink-0 group-hover:border-emerald-500 transition">
-                              {profile.profile_photo ? (
-                                <img
-                                  src={profile.profile_photo}
-                                  alt={faculty.name}
-                                  className="h-full w-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(faculty.name)}`;
-                                  }}
-                                />
-                              ) : (
-                                <span className="font-bold text-slate-500 text-sm group-hover:text-emerald-700">{faculty.name ? faculty.name.charAt(0).toUpperCase() : 'M'}</span>
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-slate-900 group-hover:text-emerald-800 group-hover:underline transition flex items-center gap-1">
-                                <span>{faculty.name}</span>
-                                <ExternalLink className="h-3 w-3 text-emerald-600 opacity-0 group-hover:opacity-100 transition" />
-                              </div>
-                              <div className="text-xs text-slate-500">{faculty.email}</div>
-                              <div className="text-xs font-semibold text-emerald-700 mt-0.5">{profile.contact_number || ''}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 font-mono font-semibold text-slate-700">{profile.faculty_id || '-'}</td>
-                        <td className="px-5 py-4 text-slate-700">
-                          <div className="font-semibold uppercase">{profile.department || '-'}</div>
-                          <div className="text-xs text-slate-500">{profile.designation || '-'}</div>
-                        </td>
-                        <td className="px-5 py-4">
-                          <select
-                            value={profile.hod_id || ''}
-                            onChange={(e) => handleHodChange(faculty.id, e.target.value)}
-                            className="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-emerald-600 focus:outline-none w-full max-w-[150px]"
-                          >
-                            <option value="">Unassigned</option>
-                            {hodList.map((h) => (
-                              <option key={h.id} value={h.id}>
-                                {h.name}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="flex items-center gap-2">
-                            <span 
-                              onClick={() => router.push(`/admin/faculty/${faculty.id}` as any)}
-                              className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 border border-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-800 hover:bg-emerald-100 cursor-pointer transition"
-                              title="Click to view assigned students roster"
-                            >
-                              <Users className="h-3.5 w-3.5" />
-                              <span>{studentCount} Students</span>
-                            </span>
-                            <button
-                              onClick={() => openAssignStudentsModal(faculty)}
-                              className="inline-flex items-center gap-1 rounded-xl border border-emerald-600 bg-emerald-600 text-white px-2.5 py-1 text-xs font-bold hover:bg-emerald-700 transition shadow-2xs cursor-pointer"
-                              title="Assign Students via Drag & Drop"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                              <span>Assign</span>
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => router.push(`/admin/faculty/${faculty.id}` as any)}
-                              className="inline-flex items-center gap-1 rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
-                              title="View Full Mentor Profile"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                              <span>View Profile</span>
-                            </button>
-                            <button
-                              onClick={() => handleStatusUpdate(faculty.id, 'Pending')}
-                              className="inline-flex items-center gap-1 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition cursor-pointer"
-                              title="Suspend Approval"
-                            >
-                              <ShieldAlert className="h-3.5 w-3.5" />
-                              <span>Suspend</span>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(faculty.id)}
-                              className="inline-flex items-center gap-1 rounded-2xl border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 hover:bg-rose-100 transition cursor-pointer"
-                              title="Delete Faculty"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              <span>Delete</span>
-                            </button>
-                          </div>
-                        </td>
+              {/* Quick Info Grid */}
+              <div className="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50/50 border-t border-slate-100">
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Mentor ID</span>
+                  <span className="text-base font-black font-mono text-slate-900 mt-1 block">{profile.faculty_id || 'N/A'}</span>
+                </div>
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Department</span>
+                  <span className="text-base font-black text-slate-900 uppercase mt-1 block">{profile.department || 'N/A'}</span>
+                </div>
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Designation</span>
+                  <span className="text-base font-black text-slate-900 mt-1 block truncate">{profile.designation || 'N/A'}</span>
+                </div>
+                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Assigned HOD</span>
+                  <span className="text-base font-black text-slate-900 mt-1 block truncate">{hodName}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Qualification & Subjects Info Card */}
+            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-3">
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <BookOpen className="h-4.5 w-4.5 text-emerald-700" />
+                <span>Qualification & Academic Responsibilities</span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold pt-2">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <span className="text-slate-500 block font-normal text-[11px]">Qualification:</span>
+                  <span className="text-sm font-extrabold text-slate-900 uppercase mt-0.5 block">{profile.qualification || 'Not Specified'}</span>
+                </div>
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <span className="text-slate-500 block font-normal text-[11px]">Subjects Handling:</span>
+                  <span className="text-sm font-extrabold text-slate-900 mt-0.5 block">{profile.subjects || 'Not Specified'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Assigned Students Roster Table */}
+            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <UserCheck className="h-5 w-5 text-emerald-700" />
+                    <span>Assigned Students ({assignedMentees.length})</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Full list of student mentees assigned to {mentor.name}.</p>
+                </div>
+
+                <button
+                  onClick={openAssignModal}
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-extrabold text-white transition shadow-sm cursor-pointer"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Assign More Students</span>
+                </button>
+              </div>
+
+              {assignedMentees.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 font-medium">
+                  No students are currently assigned to {mentor.name}. Click <b>+ Assign More Students</b> to assign.
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                  <table className="w-full text-left text-xs font-semibold text-slate-700">
+                    <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 font-extrabold border-b border-slate-200">
+                      <tr>
+                        <th className="px-5 py-3.5">Roll No</th>
+                        <th className="px-5 py-3.5">Student Name</th>
+                        <th className="px-5 py-3.5">Branch & Section</th>
+                        <th className="px-5 py-3.5 text-center">CGPA</th>
+                        <th className="px-5 py-3.5 text-center">Risk Status</th>
+                        <th className="px-5 py-3.5 text-center">Action</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 bg-white">
+                      {assignedMentees.map((st) => (
+                        <tr key={st.userId} className="hover:bg-slate-50/60 transition">
+                          <td className="px-5 py-4 font-mono font-bold text-slate-900">{st.rollNumber}</td>
+                          <td className="px-5 py-4 font-bold text-slate-900">{st.name}</td>
+                          <td className="px-5 py-4 text-slate-600">
+                            <span className="font-extrabold uppercase text-slate-800">{st.branch}</span>
+                            <span className="text-slate-400 font-normal ml-1">
+                              {st.section ? `Sec ${st.section} • ` : ''}{st.btechYear}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-center font-black text-slate-900">
+                            {st.cgpa > 0 ? st.cgpa.toFixed(2) : 'N/A'}
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                              st.riskLevel === 'Low' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                              st.riskLevel === 'Medium' ? 'bg-amber-50 border-amber-200 text-amber-800' :
+                              'bg-rose-50 border-rose-200 text-rose-800'
+                            }`}>
+                              {st.riskLevel}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <button
+                              onClick={() => router.push(`/admin/students/${st.userId}`)}
+                              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
+                            >
+                              <span>View Profile</span>
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* DRAG & DROP ASSIGN STUDENTS MODAL */}
-        {assigningMentor && (
+        {isAssignModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
             <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col h-[85vh]">
               {/* Header */}
@@ -422,14 +491,14 @@ export default function AdminFacultyPage() {
                 <div>
                   <h3 className="text-lg font-extrabold flex items-center gap-2">
                     <Users className="h-5 w-5 text-emerald-200" />
-                    <span>Assign Students to {assigningMentor.name}</span>
+                    <span>Assign Students to {mentor.name}</span>
                   </h3>
                   <p className="text-xs text-emerald-100/90 mt-0.5">
                     Drag and drop student cards or click + / ✕ to manage mentor assignments.
                   </p>
                 </div>
                 <button
-                  onClick={() => setAssigningMentor(null)}
+                  onClick={() => setIsAssignModalOpen(false)}
                   className="rounded-full bg-white/20 p-1.5 text-white hover:bg-white/30 backdrop-blur-md transition cursor-pointer"
                 >
                   <X className="h-5 w-5" />
@@ -452,8 +521,7 @@ export default function AdminFacultyPage() {
 
               {/* Drag and Drop Container Grid */}
               <div className="p-6 overflow-hidden flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-100/50">
-                
-                {/* Zone 1: Available Unassigned / Department Students */}
+                {/* Zone 1: Available Students */}
                 <div 
                   className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-xs min-h-0"
                   onDragOver={(e) => e.preventDefault()}
@@ -528,7 +596,7 @@ export default function AdminFacultyPage() {
                   </div>
                 </div>
 
-                {/* Zone 2: Assigned Students to this Mentor */}
+                {/* Zone 2: Assigned Students */}
                 <div 
                   className="flex flex-col rounded-2xl border-2 border-emerald-200 bg-white p-4 shadow-xs min-h-0"
                   onDragOver={(e) => e.preventDefault()}
@@ -542,8 +610,8 @@ export default function AdminFacultyPage() {
                 >
                   <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 shrink-0">
                     <h4 className="text-xs font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <Users className="h-4 w-4 text-emerald-700" />
-                      <span>Assigned to {assigningMentor.name}</span>
+                      <UserCheck className="h-4 w-4 text-emerald-700" />
+                      <span>Assigned to {mentor.name}</span>
                     </h4>
                     <span className="text-[10px] font-black text-emerald-800 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-full">
                       {assignedStudentUserIds.length} Assigned
@@ -603,18 +671,17 @@ export default function AdminFacultyPage() {
                     })()}
                   </div>
                 </div>
-
               </div>
 
-              {/* Modal Footer Actions */}
+              {/* Modal Footer */}
               <div className="flex items-center justify-between border-t border-slate-200 p-4 bg-slate-50 shrink-0">
                 <span className="text-xs font-bold text-slate-500">
-                  Total {assignedStudentUserIds.length} students selected for {assigningMentor.name}
+                  Total {assignedStudentUserIds.length} students selected for {mentor.name}
                 </span>
 
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setAssigningMentor(null)}
+                    onClick={() => setIsAssignModalOpen(false)}
                     disabled={savingAssignments}
                     className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
                   >

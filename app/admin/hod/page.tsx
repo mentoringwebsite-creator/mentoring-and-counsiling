@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PageShell } from '@/components/page-shell';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 import { supabase } from '@/lib/supabase';
-import { Loader2, Trash2, ShieldAlert, X, CheckCircle2, User, Mail, Phone, Building, GraduationCap, ShieldCheck } from 'lucide-react';
+import { Loader2, Trash2, ShieldAlert, ExternalLink } from 'lucide-react';
 
 const adminSidebarItems = [
   { href: '/admin', label: 'Overview' },
@@ -16,14 +17,10 @@ const adminSidebarItems = [
 ];
 
 export default function AdminHodPage() {
+  const router = useRouter();
   const [hodList, setHodList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-  // Detail Modal State
-  const [selectedHod, setSelectedHod] = useState<any | null>(null);
-  const [assignedMentorsCount, setAssignedMentorsCount] = useState<number>(0);
-  const [loadingDetails, setLoadingDetails] = useState<boolean>(false);
 
   const fetchHod = async () => {
     try {
@@ -44,7 +41,6 @@ export default function AdminHodPage() {
 
       if (error) throw error;
 
-      // Auto repair & fallbacks
       const processed = (data || []).map((hod) => {
         const hp = hod.hod_profiles?.[0] || {};
         const fp = hod.faculty_profiles?.[0] || {};
@@ -79,27 +75,6 @@ export default function AdminHodPage() {
     fetchHod();
   }, []);
 
-  const openHodDetails = async (hod: any) => {
-    setSelectedHod(hod);
-    setLoadingDetails(true);
-    setAssignedMentorsCount(0);
-    try {
-      // Fetch number of faculty mentors under this HOD
-      const { count, error } = await supabase
-        .from('faculty_profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('hod_id', hod.id);
-
-      if (!error && count !== null) {
-        setAssignedMentorsCount(count);
-      }
-    } catch (err) {
-      console.error('Error fetching mentors count for HOD:', err);
-    } finally {
-      setLoadingDetails(false);
-    }
-  };
-
   const handleStatusUpdate = async (userId: string, newStatus: 'Pending' | 'Rejected') => {
     try {
       const { error } = await supabase
@@ -110,7 +85,6 @@ export default function AdminHodPage() {
       if (error) throw error;
 
       setFeedback({ type: 'success', message: `HOD status changed to ${newStatus}.` });
-      if (selectedHod?.id === userId) setSelectedHod(null);
       fetchHod();
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to update HOD status.' });
@@ -131,7 +105,6 @@ export default function AdminHodPage() {
       if (error) throw error;
 
       setFeedback({ type: 'success', message: 'HOD account deleted successfully.' });
-      if (selectedHod?.id === userId) setSelectedHod(null);
       fetchHod();
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to delete HOD.' });
@@ -192,9 +165,9 @@ export default function AdminHodPage() {
                       <tr key={hod.id} className="hover:bg-slate-50/50">
                         <td className="px-5 py-4">
                           <div 
-                            onClick={() => openHodDetails(hod)}
+                            onClick={() => router.push(`/admin/hod/${hod.id}` as any)}
                             className="flex items-center gap-3 cursor-pointer group"
-                            title="Click to view full details"
+                            title="Click to view dedicated HOD details page"
                           >
                             <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-100 flex items-center justify-center shrink-0 group-hover:border-emerald-500 transition">
                               {profile.profile_photo ? (
@@ -211,7 +184,10 @@ export default function AdminHodPage() {
                               )}
                             </div>
                             <div>
-                              <div className="font-semibold text-slate-900 group-hover:text-emerald-800 group-hover:underline transition">{hod.name}</div>
+                              <div className="font-semibold text-slate-900 group-hover:text-emerald-800 group-hover:underline transition flex items-center gap-1">
+                                <span>{hod.name}</span>
+                                <ExternalLink className="h-3 w-3 text-emerald-600 opacity-0 group-hover:opacity-100 transition" />
+                              </div>
                               <div className="text-xs text-slate-500">{hod.email}</div>
                             </div>
                           </div>
@@ -224,6 +200,14 @@ export default function AdminHodPage() {
                         <td className="px-5 py-4 text-slate-700 font-semibold">{profile.contact_number}</td>
                         <td className="px-5 py-4">
                           <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => router.push(`/admin/hod/${hod.id}` as any)}
+                              className="inline-flex items-center gap-1 rounded-2xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
+                              title="View Full Profile"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span>View Profile</span>
+                            </button>
                             <button
                               onClick={() => handleStatusUpdate(hod.id, 'Pending')}
                               className="inline-flex items-center gap-1 rounded-2xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition cursor-pointer"
@@ -250,99 +234,6 @@ export default function AdminHodPage() {
             </div>
           </div>
         </div>
-
-        {/* Full HOD Details Modal */}
-        {selectedHod && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-              {/* Header Cover */}
-              <div className="relative bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 p-6 text-white shrink-0">
-                <button
-                  onClick={() => setSelectedHod(null)}
-                  className="absolute right-4 top-4 rounded-full bg-white/20 p-1.5 text-white hover:bg-white/30 backdrop-blur-md transition cursor-pointer"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-                
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 overflow-hidden rounded-2xl border-2 border-white/80 bg-white/10 flex items-center justify-center shrink-0 shadow-md">
-                    {selectedHod.profile.profile_photo ? (
-                      <img src={selectedHod.profile.profile_photo} alt={selectedHod.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <User className="h-8 w-8 text-white/90" />
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold leading-tight">{selectedHod.name}</h3>
-                    <p className="text-xs font-semibold text-emerald-100/90 mt-0.5">{selectedHod.email}</p>
-                    <span className="inline-flex items-center gap-1 mt-2 rounded-lg bg-emerald-500/20 border border-white/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-100 backdrop-blur-md">
-                      <ShieldCheck className="h-3 w-3" /> Head of Department
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Body Details */}
-              <div className="p-6 overflow-y-auto space-y-5 flex-1">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Faculty ID</span>
-                    <p className="text-sm font-black font-mono text-slate-800 mt-1">{selectedHod.profile.faculty_id}</p>
-                  </div>
-                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Department</span>
-                    <p className="text-sm font-black text-slate-800 uppercase mt-1">{selectedHod.profile.department}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3.5">
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div className="flex items-center gap-2.5">
-                      <GraduationCap className="h-4.5 w-4.5 text-emerald-700" />
-                      <span className="text-xs font-bold text-slate-600">Designation</span>
-                    </div>
-                    <span className="text-xs font-extrabold text-slate-900">{selectedHod.profile.designation}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div className="flex items-center gap-2.5">
-                      <Phone className="h-4.5 w-4.5 text-emerald-700" />
-                      <span className="text-xs font-bold text-slate-600">Contact Number</span>
-                    </div>
-                    <span className="text-xs font-extrabold text-slate-900">{selectedHod.profile.contact_number}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 border border-slate-100">
-                    <div className="flex items-center gap-2.5">
-                      <Building className="h-4.5 w-4.5 text-emerald-700" />
-                      <span className="text-xs font-bold text-slate-600">Assigned Mentors</span>
-                    </div>
-                    <span className="text-xs font-black text-emerald-800">
-                      {loadingDetails ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : `${assignedMentorsCount} Faculty Mentors`}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer Actions */}
-              <div className="flex items-center justify-end gap-3 border-t border-slate-100 p-4 bg-slate-50 shrink-0">
-                <button
-                  onClick={() => handleStatusUpdate(selectedHod.id, 'Pending')}
-                  className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 transition cursor-pointer"
-                >
-                  Suspend Account
-                </button>
-                <button
-                  onClick={() => setSelectedHod(null)}
-                  className="rounded-xl bg-slate-800 hover:bg-slate-900 px-5 py-2 text-xs font-bold text-white transition shadow-sm cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
       </PageShell>
     </ProtectedRoute>
   );
