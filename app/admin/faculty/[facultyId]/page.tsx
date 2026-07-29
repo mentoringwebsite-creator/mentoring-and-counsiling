@@ -9,8 +9,8 @@ import { supabase } from '@/lib/supabase';
 import { getRiskLevel } from '@/lib/risk';
 import { 
   Loader2, ArrowLeft, User, Mail, Phone, BookOpen, 
-  GraduationCap, Building, ShieldCheck, Users, UserCheck, ExternalLink, Search,
-  Plus, Check, X, GripVertical, CheckCircle2, ShieldAlert, Trash2
+  Building, ShieldCheck, Users, UserCheck, ExternalLink,
+  Plus, ShieldAlert, Trash2
 } from 'lucide-react';
 
 const adminSidebarItems = [
@@ -53,15 +53,6 @@ export default function AdminMentorDetailPage({ params }: { params: Promise<{ fa
   const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // Drag & Drop Student Assignment Modal State
-  const [isAssignModalOpen, setIsAssignModalOpen] = useState<boolean>(false);
-  const [allStudentsList, setAllStudentsList] = useState<any[]>([]);
-  const [assignedStudentUserIds, setAssignedStudentUserIds] = useState<string[]>([]);
-  const [loadingAssignModal, setLoadingAssignModal] = useState<boolean>(false);
-  const [savingAssignments, setSavingAssignments] = useState<boolean>(false);
-  const [assignSearchQuery, setAssignSearchQuery] = useState<string>('');
-  const [draggedUserId, setDraggedUserId] = useState<string | null>(null);
-
   const loadMentorData = async () => {
     try {
       setLoading(true);
@@ -70,7 +61,7 @@ export default function AdminMentorDetailPage({ params }: { params: Promise<{ fa
         .select(`
           id, name, email, role, status,
           faculty_profiles!user_id (
-            faculty_id, department, designation, qualification, subjects, contact_number, profile_photo, hod_id, year_joined
+            id, faculty_id, department, designation, qualification, subjects, contact_number, profile_photo, hod_id
           )
         `)
         .eq('id', facultyId)
@@ -81,6 +72,8 @@ export default function AdminMentorDetailPage({ params }: { params: Promise<{ fa
       setMentor(userData);
 
       const fProfile = userData.faculty_profiles?.[0] || {};
+      const fProfileId = fProfile.id;
+
       if (fProfile.hod_id) {
         const { data: hodData } = await supabase
           .from('users')
@@ -92,38 +85,47 @@ export default function AdminMentorDetailPage({ params }: { params: Promise<{ fa
         setHodName('Unassigned');
       }
 
-      // Fetch assigned students
-      const { data: menteeProfiles, error: menteeError } = await supabase
-        .from('student_profiles')
+      // Fetch all approved students and filter by matching mentor_id
+      const { data: studentsDb, error: studentError } = await supabase
+        .from('users')
         .select(`
-          user_id, roll_number, branch, section, cgpa, backlogs, academic_year, attendance_percentage,
-          users!user_id ( id, name, email )
+          id, name, email,
+          student_profiles!user_id (
+            user_id, roll_number, branch, section, cgpa, backlogs, academic_year, attendance_percentage, mentor_id
+          )
         `)
-        .eq('mentor_id', facultyId);
+        .eq('role', 'student')
+        .eq('status', 'Approved');
 
-      if (menteeError) throw menteeError;
+      if (studentError) throw studentError;
 
-      const processedMentees = (menteeProfiles || []).map((sp: any) => {
-        const u = sp.users || {};
-        const cgpaVal = sp.cgpa !== null && sp.cgpa !== undefined ? parseFloat(sp.cgpa) : 0;
-        const backlogsVal = sp.backlogs !== null && sp.backlogs !== undefined ? Number(sp.backlogs) : 0;
-        const riskLevel = getRiskLevel(cgpaVal, backlogsVal);
+      const matchedMentees = (studentsDb || [])
+        .filter((u: any) => {
+          const sp = u.student_profiles?.[0] || {};
+          if (!sp.mentor_id) return false;
+          return sp.mentor_id === facultyId || (fProfileId && sp.mentor_id === fProfileId);
+        })
+        .map((u: any) => {
+          const sp = u.student_profiles?.[0] || {};
+          const cgpaVal = sp.cgpa !== null && sp.cgpa !== undefined ? parseFloat(sp.cgpa) : 0;
+          const backlogsVal = sp.backlogs !== null && sp.backlogs !== undefined ? Number(sp.backlogs) : 0;
+          const riskLevel = getRiskLevel(cgpaVal, backlogsVal);
 
-        return {
-          userId: sp.user_id,
-          name: u.name || 'Student',
-          email: u.email || '',
-          rollNumber: sp.roll_number || 'N/A',
-          branch: sp.branch || 'N/A',
-          section: sp.section || '',
-          btechYear: getStudentBTechYear(sp.academic_year, sp.roll_number),
-          cgpa: cgpaVal,
-          backlogs: backlogsVal,
-          riskLevel: riskLevel
-        };
-      });
+          return {
+            userId: u.id,
+            name: u.name || 'Student',
+            email: u.email || '',
+            rollNumber: sp.roll_number || 'N/A',
+            branch: sp.branch || 'N/A',
+            section: sp.section || '',
+            btechYear: getStudentBTechYear(sp.academic_year, sp.roll_number),
+            cgpa: cgpaVal,
+            backlogs: backlogsVal,
+            riskLevel: riskLevel
+          };
+        });
 
-      setAssignedMentees(processedMentees);
+      setAssignedMentees(matchedMentees);
     } catch (err: any) {
       setFeedback({ type: 'error', message: err.message || 'Failed to load mentor details.' });
     } finally {
@@ -134,91 +136,6 @@ export default function AdminMentorDetailPage({ params }: { params: Promise<{ fa
   useEffect(() => {
     loadMentorData();
   }, [facultyId]);
-
-  const openAssignModal = async () => {
-    setIsAssignModalOpen(true);
-    setLoadingAssignModal(true);
-    setAssignSearchQuery('');
-    try {
-      const { data: studentsDb, error } = await supabase
-        .from('student_profiles')
-        .select(`
-          user_id, roll_number, branch, section, mentor_id, academic_year,
-          users!user_id ( id, name, email )
-        `);
-
-      if (error) throw error;
-
-      const formatted = (studentsDb || []).map((sp: any) => ({
-        userId: sp.user_id,
-        name: sp.users?.name || 'Student',
-        email: sp.users?.email || '',
-        rollNumber: sp.roll_number || 'N/A',
-        branch: sp.branch || 'N/A',
-        section: sp.section || '',
-        mentorId: sp.mentor_id,
-        btechYear: getStudentBTechYear(sp.academic_year, sp.roll_number)
-      }));
-
-      setAllStudentsList(formatted);
-      const currentlyAssigned = formatted
-        .filter((s: any) => s.mentorId === facultyId)
-        .map((s: any) => s.userId);
-      setAssignedStudentUserIds(currentlyAssigned);
-    } catch (err) {
-      console.error('Error loading students for assignment:', err);
-    } finally {
-      setLoadingAssignModal(false);
-    }
-  };
-
-  const handleAssignStudent = (studentUserId: string) => {
-    if (!assignedStudentUserIds.includes(studentUserId)) {
-      setAssignedStudentUserIds((prev) => [...prev, studentUserId]);
-    }
-  };
-
-  const handleUnassignStudent = (studentUserId: string) => {
-    setAssignedStudentUserIds((prev) => prev.filter((id) => id !== studentUserId));
-  };
-
-  const handleSaveStudentAssignments = async () => {
-    setSavingAssignments(true);
-    setFeedback(null);
-    try {
-      const previousAssigned = allStudentsList
-        .filter((s) => s.mentorId === facultyId)
-        .map((s) => s.userId);
-
-      const removedIds = previousAssigned.filter((id) => !assignedStudentUserIds.includes(id));
-      if (removedIds.length > 0) {
-        await supabase
-          .from('student_profiles')
-          .update({ mentor_id: null })
-          .in('user_id', removedIds);
-      }
-
-      const newlyAddedIds = assignedStudentUserIds.filter((id) => !previousAssigned.includes(id));
-      if (newlyAddedIds.length > 0) {
-        await supabase
-          .from('student_profiles')
-          .update({ mentor_id: facultyId })
-          .in('user_id', newlyAddedIds);
-      }
-
-      setFeedback({ 
-        type: 'success', 
-        message: `Updated student assignments for ${mentor.name} (${assignedStudentUserIds.length} assigned students).` 
-      });
-      setIsAssignModalOpen(false);
-      loadMentorData();
-    } catch (err: any) {
-      console.error('Failed to save student assignments:', err);
-      setFeedback({ type: 'error', message: err.message || 'Failed to save student assignments.' });
-    } finally {
-      setSavingAssignments(false);
-    }
-  };
 
   const handleStatusUpdate = async (newStatus: 'Pending' | 'Rejected') => {
     try {
@@ -415,17 +332,17 @@ export default function AdminMentorDetailPage({ params }: { params: Promise<{ fa
                 </div>
 
                 <button
-                  onClick={openAssignModal}
+                  onClick={() => router.push(`/admin/faculty/${facultyId}/assign` as any)}
                   className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2 text-xs font-extrabold text-white transition shadow-sm cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>Assign More Students</span>
+                  <span>Assign / Manage Students</span>
                 </button>
               </div>
 
               {assignedMentees.length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 font-medium">
-                  No students are currently assigned to {mentor.name}. Click <b>+ Assign More Students</b> to assign.
+                  No students are currently assigned to {mentor.name}. Click <b>+ Assign / Manage Students</b> to allocate students.
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-2xl border border-slate-200">
@@ -481,234 +398,6 @@ export default function AdminMentorDetailPage({ params }: { params: Promise<{ fa
             </div>
           </div>
         </div>
-
-        {/* DRAG & DROP ASSIGN STUDENTS MODAL */}
-        {isAssignModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col h-[85vh]">
-              {/* Header */}
-              <div className="relative bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 p-5 text-white shrink-0 flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-extrabold flex items-center gap-2">
-                    <Users className="h-5 w-5 text-emerald-200" />
-                    <span>Assign Students to {mentor.name}</span>
-                  </h3>
-                  <p className="text-xs text-emerald-100/90 mt-0.5">
-                    Drag and drop student cards or click + / ✕ to manage mentor assignments.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsAssignModalOpen(false)}
-                  className="rounded-full bg-white/20 p-1.5 text-white hover:bg-white/30 backdrop-blur-md transition cursor-pointer"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Search Bar */}
-              <div className="p-4 bg-slate-50 border-b border-slate-200 shrink-0">
-                <div className="relative max-w-md">
-                  <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Filter students by name, roll number, or branch..."
-                    value={assignSearchQuery}
-                    onChange={(e) => setAssignSearchQuery(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-10 pr-4 text-xs font-semibold focus:border-emerald-600 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Drag and Drop Container Grid */}
-              <div className="p-6 overflow-hidden flex-1 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-100/50">
-                {/* Zone 1: Available Students */}
-                <div 
-                  className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-xs min-h-0"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (draggedUserId) {
-                      handleUnassignStudent(draggedUserId);
-                      setDraggedUserId(null);
-                    }
-                  }}
-                >
-                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 shrink-0">
-                    <h4 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <span>Available Students</span>
-                    </h4>
-                    <span className="text-[10px] font-extrabold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                      {allStudentsList.filter((s) => !assignedStudentUserIds.includes(s.userId)).length} Total
-                    </span>
-                  </div>
-
-                  <div className="overflow-y-auto flex-1 space-y-2 pr-1">
-                    {loadingAssignModal ? (
-                      <div className="p-8 text-center text-slate-400 flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
-                        <span className="text-xs">Loading students...</span>
-                      </div>
-                    ) : (() => {
-                      const unassignedList = allStudentsList.filter((s) => {
-                        const isNotAssignedHere = !assignedStudentUserIds.includes(s.userId);
-                        const matchesQuery = 
-                          s.name.toLowerCase().includes(assignSearchQuery.toLowerCase()) ||
-                          s.rollNumber.toLowerCase().includes(assignSearchQuery.toLowerCase()) ||
-                          s.branch.toLowerCase().includes(assignSearchQuery.toLowerCase());
-                        return isNotAssignedHere && matchesQuery;
-                      });
-
-                      if (unassignedList.length === 0) {
-                        return (
-                          <div className="p-6 text-center text-xs text-slate-400 italic">
-                            No available students match query.
-                          </div>
-                        );
-                      }
-
-                      return unassignedList.map((st) => (
-                        <div
-                          key={st.userId}
-                          draggable
-                          onDragStart={() => setDraggedUserId(st.userId)}
-                          className="p-3 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-emerald-50/40 hover:border-emerald-200 transition flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing group shadow-2xs"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <GripVertical className="h-4 w-4 text-slate-300 group-hover:text-emerald-500 shrink-0" />
-                            <div className="min-w-0">
-                              <div className="text-xs font-extrabold text-slate-900 truncate">{st.name}</div>
-                              <div className="text-[10px] font-mono font-bold text-slate-500">
-                                {st.rollNumber} • <span className="uppercase text-emerald-700">{st.branch}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={() => handleAssignStudent(st.userId)}
-                            className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition shrink-0 cursor-pointer"
-                            title="Assign to mentor"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                </div>
-
-                {/* Zone 2: Assigned Students */}
-                <div 
-                  className="flex flex-col rounded-2xl border-2 border-emerald-200 bg-white p-4 shadow-xs min-h-0"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (draggedUserId) {
-                      handleAssignStudent(draggedUserId);
-                      setDraggedUserId(null);
-                    }
-                  }}
-                >
-                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 shrink-0">
-                    <h4 className="text-xs font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <UserCheck className="h-4 w-4 text-emerald-700" />
-                      <span>Assigned to {mentor.name}</span>
-                    </h4>
-                    <span className="text-[10px] font-black text-emerald-800 bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 rounded-full">
-                      {assignedStudentUserIds.length} Assigned
-                    </span>
-                  </div>
-
-                  <div className="overflow-y-auto flex-1 space-y-2 pr-1">
-                    {loadingAssignModal ? (
-                      <div className="p-8 text-center text-slate-400 flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin text-emerald-600" />
-                        <span className="text-xs">Loading...</span>
-                      </div>
-                    ) : (() => {
-                      const assignedList = allStudentsList.filter((s) => {
-                        const isAssignedHere = assignedStudentUserIds.includes(s.userId);
-                        const matchesQuery = 
-                          s.name.toLowerCase().includes(assignSearchQuery.toLowerCase()) ||
-                          s.rollNumber.toLowerCase().includes(assignSearchQuery.toLowerCase()) ||
-                          s.branch.toLowerCase().includes(assignSearchQuery.toLowerCase());
-                        return isAssignedHere && matchesQuery;
-                      });
-
-                      if (assignedList.length === 0) {
-                        return (
-                          <div className="p-8 text-center text-xs text-slate-400 border border-dashed border-emerald-200 rounded-xl">
-                            Drag students here or click + to assign.
-                          </div>
-                        );
-                      }
-
-                      return assignedList.map((st) => (
-                        <div
-                          key={st.userId}
-                          draggable
-                          onDragStart={() => setDraggedUserId(st.userId)}
-                          className="p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/50 transition flex items-center justify-between gap-2 cursor-grab active:cursor-grabbing group shadow-2xs"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <GripVertical className="h-4 w-4 text-emerald-400 group-hover:text-emerald-700 shrink-0" />
-                            <div className="min-w-0">
-                              <div className="text-xs font-extrabold text-slate-900 truncate">{st.name}</div>
-                              <div className="text-[10px] font-mono font-bold text-emerald-800">
-                                {st.rollNumber} • <span className="uppercase">{st.branch}</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <button
-                            onClick={() => handleUnassignStudent(st.userId)}
-                            className="p-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 transition shrink-0 cursor-pointer"
-                            title="Remove assignment"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex items-center justify-between border-t border-slate-200 p-4 bg-slate-50 shrink-0">
-                <span className="text-xs font-bold text-slate-500">
-                  Total {assignedStudentUserIds.length} students selected for {mentor.name}
-                </span>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setIsAssignModalOpen(false)}
-                    disabled={savingAssignments}
-                    className="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveStudentAssignments}
-                    disabled={savingAssignments}
-                    className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2 text-xs font-extrabold text-white transition shadow-md cursor-pointer"
-                  >
-                    {savingAssignments ? (
-                      <>
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        <span>Saving Assignments...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span>Save Student Assignments</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </PageShell>
     </ProtectedRoute>
   );
