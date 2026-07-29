@@ -49,6 +49,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
   const [messages, setMessages] = useState<any[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState('');
+  const [sendingMsg, setSendingMsg] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [chatCollapsed, setChatCollapsed] = useState(false);
@@ -93,7 +94,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
       setQueries(mentorOnlyQueries);
 
-      // Select first query if available and none selected
+      // Auto select first query if none selected
       if (mentorOnlyQueries.length > 0 && !selectedQuery) {
         setSelectedQuery(mentorOnlyQueries[0]);
       }
@@ -114,7 +115,6 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
           id,
           query_id,
           sender_id,
-          sender_role,
           message,
           created_at,
           users:sender_id (
@@ -142,9 +142,9 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
     if (selectedQuery) {
       fetchMessages(selectedQuery.id);
 
-      // Realtime channel subscription
+      // Realtime channel subscription for new messages
       const channel = supabase
-        .channel(`mentoring-student-query-messages-${selectedQuery.id}`)
+        .channel(`mentoring-query-msgs-${selectedQuery.id}`)
         .on(
           'postgres_changes',
           {
@@ -171,38 +171,46 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedQuery) return;
+    const msgText = newMessage.trim();
+    if (!msgText || !selectedQuery) return;
 
+    setSendingMsg(true);
+    setFeedback(null);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       const userId = sessionData?.session?.user?.id;
-      if (!userId) return;
+      if (!userId) throw new Error('User session not found.');
 
-      const { error } = await supabase
+      // 1. Insert message into query_messages
+      const { error: insertError } = await supabase
         .from('query_messages')
         .insert([
           {
             query_id: selectedQuery.id,
             sender_id: userId,
-            sender_role: 'Faculty',
-            message: newMessage.trim(),
+            message: msgText
           }
         ]);
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
-      // Auto update status to Resolved when faculty answers
-      await supabase
+      // 2. Update query status to Resolved when mentor responds
+      const { error: updateError } = await supabase
         .from('queries')
         .update({ status: 'Resolved' })
         .eq('id', selectedQuery.id);
 
+      if (updateError) console.error('Status update warning:', updateError);
+
       setSelectedQuery((prev: any) => prev ? { ...prev, status: 'Resolved' } : null);
       setNewMessage('');
-      fetchMessages(selectedQuery.id);
+      await fetchMessages(selectedQuery.id);
       loadStudentQueries();
     } catch (err: any) {
       console.error('Error sending message:', err);
+      setFeedback({ type: 'error', message: err.message || 'Failed to send message.' });
+    } fontally: {
+      setSendingMsg(false);
     }
   };
 
@@ -274,7 +282,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
             <p className="text-slate-500 font-semibold mb-4">Student record not found.</p>
             <button
               onClick={() => router.push('/faculty/mentoring-status')}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white"
+              className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Back to Mentoring Status</span>
@@ -481,7 +489,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
                 </div>
               </div>
 
-              {/* Right Side Chat Window (Identical to Student Queries Chat) */}
+              {/* Right Side Chat Window */}
               <div className={showChat ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white shadow-md rounded-[28px]" : "hidden"}>
                 {selectedQuery && (
                   <>
@@ -510,7 +518,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            From: {student.name}
+                            FROM: {student.name}
                           </span>
                           <h3 className="text-base font-bold text-slate-900 leading-tight mt-0.5">{selectedQuery.subject}</h3>
                         </div>
@@ -559,7 +567,8 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
                         </div>
                       ) : (
                         messages.map((msg) => {
-                          const isFaculty = msg.sender_role === 'Faculty' || msg.users?.role === 'faculty';
+                          const senderRole = msg.users?.role;
+                          const isFaculty = senderRole === 'faculty' || msg.sender_id !== studentId;
 
                           return (
                             <div
@@ -574,7 +583,7 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
                                 }`}
                               >
                                 <div className={`text-[10px] font-black uppercase mb-1 ${isFaculty ? 'text-emerald-200' : 'text-slate-500'}`}>
-                                  {isFaculty ? 'Mentor (You)' : student.name}
+                                  {isFaculty ? 'Mentor (You)' : (msg.users?.name || student.name)}
                                 </div>
                                 <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
                               </div>
@@ -600,11 +609,17 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
                         />
                         <button
                           type="submit"
-                          disabled={!newMessage.trim()}
-                          className="rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                          disabled={sendingMsg || !newMessage.trim()}
+                          className="rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-2 text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                         >
-                          <Send className="h-3.5 w-3.5" />
-                          <span>Send</span>
+                          {sendingMsg ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <>
+                              <Send className="h-3.5 w-3.5" />
+                              <span>Send</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     </form>

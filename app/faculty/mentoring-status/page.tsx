@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/sidebar';
 import { supabase } from '@/lib/supabase';
 import { 
   Loader2, Calendar, CheckCircle2, XCircle, UserCheck, MessageSquare, 
-  CheckCircle, Clock, Save, Search, Filter, HelpCircle, ChevronRight, User, ExternalLink
+  Save, ExternalLink
 } from 'lucide-react';
 
 const facultySidebarItems = [
@@ -255,7 +255,6 @@ export default function FacultyMentoringStatusPage() {
 
   const totalQueriesCount = queries.length;
   const resolvedQueriesCount = queries.filter((q) => q.status === 'Resolved' || q.status === 'Closed').length;
-  const pendingQueriesCount = totalQueriesCount - resolvedQueriesCount;
 
   return (
     <ProtectedRoute role="faculty">
@@ -491,72 +490,6 @@ export default function FacultyMentoringStatusPage() {
                   </button>
                 </div>
               </div>
-            </div>
-
-            {/* Queries & Solutions Summary Cards */}
-            <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                    <HelpCircle className="h-5 w-5 text-emerald-700" />
-                    <span>Assigned Student Queries & Solutions</span>
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Click any student query card to open dedicated query & solution details page.</p>
-                </div>
-
-                <div className="flex items-center gap-2 text-xs font-bold">
-                  <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100">
-                    {resolvedQueriesCount} Solved
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-100">
-                    {pendingQueriesCount} Pending
-                  </span>
-                </div>
-              </div>
-
-              {queries.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
-                  No student mentor queries recorded yet.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {queries.map((q) => {
-                    const isSolved = q.status === 'Resolved' || q.status === 'Closed';
-                    const studentName = q.users?.name || 'Student';
-
-                    return (
-                      <div 
-                        key={q.id} 
-                        onClick={() => router.push(`/faculty/mentoring-status/student/${q.student_id}` as any)}
-                        className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-emerald-50/40 hover:border-emerald-300 transition space-y-2 cursor-pointer group shadow-2xs"
-                        title="Click to view full query details & respond"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                              {q.type || 'Academic Query'}
-                            </span>
-                            <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-emerald-800 group-hover:underline transition mt-1">{q.subject}</h4>
-                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
-                              Raised by: <span className="text-slate-800 font-bold group-hover:text-emerald-700">{studentName}</span>
-                            </p>
-                          </div>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border shrink-0 ${
-                            isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
-                          }`}>
-                            {isSolved ? 'Solved' : 'Pending'}
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-100 italic flex items-center justify-between">
-                          <span className="truncate">"{q.cleanDescription || q.description || 'No description provided'}"</span>
-                          <ExternalLink className="h-3.5 w-3.5 text-emerald-600 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition" />
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
 
           </div>
