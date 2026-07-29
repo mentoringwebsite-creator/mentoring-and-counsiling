@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageShell } from '@/components/page-shell';
 import { ProtectedRoute } from '@/components/auth/protected-route';
@@ -8,7 +8,7 @@ import { Sidebar } from '@/components/sidebar';
 import { supabase } from '@/lib/supabase';
 import { 
   Loader2, ArrowLeft, User, Mail, MessageSquare, CheckCircle2, 
-  Clock, HelpCircle, Send, AlertCircle, RefreshCw 
+  Send, AlertCircle, RefreshCw, Trash2, ChevronLeft, ChevronRight 
 } from 'lucide-react';
 
 const facultySidebarItems = [
@@ -45,9 +45,15 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
   const [student, setStudent] = useState<any | null>(null);
   const [queries, setQueries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submittingReply, setSubmittingReply] = useState<string | null>(null);
-  const [replyTextMap, setReplyTextMap] = useState<{ [queryId: string]: string }>({});
+  const [selectedQuery, setSelectedQuery] = useState<any | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [newMessage, setNewMessage] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const loadStudentQueries = async () => {
     try {
@@ -78,38 +84,19 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
       if (queriesError) throw queriesError;
 
-      // Filter OUT queries raised to HOD — ONLY show queries raised to Faculty / Mentor
+      // Filter OUT queries explicitly raised to HOD — ONLY show queries raised to Faculty / Mentor
       const mentorOnlyQueries = (queriesData || []).filter((q: any) => {
         const { raisedTo } = parseQueryMetadata(q.description);
         const targetRole = (q.raised_to_role || raisedTo || 'Faculty').toUpperCase();
         return targetRole !== 'HOD';
       });
 
-      // 3. Load replies/messages for each query
-      const queriesWithMessages = await Promise.all((mentorOnlyQueries || []).map(async (q: any) => {
-        const { cleanDesc } = parseQueryMetadata(q.description);
-        try {
-          const { data: msgData } = await supabase
-            .from('query_messages')
-            .select('id, sender_role, message, created_at')
-            .eq('query_id', q.id)
-            .order('created_at', { ascending: true });
+      setQueries(mentorOnlyQueries);
 
-          return {
-            ...q,
-            cleanDescription: cleanDesc,
-            messages: msgData || []
-          };
-        } catch {
-          return {
-            ...q,
-            cleanDescription: cleanDesc,
-            messages: []
-          };
-        }
-      }));
-
-      setQueries(queriesWithMessages);
+      // Select first query if available and none selected
+      if (mentorOnlyQueries.length > 0 && !selectedQuery) {
+        setSelectedQuery(mentorOnlyQueries[0]);
+      }
     } catch (err: any) {
       console.error('Error loading student query details:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to load student query details.' });
@@ -118,44 +105,152 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
     }
   };
 
+  const fetchMessages = async (queryId: string) => {
+    try {
+      setLoadingMessages(true);
+      const { data, error } = await supabase
+        .from('query_messages')
+        .select(`
+          id,
+          query_id,
+          sender_id,
+          sender_role,
+          message,
+          created_at,
+          users:sender_id (
+            name,
+            role
+          )
+        `)
+        .eq('query_id', queryId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (err: any) {
+      console.error('Error fetching messages:', err);
+    } finally {
+      setLoadingMessages(false);
+    }
+  };
+
   useEffect(() => {
     loadStudentQueries();
   }, [studentId]);
 
-  const handleSendSolution = async (queryId: string) => {
-    const replyText = (replyTextMap[queryId] || '').trim();
-    if (!replyText) return;
+  useEffect(() => {
+    if (selectedQuery) {
+      fetchMessages(selectedQuery.id);
 
-    setSubmittingReply(queryId);
-    setFeedback(null);
+      // Realtime channel subscription
+      const channel = supabase
+        .channel(`mentoring-student-query-messages-${selectedQuery.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'query_messages',
+            filter: `query_id=eq.${selectedQuery.id}`,
+          },
+          () => {
+            fetchMessages(selectedQuery.id);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [selectedQuery]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !selectedQuery) return;
+
     try {
-      // 1. Insert mentor reply message
-      const { error: msgError } = await supabase
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userId = sessionData?.session?.user?.id;
+      if (!userId) return;
+
+      const { error } = await supabase
         .from('query_messages')
-        .insert({
-          query_id: queryId,
-          sender_role: 'Faculty',
-          message: replyText
-        });
+        .insert([
+          {
+            query_id: selectedQuery.id,
+            sender_id: userId,
+            sender_role: 'Faculty',
+            message: newMessage.trim(),
+          }
+        ]);
 
-      if (msgError) throw msgError;
+      if (error) throw error;
 
-      // 2. Update query status to Resolved
-      const { error: updateError } = await supabase
+      // Auto update status to Resolved when faculty answers
+      await supabase
         .from('queries')
         .update({ status: 'Resolved' })
-        .eq('id', queryId);
+        .eq('id', selectedQuery.id);
 
-      if (updateError) throw updateError;
-
-      setFeedback({ type: 'success', message: 'Solution submitted and query marked as Resolved!' });
-      setReplyTextMap(prev => ({ ...prev, [queryId]: '' }));
+      setSelectedQuery((prev: any) => prev ? { ...prev, status: 'Resolved' } : null);
+      setNewMessage('');
+      fetchMessages(selectedQuery.id);
       loadStudentQueries();
     } catch (err: any) {
-      console.error('Error sending solution:', err);
-      setFeedback({ type: 'error', message: err.message || 'Failed to send solution.' });
+      console.error('Error sending message:', err);
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!selectedQuery) return;
+
+    try {
+      setUpdatingStatus(true);
+      setFeedback(null);
+      const { error } = await supabase
+        .from('queries')
+        .update({ status: newStatus })
+        .eq('id', selectedQuery.id);
+
+      if (error) throw error;
+      
+      setSelectedQuery((prev: any) => prev ? { ...prev, status: newStatus } : null);
+      setFeedback({ type: 'success', message: `Query status updated to ${newStatus}.` });
+      loadStudentQueries();
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to update status.' });
     } finally {
-      setSubmittingReply(null);
+      setUpdatingStatus(false);
+    }
+  };
+
+  const deleteQueryById = async (queryId: string) => {
+    if (!window.confirm('Are you sure you want to delete this query completely? This action cannot be undone.')) return;
+
+    try {
+      setUpdatingStatus(true);
+      setFeedback(null);
+      const { error } = await supabase
+        .from('queries')
+        .delete()
+        .eq('id', queryId);
+
+      if (error) throw error;
+      
+      if (selectedQuery?.id === queryId) {
+        setSelectedQuery(null);
+      }
+      setFeedback({ type: 'success', message: 'Query deleted successfully.' });
+      loadStudentQueries();
+    } catch (err: any) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to delete query.' });
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -194,6 +289,8 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
   const totalQueriesCount = queries.length;
   const solvedCount = queries.filter((q) => q.status === 'Resolved' || q.status === 'Closed').length;
   const pendingCount = totalQueriesCount - solvedCount;
+
+  const showChat = Boolean(selectedQuery && !chatCollapsed);
 
   return (
     <ProtectedRoute role="faculty">
@@ -264,124 +361,257 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
               </div>
             </div>
 
-            {/* Queries & Solution Threads List */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <HelpCircle className="h-5 w-5 text-emerald-700" />
-                  <span>Queries & Solutions Breakdown for {student.name}</span>
-                </h3>
-              </div>
+            {/* Queries List & Chat Section Layout */}
+            <div className={showChat ? "grid gap-6 lg:grid-cols-[1fr_420px] xl:grid-cols-[1fr_480px] w-full min-w-0" : "grid grid-cols-1 gap-6 w-full min-w-0"}>
+              
+              {/* Left Side Table: Mentees' Queries (Identical to Student Queries page layout) */}
+              <div className={`${showChat ? 'hidden lg:block' : 'block'} space-y-6 w-full min-w-0`}>
+                <div className="portal-card">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-extrabold text-slate-900">Queries & Solutions Breakdown for {student.name}</h2>
+                    {selectedQuery && chatCollapsed && (
+                      <button
+                        onClick={() => setChatCollapsed(false)}
+                        className="flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition shadow-2xs"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                        <span>Show Chat</span>
+                      </button>
+                    )}
+                  </div>
 
-              {queries.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-xs text-slate-400 font-semibold">
-                  No mentor queries raised by {student.name} yet.
-                </div>
-              ) : (
-                queries.map((q) => {
-                  const isSolved = q.status === 'Resolved' || q.status === 'Closed';
-
-                  return (
-                    <div key={q.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-                      {/* Query Top Header */}
-                      <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-100">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider">
-                              {q.type || 'Academic Query'}
-                            </span>
-                            <span className="text-xs font-mono text-slate-400">
-                              Date: {new Date(q.created_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <h4 className="text-base font-extrabold text-slate-900 mt-1">{q.subject}</h4>
-                        </div>
-
-                        <span className={`px-3 py-1 rounded-full text-xs font-black uppercase border shrink-0 ${
-                          isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
-                        }`}>
-                          {isSolved ? 'SOLVED' : 'PENDING SOLUTION'}
-                        </span>
-                      </div>
-
-                      {/* Question Box */}
-                      <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Student Question</span>
-                        <p className="text-xs font-semibold text-slate-800 whitespace-pre-line">
-                          "{q.cleanDescription || q.description || 'No description provided.'}"
-                        </p>
-                      </div>
-
-                      {/* Mentor Solution Messages Thread */}
-                      {q.messages && q.messages.length > 0 && (
-                        <div className="space-y-3 pt-2">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">
-                            Solution & Conversation Thread ({q.messages.length} replies)
-                          </span>
-
-                          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                            {q.messages.map((msg: any) => {
-                              const isFaculty = msg.sender_role === 'Faculty';
+                  {/* Clean Queries Table matching Student Queries page */}
+                  <div className="mt-4 overflow-hidden rounded-[20px] border border-slate-200 bg-white shadow-sm w-full min-w-0">
+                    <div className="overflow-x-auto w-full">
+                      <table className="w-full border-collapse text-left text-sm min-w-[500px]">
+                        <thead>
+                          <tr className="border-b border-slate-200 bg-slate-50 font-semibold text-slate-600 text-xs">
+                            <th className="p-4">Student</th>
+                            <th className="p-4">Type</th>
+                            <th className="p-4">Subject</th>
+                            <th className="p-4">Raised By</th>
+                            <th className="p-4">Status</th>
+                            <th className="p-4 text-center">Action</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {queries.length === 0 ? (
+                            <tr>
+                              <td className="p-8 text-center text-slate-500 text-xs font-semibold" colSpan={6}>
+                                No mentor queries raised by {student.name} yet.
+                              </td>
+                            </tr>
+                          ) : (
+                            queries.map((query) => {
+                              const { raisedBy } = parseQueryMetadata(query.description);
+                              const effectiveRaisedBy = query.raised_by_role || raisedBy;
+                              const isSelected = selectedQuery?.id === query.id;
 
                               return (
-                                <div 
-                                  key={msg.id} 
-                                  className={`p-3 rounded-2xl text-xs ${
-                                    isFaculty 
-                                      ? 'bg-emerald-50 border border-emerald-200 ml-6 text-emerald-950 font-semibold' 
-                                      : 'bg-slate-100 border border-slate-200 mr-6 text-slate-800 font-medium'
+                                <tr 
+                                  key={query.id}
+                                  onClick={() => {
+                                    setSelectedQuery(query);
+                                    setChatCollapsed(false);
+                                  }}
+                                  className={`cursor-pointer hover:bg-slate-50/70 transition-colors ${
+                                    isSelected ? 'bg-emerald-50/40 font-semibold' : ''
                                   }`}
                                 >
-                                  <div className="flex items-center justify-between text-[10px] font-extrabold mb-1">
-                                    <span className={isFaculty ? 'text-emerald-800' : 'text-slate-600'}>
-                                      {isFaculty ? 'Mentor Solution' : student.name}
-                                    </span>
-                                    <span className="text-slate-400 font-mono">
-                                      {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                  </div>
-                                  <p>{msg.message}</p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
+                                  <td className="p-4">
+                                    <div className="font-bold text-slate-900">{student.name}</div>
+                                    <div className="text-[10px] text-slate-400 font-normal">{student.email}</div>
+                                  </td>
 
-                      {/* Mentor Reply / Solution Input Box */}
-                      <div className="pt-2">
-                        <label className="block text-[10px] font-extrabold uppercase text-slate-500 tracking-wider mb-1.5">
-                          Provide / Update Solution for {student.name}
-                        </label>
-                        <div className="flex gap-2">
-                          <textarea
-                            rows={2}
-                            placeholder="Type mentor solution or response..."
-                            value={replyTextMap[q.id] || ''}
-                            onChange={(e) => setReplyTextMap(prev => ({ ...prev, [q.id]: e.target.value }))}
-                            className="w-full rounded-2xl border border-slate-300 bg-white p-3 text-xs font-semibold focus:border-emerald-600 focus:outline-none"
-                          />
-                          <button
-                            onClick={() => handleSendSolution(q.id)}
-                            disabled={submittingReply === q.id || !replyTextMap[q.id]?.trim()}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white px-5 text-xs font-extrabold transition shadow-sm shrink-0 cursor-pointer disabled:opacity-50"
+                                  <td className="p-4">
+                                    <span className="rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                                      {query.type || 'Academic'}
+                                    </span>
+                                  </td>
+
+                                  <td className="p-4 text-slate-800 font-medium max-w-[160px] truncate">
+                                    {query.subject}
+                                  </td>
+
+                                  <td className="p-4">
+                                    <div className="flex items-center gap-1.5 text-slate-600">
+                                      <User className="h-3.5 w-3.5 text-emerald-700" />
+                                      <span className="text-xs font-semibold">{effectiveRaisedBy}</span>
+                                    </div>
+                                  </td>
+
+                                  <td className="p-4">
+                                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-extrabold ${
+                                      query.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
+                                      query.status === 'In Review' ? 'bg-blue-100 text-blue-800' :
+                                      'bg-emerald-100 text-emerald-800'
+                                    }`}>
+                                      {query.status}
+                                    </span>
+                                  </td>
+
+                                  <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                    <div className="flex items-center justify-center gap-3">
+                                      <button 
+                                        className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition hover:underline"
+                                        onClick={() => {
+                                          setSelectedQuery(query);
+                                          setChatCollapsed(false);
+                                        }}
+                                      >
+                                        View Chat
+                                      </button>
+                                      <button
+                                        onClick={() => deleteQueryById(query.id)}
+                                        className="p-1.5 text-rose-500 hover:bg-rose-50 hover:text-rose-700 rounded-lg transition"
+                                        title="Delete Query"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Side Chat Window (Identical to Student Queries Chat) */}
+              <div className={showChat ? "portal-card h-[600px] flex flex-col justify-between border border-slate-200 bg-white shadow-md rounded-[28px]" : "hidden"}>
+                {selectedQuery && (
+                  <>
+                    {/* Chat Header */}
+                    <div className="border-b border-slate-200 pb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <button
+                          onClick={() => {
+                            setSelectedQuery(null);
+                            setChatCollapsed(false);
+                          }}
+                          className="flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                        >
+                          &larr; Back to Queries Table
+                        </button>
+
+                        <button
+                          onClick={() => setChatCollapsed(true)}
+                          className="hidden lg:flex items-center justify-center p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition border border-slate-200"
+                          title="Collapse Chat"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            From: {student.name}
+                          </span>
+                          <h3 className="text-base font-bold text-slate-900 leading-tight mt-0.5">{selectedQuery.subject}</h3>
+                        </div>
+
+                        {/* Status Dropdown & Delete */}
+                        <div className="flex items-center gap-1.5">
+                          <select
+                            value={selectedQuery.status}
+                            disabled={updatingStatus}
+                            onChange={(e) => handleStatusChange(e.target.value)}
+                            className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-emerald-600 focus:outline-none"
                           >
-                            {submittingReply === q.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <Send className="h-4 w-4" />
-                                <span>Solve</span>
-                              </>
-                            )}
+                            <option value="Pending">Pending</option>
+                            <option value="In Review">In Review</option>
+                            <option value="Resolved">Resolved</option>
+                          </select>
+
+                          <button
+                            onClick={() => deleteQueryById(selectedQuery.id)}
+                            disabled={updatingStatus}
+                            title="Delete Query"
+                            className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                          >
+                            <Trash2 className="h-4.5 w-4.5" />
                           </button>
                         </div>
                       </div>
 
+                      {/* Question Description Box */}
+                      {selectedQuery.description && (
+                        <p className="text-xs text-slate-600 mt-2.5 bg-slate-50 rounded-xl p-3 border border-slate-100 max-h-[80px] overflow-y-auto italic">
+                          "{parseQueryMetadata(selectedQuery.description).cleanDesc || selectedQuery.description}"
+                        </p>
+                      )}
                     </div>
-                  );
-                })
-              )}
+
+                    {/* Messages Body */}
+                    <div className="flex-1 overflow-y-auto py-4 space-y-3 pr-2">
+                      {loadingMessages ? (
+                        <div className="flex h-full items-center justify-center">
+                          <Loader2 className="h-5 w-5 animate-spin text-emerald-700" />
+                        </div>
+                      ) : messages.length === 0 ? (
+                        <div className="flex h-full items-center justify-center text-center text-xs text-slate-400">
+                          No messages yet. Send a response below to start conversation.
+                        </div>
+                      ) : (
+                        messages.map((msg) => {
+                          const isFaculty = msg.sender_role === 'Faculty' || msg.users?.role === 'faculty';
+
+                          return (
+                            <div
+                              key={msg.id}
+                              className={`flex flex-col ${isFaculty ? 'items-end' : 'items-start'}`}
+                            >
+                              <div
+                                className={`max-w-[85%] rounded-2xl p-3 text-xs shadow-2xs ${
+                                  isFaculty
+                                    ? 'bg-emerald-700 text-white rounded-br-none font-medium'
+                                    : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200 font-medium'
+                                }`}
+                              >
+                                <div className={`text-[10px] font-black uppercase mb-1 ${isFaculty ? 'text-emerald-200' : 'text-slate-500'}`}>
+                                  {isFaculty ? 'Mentor (You)' : student.name}
+                                </div>
+                                <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                              </div>
+                              <span className="mt-1 text-[9px] text-slate-400 font-mono">
+                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Message Input Form */}
+                    <form onSubmit={handleSendMessage} className="border-t border-slate-200 pt-3">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder="Type mentor response..."
+                          className="flex-1 rounded-2xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold focus:border-emerald-600 focus:outline-none"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newMessage.trim()}
+                          className="rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                          <span>Send</span>
+                        </button>
+                      </div>
+                    </form>
+                  </>
+                )}
+              </div>
+
             </div>
 
           </div>
