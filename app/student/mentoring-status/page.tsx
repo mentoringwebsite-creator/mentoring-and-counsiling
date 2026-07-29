@@ -47,6 +47,7 @@ export default function StudentMentoringStatusPage() {
       setStudentId(sId);
 
       // 1. Fetch student's mentor info
+      let mentorId: string | null = null;
       const { data: sp } = await supabase
         .from('student_profiles')
         .select('mentor_id')
@@ -54,6 +55,7 @@ export default function StudentMentoringStatusPage() {
         .maybeSingle();
 
       if (sp?.mentor_id) {
+        mentorId = sp.mentor_id;
         const { data: mentorUser } = await supabase
           .from('users')
           .select('name')
@@ -73,14 +75,34 @@ export default function StudentMentoringStatusPage() {
 
       setStudentQueries(queriesData || []);
 
-      // 3. Fetch weekly attendance records from storage
-      const stored = getStoredAttendance();
+      // 3. Fetch weekly mentoring class attendance from Supabase
+      let supabaseSessions: any = {};
+      if (mentorId) {
+        const { data: dbSubmissions } = await supabase
+          .from('academic_form_submissions')
+          .select('*')
+          .eq('mentor_id', mentorId)
+          .eq('form_type', 'mentoring_attendance');
+
+        if (dbSubmissions && dbSubmissions.length > 0) {
+          dbSubmissions.forEach((sub: any) => {
+            if (sub.semester && sub.form_data) {
+              supabaseSessions[sub.semester] = sub.form_data;
+            }
+          });
+        }
+      }
+
+      // Merge Supabase sessions with local storage backup
+      const localStored = getStoredAttendance();
+      const mergedSessions = { ...localStored, ...supabaseSessions };
+
       const attendanceHistory = WEEKS_LIST.map((week) => {
-        const record = stored[week] || {};
+        const record = mergedSessions[week] || {};
         const isPresent = record.attendance?.[sId] !== 'Absent';
         const date = record.date || 'Scheduled';
         const topic = record.topic || 'Weekly Counseling & Academic Progress';
-        const hasRecord = Boolean(record.updatedAt);
+        const hasRecord = Boolean(record.updatedAt || record.attendance);
 
         return {
           week,

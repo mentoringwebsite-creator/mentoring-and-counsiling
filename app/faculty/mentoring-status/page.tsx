@@ -104,12 +104,29 @@ export default function FacultyMentoringStatusPage() {
         setQueries(queriesData || []);
       }
 
-      // 3. Load saved attendance from storage
-      const stored = getStoredAttendance();
-      setAllSessionsData(stored);
+      // 3. Fetch weekly attendance records from Supabase
+      const { data: dbSessions } = await supabase
+        .from('academic_form_submissions')
+        .select('*')
+        .eq('mentor_id', fId)
+        .eq('form_type', 'mentoring_attendance');
+
+      const supabaseSessions: any = {};
+      if (dbSessions && dbSessions.length > 0) {
+        dbSessions.forEach((sub: any) => {
+          if (sub.semester && sub.form_data) {
+            supabaseSessions[sub.semester] = sub.form_data;
+          }
+        });
+      }
+
+      // Merge Supabase sessions with local storage fallback
+      const localStored = getStoredAttendance();
+      const mergedSessions = { ...localStored, ...supabaseSessions };
+      setAllSessionsData(mergedSessions);
 
       // Load data for initial week
-      const currentWeekRecord = stored[selectedWeek] || {};
+      const currentWeekRecord = mergedSessions[selectedWeek] || {};
       const initialMap: { [key: string]: 'Present' | 'Absent' } = {};
       studentList.forEach((s) => {
         initialMap[s.userId] = currentWeekRecord.attendance?.[s.userId] || 'Present';
@@ -141,29 +158,65 @@ export default function FacultyMentoringStatusPage() {
     setTopicDiscussed(weekRecord.topic || '');
   };
 
-  const handleSaveSession = () => {
+  const handleSaveSession = async () => {
+    if (!facultyId) return;
     setSaving(true);
     setFeedback(null);
     try {
-      const updatedData = {
-        ...allSessionsData,
-        [selectedWeek]: {
-          week: selectedWeek,
-          date: sessionDate,
-          topic: topicDiscussed,
-          attendance: attendanceMap,
-          updatedAt: new Date().toISOString()
-        }
+      const sessionPayload = {
+        week: selectedWeek,
+        date: sessionDate,
+        topic: topicDiscussed,
+        attendance: attendanceMap,
+        updatedAt: new Date().toISOString()
       };
 
+      // 1. Save to Supabase academic_form_submissions
+      const { data: existing } = await supabase
+        .from('academic_form_submissions')
+        .select('id')
+        .eq('mentor_id', facultyId)
+        .eq('form_type', 'mentoring_attendance')
+        .eq('semester', selectedWeek)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from('academic_form_submissions')
+          .update({
+            form_data: sessionPayload,
+            submitted_at: new Date().toISOString(),
+            status: 'Submitted'
+          })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('academic_form_submissions')
+          .insert({
+            mentor_id: facultyId,
+            student_id: facultyId, // mentor self record for session
+            form_type: 'mentoring_attendance',
+            semester: selectedWeek,
+            form_data: sessionPayload,
+            submitted_at: new Date().toISOString(),
+            status: 'Submitted'
+          });
+      }
+
+      // 2. Update local state and backup storage
+      const updatedData = {
+        ...allSessionsData,
+        [selectedWeek]: sessionPayload
+      };
       setAllSessionsData(updatedData);
       saveAttendanceToStorage(updatedData);
 
       setFeedback({ 
         type: 'success', 
-        message: `Mentoring class attendance for ${selectedWeek} saved successfully!` 
+        message: `Mentoring class attendance for ${selectedWeek} saved successfully to Supabase!` 
       });
     } catch (err: any) {
+      console.error('Save session error:', err);
       setFeedback({ type: 'error', message: err.message || 'Failed to save attendance.' });
     } finally {
       setSaving(false);

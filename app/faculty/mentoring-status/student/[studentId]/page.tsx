@@ -35,7 +35,9 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
   const loadStudentQueries = async () => {
     try {
       setLoading(true);
-      // 1. Load Student info
+      setFeedback(null);
+
+      // 1. Load Student user & profile info
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select(`
@@ -48,11 +50,11 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
       if (userError || !userData) throw new Error('Student not found.');
       setStudent(userData);
 
-      // 2. Load Queries from this student
+      // 2. Load Queries from this student (without updated_at column to prevent Supabase errors)
       const { data: queriesData, error: queriesError } = await supabase
         .from('queries')
         .select(`
-          id, type, subject, description, status, created_at, updated_at
+          id, type, subject, description, status, created_at
         `)
         .eq('student_id', studentId)
         .order('created_at', { ascending: false });
@@ -61,16 +63,23 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
       // 3. Load replies/messages for each query
       const queriesWithMessages = await Promise.all((queriesData || []).map(async (q: any) => {
-        const { data: msgData } = await supabase
-          .from('query_messages')
-          .select('id, sender_role, message, created_at')
-          .eq('query_id', q.id)
-          .order('created_at', { ascending: true });
+        try {
+          const { data: msgData } = await supabase
+            .from('query_messages')
+            .select('id, sender_role, message, created_at')
+            .eq('query_id', q.id)
+            .order('created_at', { ascending: true });
 
-        return {
-          ...q,
-          messages: msgData || []
-        };
+          return {
+            ...q,
+            messages: msgData || []
+          };
+        } catch {
+          return {
+            ...q,
+            messages: []
+          };
+        }
       }));
 
       setQueries(queriesWithMessages);
@@ -104,15 +113,15 @@ export default function StudentQueryDetailsPage({ params }: { params: Promise<{ 
 
       if (msgError) throw msgError;
 
-      // 2. Mark query status as Resolved
+      // 2. Update query status to Resolved (without updating non-existent updated_at column)
       const { error: updateError } = await supabase
         .from('queries')
-        .update({ status: 'Resolved', updated_at: new Date().toISOString() })
+        .update({ status: 'Resolved' })
         .eq('id', queryId);
 
       if (updateError) throw updateError;
 
-      setFeedback({ type: 'success', message: 'Solution submitted and query marked as Resolved!' });
+      setFeedback({ type: 'success', message: 'Solution submitted and query marked as Resolved in Supabase!' });
       setReplyTextMap(prev => ({ ...prev, [queryId]: '' }));
       loadStudentQueries();
     } catch (err: any) {
