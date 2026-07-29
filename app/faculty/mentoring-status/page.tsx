@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PageShell } from '@/components/page-shell';
 import { ProtectedRoute } from '@/components/auth/protected-route';
 import { Sidebar } from '@/components/sidebar';
 import { supabase } from '@/lib/supabase';
 import { 
   Loader2, Calendar, CheckCircle2, XCircle, UserCheck, MessageSquare, 
-  CheckCircle, Clock, Save, Search, Filter, HelpCircle, ChevronRight, User
+  CheckCircle, Clock, Save, Search, Filter, HelpCircle, ChevronRight, User, ExternalLink
 } from 'lucide-react';
 
 const facultySidebarItems = [
@@ -41,6 +42,7 @@ const saveAttendanceToStorage = (data: any) => {
 };
 
 export default function FacultyMentoringStatusPage() {
+  const router = useRouter();
   const [facultyId, setFacultyId] = useState<string | null>(null);
   const [mentees, setMentees] = useState<any[]>([]);
   const [queries, setQueries] = useState<any[]>([]);
@@ -127,7 +129,6 @@ export default function FacultyMentoringStatusPage() {
     loadMentorData();
   }, []);
 
-  // When week changes, update form state from stored session data
   const handleWeekChange = (week: string) => {
     setSelectedWeek(week);
     const weekRecord = allSessionsData[week] || {};
@@ -169,7 +170,6 @@ export default function FacultyMentoringStatusPage() {
     }
   };
 
-  // Queries statistics
   const totalQueriesCount = queries.length;
   const resolvedQueriesCount = queries.filter((q) => q.status === 'Resolved' || q.status === 'Closed').length;
   const pendingQueriesCount = totalQueriesCount - resolvedQueriesCount;
@@ -270,7 +270,6 @@ export default function FacultyMentoringStatusPage() {
                     <span>{selectedWeek} Student Attendance Roster</span>
                   </h3>
 
-                  {/* Mark All Buttons */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
@@ -325,17 +324,30 @@ export default function FacultyMentoringStatusPage() {
                           return (
                             <tr key={st.userId} className="hover:bg-slate-50/60 transition">
                               <td className="px-5 py-4 font-mono font-bold text-slate-900">{st.rollNumber}</td>
-                              <td className="px-5 py-4 font-bold text-slate-900">{st.name}</td>
+                              <td className="px-5 py-4 font-bold text-slate-900">
+                                <button
+                                  onClick={() => router.push(`/faculty/mentoring-status/student/${st.userId}` as any)}
+                                  className="text-left font-bold text-slate-900 hover:text-emerald-700 hover:underline transition flex items-center gap-1 group cursor-pointer"
+                                  title="Click to view student query details"
+                                >
+                                  <span>{st.name}</span>
+                                  <ExternalLink className="h-3 w-3 text-emerald-600 opacity-0 group-hover:opacity-100 transition" />
+                                </button>
+                              </td>
                               <td className="px-5 py-4 text-slate-600">
                                 <span className="font-extrabold uppercase text-slate-800">{st.branch}</span>
                                 {st.section && <span className="text-slate-400 font-normal"> • Sec {st.section}</span>}
                               </td>
                               <td className="px-5 py-4 text-center">
                                 {studentQueries.length > 0 ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-100">
+                                  <button
+                                    onClick={() => router.push(`/faculty/mentoring-status/student/${st.userId}` as any)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer"
+                                    title="Click to inspect student queries & solutions"
+                                  >
                                     <MessageSquare className="h-3 w-3" />
                                     <span>{solvedCount} / {studentQueries.length} Solved</span>
-                                  </span>
+                                  </button>
                                 ) : (
                                   <span className="text-slate-400 text-[11px] font-normal">No Queries</span>
                                 )}
@@ -406,7 +418,7 @@ export default function FacultyMentoringStatusPage() {
                     <HelpCircle className="h-5 w-5 text-emerald-700" />
                     <span>Assigned Student Queries & Solutions</span>
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">Overview of queries raised by mentees and status of solutions provided.</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Click any student query card to open dedicated query & solution details page.</p>
                 </div>
 
                 <div className="flex items-center gap-2 text-xs font-bold">
@@ -430,14 +442,21 @@ export default function FacultyMentoringStatusPage() {
                     const studentName = q.users?.name || 'Student';
 
                     return (
-                      <div key={q.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-slate-50 transition space-y-2">
+                      <div 
+                        key={q.id} 
+                        onClick={() => router.push(`/faculty/mentoring-status/student/${q.student_id}` as any)}
+                        className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 hover:bg-emerald-50/40 hover:border-emerald-300 transition space-y-2 cursor-pointer group shadow-2xs"
+                        title="Click to view full query details & respond"
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
                               {q.type || 'Academic Query'}
                             </span>
-                            <h4 className="text-xs font-extrabold text-slate-900 mt-1">{q.subject}</h4>
-                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">Raised by: <span className="text-slate-800 font-bold">{studentName}</span></p>
+                            <h4 className="text-xs font-extrabold text-slate-900 group-hover:text-emerald-800 group-hover:underline transition mt-1">{q.subject}</h4>
+                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                              Raised by: <span className="text-slate-800 font-bold group-hover:text-emerald-700">{studentName}</span>
+                            </p>
                           </div>
                           <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border shrink-0 ${
                             isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
@@ -446,8 +465,9 @@ export default function FacultyMentoringStatusPage() {
                           </span>
                         </div>
 
-                        <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-100 italic">
-                          "{q.description || 'No description provided'}"
+                        <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-100 italic flex items-center justify-between">
+                          <span className="truncate">"{q.description || 'No description provided'}"</span>
+                          <ExternalLink className="h-3.5 w-3.5 text-emerald-600 shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition" />
                         </p>
                       </div>
                     );
