@@ -4,8 +4,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { 
   Calendar, CheckCircle2, XCircle, Clock, MessageSquare, 
-  HelpCircle, Loader2, UserCheck, ShieldCheck, CheckCircle 
+  HelpCircle, Loader2, UserCheck, ShieldCheck, CheckCircle,
+  TrendingUp, BarChart3, PieChart as PieIcon, Award, Activity
 } from 'lucide-react';
+import { 
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, 
+  CartesianGrid, PieChart, Pie, Cell, Legend 
+} from 'recharts';
 
 const WEEKS_LIST = Array.from({ length: 16 }, (_, i) => `Week ${i + 1}`);
 
@@ -24,6 +29,8 @@ interface StudentMentoringStatusCardProps {
   mentorId?: string;
   role?: 'faculty' | 'hod' | 'admin';
 }
+
+const PIE_COLORS = ['#10b981', '#f59e0b', '#64748b'];
 
 export function StudentMentoringStatusCard({ studentId, mentorId, role = 'faculty' }: StudentMentoringStatusCardProps) {
   const [loading, setLoading] = useState(true);
@@ -48,7 +55,6 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
       // 2. Fetch weekly mentoring attendance from Supabase
       let supabaseSessions: any = {};
       
-      // Find mentor ID if not explicitly passed
       let effectiveMentorId = mentorId;
       if (!effectiveMentorId) {
         const { data: sp } = await supabase
@@ -110,16 +116,35 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
   const totalClassesRecorded = weeklyAttendanceList.filter((w) => w.hasRecord).length;
   const attendedClassesCount = weeklyAttendanceList.filter((w) => w.hasRecord && w.isPresent).length;
   const missedClassesCount = totalClassesRecorded - attendedClassesCount;
+  const attendancePercentage = totalClassesRecorded > 0 ? Math.round((attendedClassesCount / totalClassesRecorded) * 100) : 100;
 
   const totalQueriesCount = queries.length;
   const solvedQueriesCount = queries.filter((q) => q.status === 'Resolved' || q.status === 'Closed').length;
   const pendingQueriesCount = totalQueriesCount - solvedQueriesCount;
+  const queryResolutionPercentage = totalQueriesCount > 0 ? Math.round((solvedQueriesCount / totalQueriesCount) * 100) : 100;
+
+  // Chart 1 Data: Weekly Attendance Bar Chart
+  const attendanceChartData = weeklyAttendanceList.map((w, idx) => ({
+    week: `W${idx + 1}`,
+    statusScore: w.hasRecord ? (w.isPresent ? 100 : 0) : null,
+    statusText: w.hasRecord ? (w.isPresent ? 'Present' : 'Absent') : 'Scheduled'
+  }));
+
+  // Chart 2 Data: Query Breakdown Pie Chart
+  const queryPieData = [
+    { name: 'Solved Queries', value: solvedQueriesCount },
+    { name: 'Pending Queries', value: pendingQueriesCount }
+  ].filter(d => d.value > 0);
+
+  if (queryPieData.length === 0) {
+    queryPieData.push({ name: 'No Queries Raised', value: 1 });
+  }
 
   if (loading) {
     return (
       <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm flex flex-col items-center justify-center gap-3">
         <Loader2 className="h-7 w-7 animate-spin text-emerald-700" />
-        <span className="text-xs font-semibold text-slate-500">Loading mentoring status & class attendance...</span>
+        <span className="text-xs font-semibold text-slate-500">Loading mentoring status & analytics...</span>
       </div>
     );
   }
@@ -131,20 +156,108 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Recorded Sessions</span>
-          <span className="text-lg font-black text-slate-900 mt-1 block">{totalClassesRecorded} Sessions</span>
+          <span className="text-xl font-black text-slate-900 mt-1 block">{totalClassesRecorded} Sessions</span>
         </div>
         <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider block">Classes Attended</span>
-          <span className="text-lg font-black text-emerald-800 mt-1 block">{attendedClassesCount} Present</span>
+          <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-wider block">Attendance Rate</span>
+          <span className="text-xl font-black text-emerald-800 mt-1 block">{attendancePercentage}% ({attendedClassesCount}/{totalClassesRecorded})</span>
         </div>
         <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
           <span className="text-[10px] font-extrabold text-rose-700 uppercase tracking-wider block">Classes Missed</span>
-          <span className="text-lg font-black text-rose-800 mt-1 block">{missedClassesCount} Absent</span>
+          <span className="text-xl font-black text-rose-800 mt-1 block">{missedClassesCount} Absent</span>
         </div>
         <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-          <span className="text-[10px] font-extrabold text-teal-700 uppercase tracking-wider block">Queries Solved</span>
-          <span className="text-lg font-black text-teal-900 mt-1 block">{solvedQueriesCount} / {totalQueriesCount}</span>
+          <span className="text-[10px] font-extrabold text-teal-700 uppercase tracking-wider block">Query Resolution Rate</span>
+          <span className="text-xl font-black text-teal-900 mt-1 block">{queryResolutionPercentage}% ({solvedQueriesCount}/{totalQueriesCount})</span>
         </div>
+      </div>
+
+      {/* Visual Analytics Charts Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* Graph 1: Weekly Mentoring Class Attendance Trend */}
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <BarChart3 className="h-4.5 w-4.5 text-emerald-700" />
+                <span>Weekly Class Attendance Trend</span>
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">Presence per week across 16 mentoring sessions.</p>
+            </div>
+            <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+              {attendancePercentage}% Attended
+            </span>
+          </div>
+
+          <div className="h-56 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={attendanceChartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="week" tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }} />
+                <YAxis domain={[0, 100]} ticks={[0, 50, 100]} tick={{ fontSize: 10, fill: '#94a3b8' }} />
+                <Tooltip 
+                  formatter={(value: any, name: any, item: any) => [
+                    item.payload.statusText, 'Attendance Status'
+                  ]}
+                  contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '11px', fontWeight: 700 }}
+                />
+                <Bar dataKey="statusScore" radius={[6, 6, 0, 0]}>
+                  {attendanceChartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={
+                        entry.statusScore === 100 ? '#10b981' : 
+                        entry.statusScore === 0 ? '#f43f5e' : '#cbd5e1'
+                      } 
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Graph 2: Query Breakdown Pie Chart */}
+        <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <PieIcon className="h-4.5 w-4.5 text-emerald-700" />
+                <span>Query Resolution Breakdown</span>
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">Distribution of solved vs pending student queries.</p>
+            </div>
+            <span className="text-xs font-black text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+              {solvedQueriesCount} / {totalQueriesCount} Solved
+            </span>
+          </div>
+
+          <div className="h-56 w-full flex items-center justify-center pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={queryPieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {queryPieData.map((entry, index) => (
+                    <Cell key={`pie-cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ borderRadius: '16px', border: '1px solid #e2e8f0', fontSize: '11px', fontWeight: 700 }}
+                />
+                <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', fontWeight: 700 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
       </div>
 
       {/* Weekly Mentoring Class Attendance Roster Table */}
@@ -155,7 +268,7 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
             <span>Weekly Mentoring Class Attendance Roster</span>
           </h3>
           <span className="text-xs font-bold text-slate-500">
-            {totalClassesRecorded > 0 ? `${Math.round((attendedClassesCount / totalClassesRecorded) * 100)}% Attendance Rate` : '100% Attendance Rate'}
+            {attendancePercentage}% Attendance Rate
           </span>
         </div>
 
@@ -202,7 +315,7 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
         </div>
       </div>
 
-      {/* Student Queries & Solutions History */}
+      {/* Student Queries & Solutions History Table */}
       <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
@@ -219,33 +332,48 @@ export function StudentMentoringStatusCard({ studentId, mentorId, role = 'facult
             No queries recorded for this student yet.
           </div>
         ) : (
-          <div className="space-y-3">
-            {queries.map((q) => {
-              const isSolved = q.status === 'Resolved' || q.status === 'Closed';
+          <div className="overflow-x-auto rounded-2xl border border-slate-200">
+            <table className="w-full text-left text-xs font-semibold text-slate-700">
+              <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500 font-extrabold border-b border-slate-200">
+                <tr>
+                  <th className="px-5 py-3.5">Category</th>
+                  <th className="px-5 py-3.5">Subject</th>
+                  <th className="px-5 py-3.5">Date Raised</th>
+                  <th className="px-5 py-3.5 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {queries.map((q) => {
+                  const isSolved = q.status === 'Resolved' || q.status === 'Closed';
 
-              return (
-                <div key={q.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-md">
-                        {q.type || 'Academic Query'}
-                      </span>
-                      <h4 className="text-xs font-extrabold text-slate-900 mt-1.5">{q.subject}</h4>
-                      <p className="text-[10px] font-mono text-slate-400 mt-0.5">Date: {new Date(q.created_at).toLocaleDateString()}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border shrink-0 ${
-                      isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
-                    }`}>
-                      {isSolved ? 'SOLVED' : 'PENDING'}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-100 italic">
-                    "{q.description || 'No description provided'}"
-                  </p>
-                </div>
-              );
-            })}
+                  return (
+                    <tr key={q.id} className="hover:bg-slate-50/60 transition">
+                      <td className="px-5 py-4">
+                        <span className="px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase">
+                          {q.type || 'Academic Query'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="font-extrabold text-slate-900">{q.subject}</div>
+                        <div className="text-[11px] text-slate-500 font-normal italic mt-0.5 truncate max-w-md">
+                          "{q.description}"
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 font-mono text-slate-600">
+                        {new Date(q.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                          isSolved ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-amber-50 border-amber-200 text-amber-800'
+                        }`}>
+                          {isSolved ? 'SOLVED' : 'PENDING'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
