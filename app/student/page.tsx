@@ -10,13 +10,14 @@ import { getStudentAcademicData } from '@/lib/studentAcademicService';
 import { PlacementEligibilityCard } from '@/components/placement-eligibility-card';
 
 const studentSidebarItems = [
-  { href: '/student', label: 'Profile' },
-  { href: '/student/academic', label: 'Academic Profile' },
+  { href: '/student', label: 'My Profile' },
+  { href: '/student/academic', label: 'Academic Details' },
   { href: '/student/academic-forms', label: 'Academic Forms' },
   { href: '/student/attendance-forms', label: 'Attendance Forms' },
-  { href: '/student/extracurricular', label: 'Extracurricular Activities' },
-  { href: '/student/performance', label: 'Performance' },
-  { href: '/student/queries', label: 'Problems / Queries' }
+  { href: '/student/extracurricular', label: 'Extracurricular & Co-Curricular' },
+  { href: '/student/performance', label: 'Academic Performance' },
+  { href: '/student/queries', label: 'Student Queries' },
+  { href: '/student/mentoring-status', label: 'Mentoring Status' }
 ];
 const parseAcademicYear = (val: string) => {
   const match = String(val || '').match(/^([IVXLC\d]+(?:\s*Year)?)\s*\((.*)\)$/i);
